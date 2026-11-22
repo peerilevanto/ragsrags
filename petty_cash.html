@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Petty Cash - Rags Heaven</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+.pc-hero{background:linear-gradient(135deg,#0a1a00,#0a0a0a);border:1px solid #1a2a00;border-radius:14px;padding:18px;margin-bottom:16px;position:relative;overflow:hidden}
+.pc-hero::before{content:'';position:absolute;top:-20px;right:-20px;width:100px;height:100px;background:radial-gradient(circle,rgba(74,222,128,0.1) 0%,transparent 70%)}
+.pc-balance{font-size:36px;font-weight:800;color:#4ade80;line-height:1}
+.pc-balance-label{font-size:10px;color:#888;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.pc-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.pc-stat{background:rgba(0,0,0,0.4);border-radius:8px;padding:10px 12px}
+.pc-stat-val{font-size:18px;font-weight:700}
+.pc-stat-label{font-size:10px;color:#888;margin-top:2px}
+.type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.type-btn{padding:10px 6px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:all 0.15s}
+.type-btn.in{border-color:#16a34a;background:#ecfdf5;color:#065f46}
+.type-btn.out{border-color:#dc2626;background:#fff1f2;color:#be123c}
+.tx-card{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.tx-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.tx-row:last-child{border-bottom:none}
+.tx-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.tx-info{flex:1;min-width:0}
+.tx-desc{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-main)}
+.tx-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.tx-amount{font-size:14px;font-weight:800;text-align:right;white-space:nowrap}
+.tx-amount.in{color:#059669}
+.tx-amount.out{color:#be123c}
+.section-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.section-head::after{content:'';flex:1;height:1px;background:var(--border)}
+.section-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;white-space:nowrap}
+.add-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px}
+.pc-report-btn{width:100%;padding:13px;background:linear-gradient(135deg,#059669,#10b981);border:1px solid #059669;border-radius:var(--radius);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:1px;margin-bottom:8px}
+.pc-report-btn:active{opacity:0.85}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <img src="logo.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='favicon.png'">
+    <div class="topbar-title">Petty Cash</div>
+    <div id="roleBadge" class="role-badge">Super User</div>
+    <button onclick="location.href='account.html'" style="background:none;border:1px solid var(--border);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;margin-left:6px;flex-shrink:0">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+  </div>
+  <div class="content">
+
+    <!-- Balance Hero -->
+    <div class="pc-hero">
+      <div class="pc-balance-label">Current Cash Balance</div>
+      <div class="pc-balance" id="pcBalance">PKR 0</div>
+      <div class="pc-stats">
+        <div class="pc-stat">
+          <div class="pc-stat-val" id="pcTotalIn" style="color:#4ade80">PKR 0</div>
+          <div class="pc-stat-label">Total Cash In</div>
+        </div>
+        <div class="pc-stat">
+          <div class="pc-stat-val" id="pcTotalOut" style="color:#f87171">PKR 0</div>
+          <div class="pc-stat-label">Total Cash Out</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Transaction (Enabled for Super User & Admin) -->
+    <div class="section-head"><div class="section-label">Record Transaction</div></div>
+    <div class="add-card">
+      <div class="type-toggle">
+        <button class="type-btn in" id="tIn" onclick="setType('in')">+ Cash In</button>
+        <button class="type-btn" id="tOut" onclick="setType('out')">- Cash Out</button>
+      </div>
+      <div class="field"><label>Amount (PKR) *</label><input id="pcAmt" type="number" placeholder="e.g. 5000" min="0"></div>
+      <div class="field"><label>Description *</label><input id="pcDesc" placeholder="e.g. Factory packing tape & supplies"></div>
+      <div class="field"><label id="pcByLabel">By Whom</label><input id="pcBy" placeholder="e.g. Peer Muhammad"></div>
+      <div class="field"><label>Date *</label><input id="pcDate" type="date"></div>
+      <div class="field"><label>Notes (optional)</label><input id="pcNote" placeholder="Additional details..."></div>
+      <button class="btn-save" style="width:100%;margin-top:4px;background:var(--burgundy);" onclick="addTx()">Add Entry</button>
+    </div>
+
+    <!-- Filter -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <div class="search-wrap" style="flex:1;margin-bottom:0">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="pcSearch" placeholder="Search transactions..." oninput="renderTx()">
+      </div>
+      <input type="date" id="pcFilter" onchange="renderTx()" style="padding:9px 10px;background:#fff;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;outline:none;font-family:inherit;">
+    </div>
+
+    <!-- Transactions -->
+    <div class="section-head"><div class="section-label">Transaction History</div></div>
+    <div class="tx-card" id="txList"><div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">Loading transactions from Supabase...</div></div>
+
+    <!-- Export -->
+    <button class="pc-report-btn" onclick="exportExcel()">📊 Export Excel Report</button>
+    <button class="btn-dl" style="width:100%;background:#0f172a;color:#fff;border-color:#0f172a;" onclick="exportPDF()">🖨 Print / PDF Report</button>
+
+  </div>
+</div>
+
+<div id="appDoubleNav" class="double-nav-container"></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+// Auth gate: don't open the app until user can login
+if (!requireAuth()) {
+  throw new Error("Auth Required");
+}
+
+let txType='in';
+let allTx=[];
+
+async function init(){
+  showLoader();
+  initRole('petty_cash');
+
+  // Requirement 2: Petty cash option must be enabled for Super User (and Admin)
+  if(!canAccessPettyCash()){
+    showToast('Petty cash is reserved for Super Users and Administrators', true);
+    setTimeout(() => {
+      window.location.href='dashboard.html';
+    }, 1200);
+    return;
+  }
+
+  document.getElementById('pcDate').value = new Date().toISOString().slice(0,10);
+  await loadTx();
+}
+
+async function loadTx(){
+  showLoader();
+  let remote = await sbGet('petty_cash');
+  if(remote && Array.isArray(remote) && remote.length){
+    allTx = remote.map(x=>({
+      id: x.id,
+      type: x.type,
+      amount: parseFloat(x.amount) || 0,
+      desc: x.description || x.desc || '',
+      by: x.by_whom || x.by || '',
+      date: x.date,
+      note: x.note || '',
+      created_at: x.created_at
+    }));
+  } else {
+    allTx = getLocalTable('petty_cash').map(x => ({
+      id: x.id,
+      type: x.type,
+      amount: parseFloat(x.amount) || 0,
+      desc: x.description || x.desc || '',
+      by: x.by_whom || x.by || '',
+      date: x.date,
+      note: x.note || '',
+      created_at: x.created_at
+    }));
+  }
+  calcStats();
+  renderTx();
+  hideLoader();
+}
+
+function setType(t){
+  txType=t;
+  document.getElementById('tIn').className='type-btn'+(t==='in'?' in':'');
+  document.getElementById('tOut').className='type-btn'+(t==='out'?' out':'');
+  const lbl=document.getElementById('pcByLabel');
+  const inp=document.getElementById('pcBy');
+  if(lbl){
+    if(t==='out'){
+      lbl.textContent='To Whom';
+      if(inp)inp.placeholder='e.g. Vendor / Recipient';
+    }else{
+      lbl.textContent='By Whom';
+      if(inp)inp.placeholder='e.g. Peer Muhammad';
+    }
+  }
+}
+
+function calcStats(){
+  const totalIn=allTx.filter(x=>x.type==='in').reduce((a,x)=>a+x.amount,0);
+  const totalOut=allTx.filter(x=>x.type==='out').reduce((a,x)=>a+x.amount,0);
+  const balance=totalIn-totalOut;
+  document.getElementById('pcBalance').textContent='PKR '+balance.toLocaleString();
+  document.getElementById('pcTotalIn').textContent='PKR '+totalIn.toLocaleString();
+  document.getElementById('pcTotalOut').textContent='PKR '+totalOut.toLocaleString();
+  document.getElementById('pcBalance').style.color=balance>=0?'#4ade80':'#f87171';
+}
+
+function renderTx(){
+  const q=document.getElementById('pcSearch').value.toLowerCase();
+  const df=document.getElementById('pcFilter').value;
+  let data=[...allTx].reverse();
+  if(q)data=data.filter(x=>(x.desc+(x.by||'')+x.note).toLowerCase().includes(q));
+  if(df)data=data.filter(x=>x.date===df);
+  const el=document.getElementById('txList');
+  if(!data.length){el.innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);font-size:13px">No transactions recorded</div>';return;}
+  
+  // Group by date
+  const grp={};
+  data.forEach(x=>{if(!grp[x.date])grp[x.date]=[];grp[x.date].push(x);});
+  const sorted=Object.keys(grp).sort((a,b)=>b.localeCompare(a));
+  
+  el.innerHTML=sorted.map(dk=>{
+    const items=grp[dk];
+    const dlabel=new Date(dk+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    const dayIn=items.filter(x=>x.type==='in').reduce((a,x)=>a+x.amount,0);
+    const dayOut=items.filter(x=>x.type==='out').reduce((a,x)=>a+x.amount,0);
+    const rows=items.map(x=>{
+      const dot=x.type==='in'?'#059669':'#be123c';
+      const sign=x.type==='in'?'+':'-';
+      const cls=x.type;
+      const personLabel=x.type==='out'?'To: ':'By: ';
+      return `<div class="tx-row">
+        <div class="tx-dot" style="background:${dot}"></div>
+        <div class="tx-info">
+          <div class="tx-desc">${escapeHtml(x.desc||'—')}</div>
+          <div class="tx-meta">${personLabel}${escapeHtml(x.by||'—')}${x.note?' · '+escapeHtml(x.note):''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <div class="tx-amount ${cls}">${sign} PKR ${x.amount.toLocaleString()}</div>
+          <button onclick="deleteTx('${x.id}')" style="font-size:11px;color:#be123c;background:none;border:none;cursor:pointer;padding:0">Delete</button>
+        </div>
+      </div>`;
+    }).join('');
+    return `<div style="background:#f8fafc;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:700;color:var(--burgundy)">${dlabel}</div>
+      <div style="font-size:10px;color:var(--muted)">+${dayIn.toLocaleString()} / -${dayOut.toLocaleString()}</div>
+    </div>${rows}`;
+  }).join('');
+}
+
+async function addTx(){
+  const amt=parseFloat(document.getElementById('pcAmt').value);
+  const desc=document.getElementById('pcDesc').value.trim();
+  const by=document.getElementById('pcBy').value.trim();
+  const date=document.getElementById('pcDate').value;
+  const note=document.getElementById('pcNote').value.trim();
+  if(!amt||amt<=0){showToast('Enter a valid amount',true);return;}
+  if(!desc){showToast('Description required',true);return;}
+  if(!date){showToast('Date required',true);return;}
+  
+  showLoader();
+  const payload = { type: txType, amount: amt, description: desc, by_whom: by, date: date, note: note };
+  await sbInsert('petty_cash', payload);
+  hideLoader();
+  
+  showToast('Entry saved to Supabase!');
+  document.getElementById('pcAmt').value='';
+  document.getElementById('pcDesc').value='';
+  document.getElementById('pcNote').value='';
+  await loadTx();
+}
+
+async function deleteTx(id){
+  if(!confirm('Delete this transaction?'))return;
+  showLoader();
+  await sbDelete('petty_cash', id);
+  hideLoader();
+  showToast('Transaction removed');
+  await loadTx();
+}
+
+function exportExcel(){
+  if(!allTx.length){showToast('No transactions to export',true);return;}
+  const totalIn  = allTx.filter(x=>x.type==='in').reduce((a,x)=>a+x.amount,0);
+  const totalOut = allTx.filter(x=>x.type==='out').reduce((a,x)=>a+x.amount,0);
+  const balance  = totalIn - totalOut;
+  const isPos    = balance >= 0;
+  const user = getCurrentUser();
+  const exportedBy = user ? user.name : 'Master Administrator';
+  const genDate = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const genTime = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  const dateStr = new Date().toISOString().slice(0,10);
+
+  // Sort chronological (oldest first for audit ledger)
+  const sorted = [...allTx].sort((a,b)=>a.date.localeCompare(b.date));
+
+  let running = 0;
+  const rowsHtml = sorted.map((x, i) => {
+    const delta = x.type==='in' ? x.amount : -x.amount;
+    running += delta;
+    const dateLabel = new Date(x.date+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const isIn = x.type==='in';
+    const bg = i % 2 === 0 ? '#FFFFFF' : '#F8FAFC';
+    const typeCell = isIn 
+      ? '<td align="center" style="background-color:#DCFCE7; color:#15803D; font-weight:bold; font-size:9.5pt; border:1px solid #CBD5E1;">CASH IN</td>'
+      : '<td align="center" style="background-color:#FEE2E2; color:#B91C1C; font-weight:bold; font-size:9.5pt; border:1px solid #CBD5E1;">CASH OUT</td>';
+    const inVal = isIn ? ('+' + x.amount.toLocaleString()) : '-';
+    const outVal = !isIn ? ('-' + x.amount.toLocaleString()) : '-';
+    const runColor = running >= 0 ? '#047857' : '#B91C1C';
+
+    return `
+      <tr style="background-color:${bg}; height:28px;">
+        <td align="center" style="border:1px solid #E2E8F0; font-size:9.5pt; color:#64748B;">${i+1}</td>
+        <td align="center" style="border:1px solid #E2E8F0; font-size:9.5pt; color:#1E293B;">${dateLabel}</td>
+        ${typeCell}
+        <td align="left" style="border:1px solid #E2E8F0; font-size:10pt; font-weight:600; color:#0F172A; padding-left:8px;">${escapeHtml(x.desc || '—')}</td>
+        <td align="right" style="border:1px solid #E2E8F0; font-size:10pt; font-weight:bold; color:#059669; padding-right:8px;">${inVal}</td>
+        <td align="right" style="border:1px solid #E2E8F0; font-size:10pt; font-weight:bold; color:#DC2626; padding-right:8px;">${outVal}</td>
+        <td align="right" style="border:1px solid #E2E8F0; font-size:10pt; font-weight:bold; color:${runColor}; padding-right:8px;">PKR ${running.toLocaleString()}</td>
+        <td align="left" style="border:1px solid #E2E8F0; font-size:9.5pt; color:#334155; padding-left:8px;">${escapeHtml(x.by || '—')}</td>
+        <td align="left" style="border:1px solid #E2E8F0; font-size:9pt; color:#64748B; padding-left:8px;">${escapeHtml(x.note || '')}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const excelHtml = `\uFEFF<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<!--[if gte mso 9]>
+<xml>
+ <x:ExcelWorkbook>
+  <x:ExcelWorksheets>
+   <x:ExcelWorksheet>
+    <x:Name>Petty Cash Statement</x:Name>
+    <x:WorksheetOptions>
+     <x:DisplayGridlines/>
+     <x:Print>
+      <x:ValidPrinterInfo/>
+      <x:Orientation>Landscape</x:Orientation>
+     </x:Print>
+    </x:WorksheetOptions>
+   </x:ExcelWorksheet>
+  </x:ExcelWorksheets>
+ </x:ExcelWorkbook>
+</xml>
+<![endif]-->
+<style>
+  body, table, td, th {
+    font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+  }
+</style>
+</head>
+<body>
+<table border="0" cellspacing="0" cellpadding="6" style="border-collapse:collapse; width:100%;">
+  <colgroup>
+    <col width="45">
+    <col width="110">
+    <col width="105">
+    <col width="260">
+    <col width="130">
+    <col width="130">
+    <col width="145">
+    <col width="170">
+    <col width="220">
+  </colgroup>
+  <!-- BANNER -->
+  <tr>
+    <td colspan="9" align="center" style="background-color:#881337; color:#FFFFFF; font-size:17pt; font-weight:bold; height:54px; vertical-align:middle; border-bottom:3px solid #D4AF37;">
+      RAGS HEAVEN &nbsp;|&nbsp; PETTY CASH LEDGER &amp; AUDIT STATEMENT
+    </td>
+  </tr>
+  <tr>
+    <td colspan="9" align="center" style="background-color:#4C0519; color:#D4AF37; font-size:9.5pt; font-weight:bold; letter-spacing:1px; height:24px; vertical-align:middle;">
+      EXECUTIVE OPERATIONS &bull; CONFIDENTIAL FINANCIAL DOCUMENT
+    </td>
+  </tr>
+  <tr height="10"><td colspan="9"></td></tr>
+  <!-- METADATA -->
+  <tr style="background-color:#F8FAFC; height:28px;">
+    <td colspan="4" style="border:1px solid #CBD5E1; font-size:9.5pt; color:#334155; padding-left:10px;">
+      <b>Generated:</b> ${genDate} at ${genTime} &nbsp;|&nbsp; <b>Exported By:</b> ${escapeHtml(exportedBy)}
+    </td>
+    <td colspan="5" align="right" style="border:1px solid #CBD5E1; font-size:9.5pt; color:#334155; padding-right:10px;">
+      <b>Total Entries:</b> ${allTx.length} Transactions &nbsp;|&nbsp; <b>Currency:</b> PKR (Pakistani Rupee)
+    </td>
+  </tr>
+  <tr height="14"><td colspan="9"></td></tr>
+  <!-- KPI CARDS -->
+  <tr height="50">
+    <td colspan="3" align="center" style="background-color:#DCFCE7; border:2px solid #16A34A; color:#14532D; vertical-align:middle;">
+      <div style="font-size:8.5pt; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">TOTAL CASH DEPOSITED (IN)</div>
+      <div style="font-size:14pt; font-weight:bold; color:#15803D;">+PKR ${totalIn.toLocaleString()}</div>
+    </td>
+    <td colspan="3" align="center" style="background-color:#FEE2E2; border:2px solid #DC2626; color:#7F1D1D; vertical-align:middle;">
+      <div style="font-size:8.5pt; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">TOTAL CASH DISBURSED (OUT)</div>
+      <div style="font-size:14pt; font-weight:bold; color:#B91C1C;">-PKR ${totalOut.toLocaleString()}</div>
+    </td>
+    <td colspan="3" align="center" style="background-color:${isPos ? '#FEF3C7' : '#FEE2E2'}; border:2px solid ${isPos ? '#D4AF37' : '#DC2626'}; color:${isPos ? '#78350F' : '#7F1D1D'}; vertical-align:middle;">
+      <div style="font-size:8.5pt; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px;">CURRENT NET BALANCE</div>
+      <div style="font-size:14pt; font-weight:bold; color:${isPos ? '#92400E' : '#B91C1C'};">${isPos ? '+' : ''}PKR ${balance.toLocaleString()}</div>
+    </td>
+  </tr>
+  <tr height="16"><td colspan="9"></td></tr>
+  <!-- TABLE HEADERS -->
+  <tr style="background-color:#0F172A; height:34px;">
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:center;">#</th>
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:center;">Date</th>
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:center;">Flow Type</th>
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:left; padding-left:8px;">Description / Item</th>
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:right; padding-right:8px;">Cash In (PKR)</th>
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:right; padding-right:8px;">Cash Out (PKR)</th>
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:right; padding-right:8px;">Running Balance</th>
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:left; padding-left:8px;">Party (By / To)</th>
+    <th style="color:#FFFFFF; border:1px solid #1E293B; border-bottom:3px solid #D4AF37; font-size:9.5pt; font-weight:bold; text-align:left; padding-left:8px;">Remarks / Notes</th>
+  </tr>
+  ${rowsHtml}
+  <!-- FOOTER TOTALS -->
+  <tr style="background-color:#F1F5F9; height:34px; font-weight:bold;">
+    <td colspan="4" align="right" style="border-top:2px solid #0F172A; border-bottom:3px double #0F172A; border-left:1px solid #CBD5E1; font-size:10pt; color:#0F172A; padding-right:12px;">
+      ACCOUNTING SUMMARY TOTALS:
+    </td>
+    <td align="right" style="border-top:2px solid #0F172A; border-bottom:3px double #0F172A; border-left:1px solid #CBD5E1; border-right:1px solid #CBD5E1; font-size:10.5pt; color:#15803D; padding-right:8px;">
+      +PKR ${totalIn.toLocaleString()}
+    </td>
+    <td align="right" style="border-top:2px solid #0F172A; border-bottom:3px double #0F172A; border-left:1px solid #CBD5E1; border-right:1px solid #CBD5E1; font-size:10.5pt; color:#DC2626; padding-right:8px;">
+      -PKR ${totalOut.toLocaleString()}
+    </td>
+    <td align="right" style="border-top:2px solid #0F172A; border-bottom:3px double #0F172A; border-left:1px solid #CBD5E1; border-right:1px solid #CBD5E1; font-size:11pt; color:${isPos ? '#92400E' : '#B91C1C'}; background-color:${isPos ? '#FEF3C7' : '#FEE2E2'}; padding-right:8px;">
+      ${isPos ? '+' : ''}PKR ${balance.toLocaleString()}
+    </td>
+    <td colspan="2" style="border-top:2px solid #0F172A; border-bottom:3px double #0F172A; border-right:1px solid #CBD5E1;"></td>
+  </tr>
+  <tr height="28"><td colspan="9"></td></tr>
+  <!-- SIGNATURE BLOCKS -->
+  <tr>
+    <td colspan="3" align="center" style="border-top:1px solid #0F172A; font-size:9.5pt; color:#334155; padding-top:6px;">
+      <b>Prepared By</b><br><span style="font-size:8.5pt; color:#64748B;">${escapeHtml(exportedBy)}</span>
+    </td>
+    <td colspan="3" align="center" style="border-top:1px solid #0F172A; font-size:9.5pt; color:#334155; padding-top:6px;">
+      <b>Audited &amp; Verified By</b><br><span style="font-size:8.5pt; color:#64748B;">Senior Floor Supervisor</span>
+    </td>
+    <td colspan="3" align="center" style="border-top:1px solid #0F172A; font-size:9.5pt; color:#334155; padding-top:6px;">
+      <b>Executive Approval</b><br><span style="font-size:8.5pt; color:#64748B;">Super User / Operations Director</span>
+    </td>
+  </tr>
+</table>
+</body>
+</html>`;
+
+  const blob = new Blob([excelHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = 'RagsHeaven_PettyCash_LuxuryLedger_' + dateStr + '.xls';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1500);
+  showToast('📊 Luxury Excel Spreadsheet downloaded!');
+}
+
+function exportPDF(){
+  if(!allTx.length){showToast('No transactions to export',true);return;}
+
+  const totalIn  = allTx.filter(x=>x.type==='in').reduce((a,x)=>a+x.amount,0);
+  const totalOut = allTx.filter(x=>x.type==='out').reduce((a,x)=>a+x.amount,0);
+  const balance  = totalIn - totalOut;
+  const isPositive = balance >= 0;
+  const user = getCurrentUser();
+  const exportedBy = user ? user.name : 'Rags Heaven';
+  const generatedDate = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const generatedTime = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+  // Sort oldest first for ledger
+  const sorted = [...allTx].sort((a,b)=>a.date.localeCompare(b.date));
+
+  // Build rows with running balance
+  let running = 0;
+  const rows = sorted.map((x,i)=>{
+    const delta = x.type==='in' ? x.amount : -x.amount;
+    running += delta;
+    const dateLabel = new Date(x.date+'T12:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    const isIn  = x.type==='in';
+    const amtIn  = isIn  ? '+PKR '+x.amount.toLocaleString() : '';
+    const amtOut = !isIn ? 'PKR '+x.amount.toLocaleString()  : '';
+    const runColor = running>=0 ? '#065f46' : '#be123c';
+    const rowBg = i%2===0 ? '#ffffff' : '#fafaf8';
+    const typeBadge = isIn
+      ? '<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:#dcfce7;color:#15803d;font-size:9px;font-weight:800;letter-spacing:0.5px">IN</span>'
+      : '<span style="display:inline-block;padding:2px 8px;border-radius:20px;background:#fee2e2;color:#be123c;font-size:9px;font-weight:800;letter-spacing:0.5px">OUT</span>';
+    return `<tr style="background:${rowBg}">
+      <td style="padding:9px 10px;color:#94a3b8;font-size:11px;text-align:center;border-bottom:1px solid #f1f5f9">${i+1}</td>
+      <td style="padding:9px 10px;font-size:11px;color:#334155;border-bottom:1px solid #f1f5f9;white-space:nowrap">${dateLabel}</td>
+      <td style="padding:9px 10px;text-align:center;border-bottom:1px solid #f1f5f9">${typeBadge}</td>
+      <td style="padding:9px 10px;font-size:12px;font-weight:600;color:#0f172a;border-bottom:1px solid #f1f5f9;max-width:180px">${escapeHtml(x.desc||'—')}</td>
+      <td style="padding:9px 10px;font-size:11px;color:#059669;font-weight:700;text-align:right;border-bottom:1px solid #f1f5f9;white-space:nowrap">${amtIn}</td>
+      <td style="padding:9px 10px;font-size:11px;color:#be123c;font-weight:700;text-align:right;border-bottom:1px solid #f1f5f9;white-space:nowrap">${amtOut}</td>
+      <td style="padding:9px 10px;font-size:11px;color:${runColor};font-weight:700;text-align:right;border-bottom:1px solid #f1f5f9;white-space:nowrap">PKR ${running.toLocaleString()}</td>
+      <td style="padding:9px 10px;font-size:11px;color:#64748b;border-bottom:1px solid #f1f5f9">${escapeHtml(x.by||'—')}</td>
+      <td style="padding:9px 10px;font-size:10px;color:#94a3b8;border-bottom:1px solid #f1f5f9">${escapeHtml(x.note||'')}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Rags Heaven — Petty Cash Report</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;color:#1e293b;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@page{size:A4 landscape;margin:10mm 12mm}
+@media print{.no-print{display:none!important}body{background:#fff}tr{page-break-inside:avoid}}
+.page{padding:20px 24px;min-height:100vh}
+
+/* ── HEADER ── */
+.report-header{position:relative;background:linear-gradient(135deg,#881337 0%,#4c0519 60%,#1a0008 100%);border-radius:16px;padding:28px 32px;margin-bottom:20px;overflow:hidden;color:#fff}
+.report-header::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(212,175,55,0.25) 0%,transparent 70%);pointer-events:none}
+.report-header::after{content:'';position:absolute;bottom:-30px;left:-30px;width:140px;height:140px;background:radial-gradient(circle,rgba(255,255,255,0.08) 0%,transparent 70%);pointer-events:none}
+.rh-logo-text{font-size:28px;font-weight:900;letter-spacing:-0.5px;margin-bottom:2px}
+.rh-logo-text span{color:#d4af37}
+.report-subtitle{font-size:11px;color:#fecdd3;letter-spacing:3px;text-transform:uppercase;margin-bottom:16px;font-weight:600}
+.gold-line{width:60px;height:2px;background:linear-gradient(90deg,#d4af37,rgba(212,175,55,0.2));border-radius:2px;margin-bottom:16px}
+.report-meta{display:flex;gap:24px;flex-wrap:wrap}
+.report-meta-item{font-size:11px;color:#ffe4e6}
+.report-meta-item strong{color:#fde68a;display:block;font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+.confidential-badge{position:absolute;top:20px;right:28px;border:1px solid rgba(212,175,55,0.5);border-radius:6px;padding:4px 12px;font-size:9px;font-weight:700;letter-spacing:2px;color:#d4af37;text-transform:uppercase;background:rgba(212,175,55,0.08)}
+
+/* ── SUMMARY CARDS ── */
+.summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px}
+.summary-card{border-radius:12px;padding:16px 20px;position:relative;overflow:hidden}
+.summary-card.in{background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1px solid #bbf7d0}
+.summary-card.out{background:linear-gradient(135deg,#fff1f2,#fee2e2);border:1px solid #fecaca}
+.summary-card.balance{border:2px solid;padding:15px 19px}
+.summary-card-label{font-size:9px;text-transform:uppercase;letter-spacing:1.5px;font-weight:700;margin-bottom:8px}
+.summary-card.in .summary-card-label{color:#15803d}
+.summary-card.out .summary-card-label{color:#be123c}
+.summary-card.balance .summary-card-label{color:#334155}
+.summary-card-value{font-size:22px;font-weight:900;letter-spacing:-0.5px}
+.summary-card.in .summary-card-value{color:#15803d}
+.summary-card.out .summary-card-value{color:#be123c}
+.summary-card-count{font-size:10px;margin-top:4px;opacity:0.7}
+.summary-card-icon{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:28px;opacity:0.15}
+
+/* ── SECTION LABEL ── */
+.section-label{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.section-label h2{font-size:12px;text-transform:uppercase;letter-spacing:2px;font-weight:800;color:#334155}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#e2e8f0,transparent)}
+
+/* ── TABLE ── */
+.ledger-table{width:100%;border-collapse:collapse;font-size:11.5px;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.08)}
+.ledger-table thead tr{background:linear-gradient(135deg,#0f172a,#1e293b)}
+.ledger-table th{padding:11px 10px;color:#94a3b8;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;white-space:nowrap}
+.ledger-table th:nth-child(5),.ledger-table th:nth-child(6),.ledger-table th:nth-child(7){text-align:right}
+.ledger-table tfoot tr{background:#f8fafc;border-top:2px solid #e2e8f0}
+.ledger-table tfoot td{padding:11px 10px;font-weight:800;font-size:12px;color:#0f172a}
+
+/* ── FOOTER ── */
+.report-footer{margin-top:18px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center}
+.report-footer-left{font-size:10px;color:#94a3b8}
+.report-footer-right{font-size:9px;color:#cbd5e1;text-align:right}
+.watermark{text-align:center;font-size:9px;color:#cbd5e1;margin-top:10px;letter-spacing:2px;text-transform:uppercase}
+
+/* ── PRINT BTN ── */
+.print-btn{display:block;margin:20px auto;padding:13px 40px;background:linear-gradient(135deg,#881337,#4c0519);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:1px;box-shadow:0 4px 12px rgba(136,19,55,0.3)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="report-header">
+    <div class="confidential-badge">Confidential</div>
+    <div class="rh-logo-text">Rags <span>Heaven</span></div>
+    <div class="report-subtitle">Petty Cash Ledger Report</div>
+    <div class="gold-line"></div>
+    <div class="report-meta">
+      <div class="report-meta-item"><strong>Generated On</strong>${generatedDate} at ${generatedTime}</div>
+      <div class="report-meta-item"><strong>Exported By</strong>${escapeHtml(exportedBy)}</div>
+      <div class="report-meta-item"><strong>Total Entries</strong>${allTx.length} Transactions</div>
+      <div class="report-meta-item"><strong>Period</strong>${sorted.length>0?new Date(sorted[0].date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' — '+new Date(sorted[sorted.length-1].date+'T12:00:00').toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'All Dates'}</div>
+    </div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="summary-grid">
+    <div class="summary-card in">
+      <div class="summary-card-label">Total Cash In</div>
+      <div class="summary-card-value">PKR ${totalIn.toLocaleString()}</div>
+      <div class="summary-card-count">${allTx.filter(x=>x.type==='in').length} deposits recorded</div>
+      <div class="summary-card-icon">📥</div>
+    </div>
+    <div class="summary-card out">
+      <div class="summary-card-label">Total Cash Out</div>
+      <div class="summary-card-value">PKR ${totalOut.toLocaleString()}</div>
+      <div class="summary-card-count">${allTx.filter(x=>x.type==='out').length} withdrawals recorded</div>
+      <div class="summary-card-icon">📤</div>
+    </div>
+    <div class="summary-card balance" style="background:${isPositive?'linear-gradient(135deg,#fffbeb,#fef3c7)':'linear-gradient(135deg,#fff1f2,#fee2e2)'};border-color:${isPositive?'#d4af37':'#fca5a5'}">
+      <div class="summary-card-label" style="color:${isPositive?'#92400e':'#be123c'}">Current Balance</div>
+      <div class="summary-card-value" style="color:${isPositive?'#92400e':'#be123c'}">${isPositive?'+':''}PKR ${balance.toLocaleString()}</div>
+      <div class="summary-card-count" style="opacity:0.7;color:${isPositive?'#b45309':'#be123c'}">${isPositive?'Surplus available':'Deficit — restock needed'}</div>
+      <div class="summary-card-icon">${isPositive?'💰':'⚠️'}</div>
+    </div>
+  </div>
+
+  <!-- LEDGER TABLE -->
+  <div class="section-label"><h2>Transaction Ledger</h2></div>
+  <table class="ledger-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Description</th>
+        <th style="text-align:right">Cash In (PKR)</th>
+        <th style="text-align:right">Cash Out (PKR)</th>
+        <th style="text-align:right">Running Balance</th>
+        <th>Person</th>
+        <th>Notes</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="4" style="color:#334155;font-size:11px;font-weight:700">CLOSING TOTALS</td>
+        <td style="text-align:right;color:#15803d">PKR ${totalIn.toLocaleString()}</td>
+        <td style="text-align:right;color:#be123c">PKR ${totalOut.toLocaleString()}</td>
+        <td style="text-align:right;color:${isPositive?'#15803d':'#be123c'}">${isPositive?'+':''}PKR ${balance.toLocaleString()}</td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <!-- FOOTER -->
+  <div class="report-footer">
+    <div class="report-footer-left">
+      <strong>Rags Heaven Inventory System</strong><br>
+      Petty Cash Module — Internal Financial Record
+    </div>
+    <div class="report-footer-right">
+      ${allTx.length} entries · PKR ${totalIn.toLocaleString()} in · PKR ${totalOut.toLocaleString()} out · Net PKR ${balance.toLocaleString()}<br>
+      Generated: ${generatedDate}
+    </div>
+  </div>
+
+  <div class="watermark">Rags Heaven &nbsp;•&nbsp; Petty Cash Ledger &nbsp;•&nbsp; Confidential &amp; Proprietary</div>
+
+  <button class="print-btn no-print" onclick="window.print()">🖨 Print / Save as PDF</button>
+</div>
+</body>
+</html>`;
+
+  const w = window.open('','_blank','width=1150,height=820');
+  if(!w){showToast('Allow popups to export PDF',true);return;}
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>{try{w.focus();w.print();}catch(e){}},900);
+}
+
+init();
+</script>
+</body>
+</html>

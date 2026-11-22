@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Media Entry & Bundles - Rags Heaven</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+.size-toggle-btn {
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.size-toggle-btn.active {
+  background: var(--burgundy);
+  color: #fff;
+  border-color: var(--burgundy);
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Topbar -->
+  <div class="topbar">
+    <img src="logo.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='favicon.png'">
+    <div class="topbar-title">Media Entry & Bundles</div>
+    <div id="roleBadge" class="role-badge">Media</div>
+    <button onclick="handleTopNavClick()" style="background:none;border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="User Profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+  </div>
+
+  <div class="content">
+    <!-- Section Header -->
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Media Upload Registry</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="mediaSummary">Catalogue photo bundles & captions</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-add" style="background:#0f172a" onclick="dlCSV()" title="Export CSV">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>CSV
+        </button>
+        <button class="btn-add" onclick="openAddModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>+ Add Bundle
+        </button>
+      </div>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="si" type="text" placeholder="Search bundle serial, item name, brand..." oninput="renderData()">
+    </div>
+
+    <!-- Date Filter Row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">Filter by Date</div>
+      <input type="date" id="df" onchange="renderData()" style="padding:5px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;font-family:inherit;background:#fff">
+    </div>
+
+    <div id="msg" style="text-align:center;padding:34px;color:var(--muted);font-size:13px">Loading media bundles...</div>
+    <div class="item-list" id="list" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<div id="appDoubleNav" class="double-nav-container"></div>
+
+<!-- Modal: Add / Edit Media Bundle -->
+<div class="modal-overlay" id="mo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="mt">Log New Media Bundle</div>
+
+    <div class="field">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <label style="margin:0">Serial / Bundle Key</label>
+        <button type="button" class="chip" style="font-size:10px;padding:2px 8px" onclick="genSerial()">Auto-generate</button>
+      </div>
+      <input id="ms" placeholder="e.g. RH-MED-0492">
+    </div>
+
+    <div class="field">
+      <label>Bundle / Item Description *</label>
+      <input id="mn" placeholder="e.g. Vintage Ralph Lauren Polo Bear Knit" required>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field">
+        <label>Brand</label>
+        <input id="mb" placeholder="e.g. Ralph Lauren, Carhartt">
+      </div>
+      <div class="field">
+        <label>Category</label>
+        <select id="mc">
+          <option value="Fleeces">Fleeces</option>
+          <option value="Jackets & Workwear">Jackets & Workwear</option>
+          <option value="Denim & Jeans">Denim & Jeans</option>
+          <option value="Hoodies">Hoodies</option>
+          <option value="Sweatshirts">Sweatshirts</option>
+          <option value="Polos">Polos</option>
+          <option value="T-Shirts">T-Shirts</option>
+          <option value="Sportswear">Sportswear</option>
+          <option value="Shirts">Shirts</option>
+          <option value="Sweaters">Sweaters</option>
+          <option value="Knitwear">Knitwear</option>
+          <option value="Shorts">Shorts</option>
+          <option value="Accessories">Accessories</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Size Specification Type</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+        <button type="button" id="btnTop" class="size-toggle-btn active" onclick="setSizeType('top')">Top Sizes (XS – XXL)</button>
+        <button type="button" id="btnBtm" class="size-toggle-btn" onclick="setSizeType('btm')">Waist Sizes (26 – 40)</button>
+      </div>
+    </div>
+
+    <div id="wrapTop" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="field" style="margin:0">
+        <label>Size From</label>
+        <select id="mtf">
+          <option>XS</option><option selected>S</option><option>M</option><option>L</option><option>XL</option><option>XXL</option><option>One Size</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0">
+        <label>Size To</label>
+        <select id="mtt">
+          <option>XS</option><option>S</option><option>M</option><option selected>L</option><option>XL</option><option>XXL</option><option>One Size</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="wrapBtm" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <div class="field" style="margin:0">
+        <label>Waist From</label>
+        <select id="mbf">
+          <option>26</option><option>28</option><option selected>30</option><option>32</option><option>34</option><option>36</option><option>38</option><option>40</option>
+        </select>
+      </div>
+      <div class="field" style="margin:0">
+        <label>Waist To</label>
+        <select id="mbt">
+          <option>28</option><option>30</option><option>32</option><option>34</option><option selected>36</option><option>38</option><option>40</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" onclick="closeM()">Cancel</button>
+      <button type="button" class="btn-save" id="btnSaveBundle" onclick="saveBundle()">Save Bundle</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+if (!requireAuth()) {
+  throw new Error("Auth Required");
+}
+
+const userRole = getRole();
+if (userRole !== 'super_user' && userRole !== 'special' && userRole !== 'media') {
+  showToast('Media module is restricted to Super User & Media Team', true);
+  setTimeout(() => { location.replace('dashboard.html'); }, 600);
+  throw new Error("Access Restricted");
+}
+
+let all = [], eid = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  initRole('media');
+  init();
+
+  const mo = document.getElementById('mo');
+  mo.addEventListener('click', e => {
+    if (e.target === mo) closeM();
+  });
+});
+
+function handleTopNavClick() {
+  const role = getRole();
+  if (role === 'super_user' || role === 'special') {
+    location.href = 'account.html';
+  } else if (['grader', 'checker', 'floor_helper'].includes(role)) {
+    location.href = 'my_attendance.html';
+  } else {
+    location.href = 'dashboard.html';
+  }
+}
+
+function genSerial() {
+  const num = Math.floor(100 + Math.random() * 900);
+  document.getElementById('ms').value = 'RH-MED-' + num;
+}
+
+function setSizeType(t) {
+  const isTop = t === 'top';
+  document.getElementById('wrapTop').style.display = isTop ? 'grid' : 'none';
+  document.getElementById('wrapBtm').style.display = isTop ? 'none' : 'grid';
+  document.getElementById('btnTop').className = isTop ? 'size-toggle-btn active' : 'size-toggle-btn';
+  document.getElementById('btnBtm').className = isTop ? 'size-toggle-btn' : 'size-toggle-btn active';
+}
+
+async function init() {
+  showLoader();
+  try {
+    all = await sbGet('media_items');
+    if (!all || !all.length) {
+      all = getLocalTable('media_items');
+    }
+  } catch(e) {
+    all = getLocalTable('media_items');
+  }
+  document.getElementById('msg').style.display = 'none';
+  document.getElementById('list').style.display = '';
+  renderData();
+  hideLoader();
+}
+
+function renderData() {
+  const q = (document.getElementById('si').value || '').toLowerCase().trim();
+  const df = document.getElementById('df').value;
+  let d = [...all];
+
+  if (q) {
+    d = d.filter(x => ((x.serial || '') + ' ' + (x.name || '') + ' ' + (x.brand || '') + ' ' + (x.category || '')).toLowerCase().includes(q));
+  }
+  if (df) {
+    d = d.filter(x => x.created_at && x.created_at.startsWith(df));
+  }
+
+  document.getElementById('mediaSummary').textContent = `${all.length} media bundles logged`;
+
+  const el = document.getElementById('list');
+  if (!d.length) {
+    el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>No media bundles match your search</div>';
+    return;
+  }
+
+  el.innerHTML = d.map(x => {
+    const sizeStr = x.top_size_from ? `Tops: ${x.top_size_from} – ${x.top_size_to}` : x.btm_size_from ? `Waist: ${x.btm_size_from} – ${x.btm_size_to}` : 'Mixed Sizes';
+    const dateFormatted = x.created_at ? new Date(x.created_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : 'Recent';
+
+    return `
+      <div class="item-card">
+        <div class="item-card-top">
+          <div>
+            <span class="chip burgundy" style="font-weight:800;letter-spacing:0.4px;margin-bottom:4px;display:inline-block">${escapeHtml(x.serial || 'RH-MED')}</span>
+            <div class="item-name">${escapeHtml(x.name || 'Unnamed Bundle')}</div>
+          </div>
+          <span class="chip green" style="font-weight:700">10 Pcs Bundle</span>
+        </div>
+
+        <div class="item-meta">
+          <span class="chip blue">${escapeHtml(x.brand || 'Vintage')}</span>
+          <span class="chip" style="background:#f8fafc">${escapeHtml(x.category || 'Apparel')}</span>
+          <span class="chip gold" style="font-weight:600">${escapeHtml(sizeStr)}</span>
+        </div>
+
+        <div class="qty-row" style="margin-top:8px">
+          <span class="qty-label">Logged Date</span>
+          <span style="font-size:11px;font-weight:600;color:var(--muted)">${dateFormatted}</span>
+        </div>
+
+        <div class="act-row">
+          <button class="btn-edit" style="background:var(--burgundy-soft);color:var(--burgundy);border:1px solid var(--burgundy-border)" onclick="copyCaption('${x.id}')">
+            📋 Caption
+          </button>
+          <button class="btn-edit" onclick="openEditModal('${x.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Edit
+          </button>
+          <button class="btn-del" onclick="delBundle('${x.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openAddModal() {
+  eid = null;
+  document.getElementById('mt').textContent = 'Log New Media Bundle';
+  genSerial();
+  document.getElementById('mn').value = '';
+  document.getElementById('mb').value = '';
+  document.getElementById('mc').value = 'Fleeces';
+  setSizeType('top');
+  document.getElementById('mtf').value = 'S';
+  document.getElementById('mtt').value = 'L';
+  document.getElementById('mo').classList.add('open');
+}
+
+function openEditModal(id) {
+  eid = id;
+  const x = all.find(a => a.id == id);
+  if (!x) return;
+  document.getElementById('mt').textContent = 'Edit Media Bundle';
+  document.getElementById('ms').value = x.serial || '';
+  document.getElementById('mn').value = x.name || '';
+  document.getElementById('mb').value = x.brand || '';
+  document.getElementById('mc').value = x.category || 'Fleeces';
+  const hasBtm = Boolean(x.btm_size_from && !x.top_size_from);
+  setSizeType(hasBtm ? 'btm' : 'top');
+  if (hasBtm) {
+    document.getElementById('mbf').value = x.btm_size_from || '30';
+    document.getElementById('mbt').value = x.btm_size_to || '36';
+  } else {
+    document.getElementById('mtf').value = x.top_size_from || 'S';
+    document.getElementById('mtt').value = x.top_size_to || 'L';
+  }
+  document.getElementById('mo').classList.add('open');
+}
+
+function closeM() {
+  document.getElementById('mo').classList.remove('open');
+  eid = null;
+}
+
+async function saveBundle() {
+  const name = document.getElementById('mn').value.trim();
+  if (!name) {
+    showToast('Bundle description is required', true);
+    return;
+  }
+  const isBtm = document.getElementById('wrapBtm').style.display === 'grid';
+  const payload = {
+    serial: document.getElementById('ms').value.trim() || ('RH-MED-' + Math.floor(100 + Math.random() * 900)),
+    name: name,
+    brand: document.getElementById('mb').value.trim(),
+    category: document.getElementById('mc').value,
+    top_size_from: isBtm ? null : document.getElementById('mtf').value,
+    top_size_to: isBtm ? null : document.getElementById('mtt').value,
+    btm_size_from: isBtm ? document.getElementById('mbf').value : null,
+    btm_size_to: isBtm ? document.getElementById('mbt').value : null
+  };
+
+  const btn = document.getElementById('btnSaveBundle');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  try {
+    if (eid) {
+      await sbUpdate('media_items', eid, payload);
+    } else {
+      await sbInsert('media_items', payload);
+    }
+    showToast(eid ? 'Media bundle updated!' : 'Media bundle saved!');
+    closeM();
+    all = await sbGet('media_items');
+    renderData();
+  } catch(e) {
+    showToast('Error saving: ' + e.message, true);
+  } finally {
+    btn.textContent = 'Save Bundle';
+    btn.disabled = false;
+  }
+}
+
+async function delBundle(id) {
+  if (!confirm('Delete this media bundle?')) return;
+  showLoader();
+  try {
+    await sbDelete('media_items', id);
+    showToast('Media bundle removed');
+    all = await sbGet('media_items');
+    renderData();
+  } catch(e) {
+    showToast('Error deleting: ' + e.message, true);
+  } finally {
+    hideLoader();
+  }
+}
+
+function copyCaption(id) {
+  const x = all.find(a => a.id == id);
+  if (!x) return;
+  const sz = x.top_size_from ? `Sizes: ${x.top_size_from} - ${x.top_size_to}` : x.btm_size_from ? `Waist: ${x.btm_size_from} - ${x.btm_size_to}` : '';
+  const text = `RAGS HEAVEN - VINTAGE APPAREL\n${x.name}\nBrand: ${x.brand || 'Vintage'}\nCategory: ${x.category || 'Clothing'}\n${sz}\nLot Serial: ${x.serial || 'RH-MED'}\nGrade: AB Grade & Premium Mix\nQty: 10 Pcs (1 Bundle)\nOfficial Quality Verified`;
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Video caption copied to clipboard!');
+    }).catch(() => {
+      prompt('Copy caption:', text);
+    });
+  } else {
+    prompt('Copy caption:', text);
+  }
+}
+
+function dlCSV() {
+  if (!all.length) {
+    showToast('No media items to export', true);
+    return;
+  }
+  let csv = 'Serial,Name,Brand,Category,Sizes,Quantity,Date\n';
+  all.forEach(x => {
+    const sz = x.top_size_from ? `${x.top_size_from}-${x.top_size_to}` : x.btm_size_from ? `${x.btm_size_from}-${x.btm_size_to}` : '';
+    csv += `"${x.serial||''}","${(x.name||'').replace(/"/g, '""')}","${x.brand||''}","${x.category||''}","${sz}","10 Pcs","${x.created_at||''}"\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `RagsHeaven_Media_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('Media CSV exported!');
+}
+</script>
+</body>
+</html>

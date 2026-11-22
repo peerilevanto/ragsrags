@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Bells Register - Rags Heaven</title>
+<link rel="stylesheet" href="style.css">
+<script>window._tkLogo="logo.png";
+</script>
+<style>
+/* ── Bells Page Styles ─────────────────────────────── */
+.bells-hero{background:linear-gradient(135deg,#0a0d1a,#0a0a0a);border:1px solid #1a1f3a;border-radius:14px;padding:18px;margin-bottom:16px;position:relative;overflow:hidden}
+.bells-hero::before{content:'';position:absolute;top:-20px;right:-20px;width:110px;height:110px;background:radial-gradient(circle,rgba(99,102,241,0.15) 0%,transparent 70%)}
+.bells-hero::after{content:'';display:none}
+.bells-total-val{font-size:38px;font-weight:800;color:#818cf8;line-height:1;letter-spacing:-1px}
+.bells-total-label{font-size:10px;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:6px}
+.bells-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+.bells-stat{background:rgba(0,0,0,0.4);border-radius:10px;padding:11px 13px;border:1px solid #1a1f3a}
+.bells-stat-val{font-size:20px;font-weight:700;color:#818cf8}
+.bells-stat-label{font-size:10px;color:#555;margin-top:2px}
+.bells-add-card{background:var(--card);border:1px solid #1a1f3a;border-radius:12px;padding:14px;margin-bottom:16px}
+.bells-add-title{font-size:11px;font-weight:700;color:#818cf8;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.calc-preview{background:#0a0d1a;border:1px solid #1a1f3a;border-radius:8px;padding:12px;margin-top:4px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.calc-preview-icon{font-size:20px}
+.calc-preview-label{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px}
+.calc-preview-val{font-size:20px;font-weight:800;color:#818cf8}
+.bells-btn{width:100%;padding:13px;background:linear-gradient(135deg,#1e1b4b,#4338ca);border:1px solid #4338ca;border-radius:var(--radius);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:1px;transition:opacity 0.15s}
+.bells-btn:active{opacity:0.8}
+.bells-pdf-btn{width:100%;padding:12px;background:linear-gradient(135deg,#0a1220,#1d4ed8);border:1px solid #3b82f6;border-radius:var(--radius);color:#93c5fd;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:1px;margin-bottom:16px;transition:opacity 0.15s}
+.bells-pdf-btn:active{opacity:0.8}
+.section-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.section-head::after{content:'';flex:1;height:1px;background:var(--border)}
+.section-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:2px;text-transform:uppercase;white-space:nowrap}
+.bell-card{background:var(--card);border:1px solid #1a1f3a;border-radius:10px;overflow:hidden;margin-bottom:10px;transition:border-color 0.15s}
+.bell-card:active{border-color:#4338ca}
+.bell-row{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.bell-icon{width:38px;height:38px;border-radius:9px;background:#0a0d1a;border:1px solid #1a1f3a;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.bell-info{flex:1;min-width:0}
+.bell-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--white)}
+.bell-meta{font-size:10px;color:var(--muted);margin-top:3px}
+.bell-weight-badge{text-align:right;flex-shrink:0}
+.bell-total-w{font-size:16px;font-weight:800;color:#818cf8;white-space:nowrap}
+.bell-total-lbl{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px;margin-top:1px}
+.bell-delete-btn{width:22px;height:22px;border-radius:5px;background:#1f0000;border:1px solid #3f0000;color:#f87171;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit}
+.bells-empty{text-align:center;padding:32px 16px;color:var(--muted);font-size:13px}
+.bells-empty-icon{font-size:40px;margin-bottom:10px;opacity:0.4}
+
+/* ── PDF Print Styles ────────────────────────────── */
+#pdf-content{display:none}
+.pdf-table{width:100%;border-collapse:collapse;font-size:11px}
+.pdf-table th{background:#1e1b4b;color:#818cf8;padding:7px 10px;text-align:left;font-size:10px;letter-spacing:1px;text-transform:uppercase}
+.pdf-table td{padding:7px 10px;border-bottom:1px solid #1a1a2e;color:#e5e7eb}
+.pdf-table tr:last-child td{border-bottom:none}
+.pdf-table .total-row td{font-weight:700;color:#818cf8;background:#0a0d1a}
+.pdf-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #1e1b4b}
+.pdf-title{font-size:18px;font-weight:800;color:#818cf8;letter-spacing:-0.5px}
+.pdf-subtitle{font-size:10px;color:#555;margin-top:2px}
+.pdf-summary{display:flex;gap:16px;margin-bottom:16px}
+.pdf-sum-box{flex:1;background:#0a0d1a;border:1px solid #1e1b4b;border-radius:8px;padding:10px 12px}
+.pdf-sum-label{font-size:9px;color:#555;text-transform:uppercase;letter-spacing:1px}
+.pdf-sum-val{font-size:20px;font-weight:800;color:#818cf8;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="btn-back" onclick="location.href='account.html'" id="backBtn" style="background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px">← Back</button>
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--white)">📦 Bells Register</div>
+        <div style="font-size:10px;color:var(--muted)">Rags Heaven</div>
+      </div>
+    </div>
+    <span id="roleBadge" class="role-badge"></span>
+  </div>
+
+  <div style="padding:0 14px 100px">
+
+    <!-- ── Summary Hero ── -->
+    <div class="bells-hero" id="heroCard">
+      <div class="bells-total-label">Total Registered Bells</div>
+      <div class="bells-total-val" id="heroTotalBells">—</div>
+      <div class="bells-stats">
+        <div class="bells-stat">
+          <div class="bells-stat-val" id="heroTotalWeight">—</div>
+          <div class="bells-stat-label">Total Weight (kg)</div>
+        </div>
+        <div class="bells-stat">
+          <div class="bells-stat-val" id="heroItemCount">—</div>
+          <div class="bells-stat-label">Item Types</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PDF Export Button ── -->
+    <button class="bells-pdf-btn" onclick="exportPDF()" id="pdfBtn">
+      📄 Export PDF Report
+    </button>
+
+    <!-- ── Add Bell Form ── -->
+    <div class="bells-add-card">
+      <div class="bells-add-title">Register New Bell</div>
+      <div class="field">
+        <label>Item Name</label>
+        <input type="text" id="inItemName" placeholder="e.g. Shop Bell, Door Bell…" autocomplete="off">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field">
+          <label>Bell Weight (kg)</label>
+          <input type="number" id="inBellWeight" placeholder="0.00" step="0.01" min="0" oninput="calcPreview()">
+        </div>
+        <div class="field">
+          <label>No. of Bells</label>
+          <input type="number" id="inTotalBells" placeholder="0" min="1" step="1" oninput="calcPreview()">
+        </div>
+      </div>
+
+      <!-- Auto-calculated total weight preview -->
+      <div class="calc-preview" id="calcPreview">
+        <div class="calc-preview-icon">⚖️</div>
+        <div style="flex:1">
+          <div class="calc-preview-label">Auto Total Weight</div>
+          <div class="calc-preview-val" id="calcVal">—</div>
+        </div>
+        <div style="font-size:10px;color:#4338ca;font-weight:600">AUTO CALC</div>
+      </div>
+
+      <div class="field">
+        <label>Notes (optional)</label>
+        <input type="text" id="inNotes" placeholder="Any remarks…" autocomplete="off">
+      </div>
+      <button class="bells-btn" onclick="saveBell()">+ Register Bell</button>
+    </div>
+
+    <!-- ── Bells List ── -->
+    <div class="section-head"><span class="section-label">All Bells</span></div>
+    <div id="bellsList">
+      <div class="bells-empty"><div class="bells-empty-icon">📦</div><div>No bells registered yet</div></div>
+    </div>
+
+  </div><!-- /padding -->
+</div><!-- /page -->
+
+<!-- ── PDF Content (hidden, rendered for export) ── -->
+<div id="pdf-content" style="display:none;background:#0a0a0a;color:#e5e7eb;font-family:system-ui,sans-serif;padding:24px;min-width:600px">
+  <div class="pdf-header">
+    <div>
+      <div class="pdf-title">📦 Bells Register</div>
+      <div class="pdf-subtitle" id="pdfSubtitle">Rags Heaven — Generated on —</div>
+    </div>
+    <div style="font-size:20px;font-weight:800;color:#818cf8;opacity:0.3">B</div>
+  </div>
+  <div class="pdf-summary">
+    <div class="pdf-sum-box">
+      <div class="pdf-sum-label">Total Bells</div>
+      <div class="pdf-sum-val" id="pdfTotalBells">0</div>
+    </div>
+    <div class="pdf-sum-box">
+      <div class="pdf-sum-label">Total Weight (kg)</div>
+      <div class="pdf-sum-val" id="pdfTotalWeight">0</div>
+    </div>
+    <div class="pdf-sum-box">
+      <div class="pdf-sum-label">Item Types</div>
+      <div class="pdf-sum-val" id="pdfItemCount">0</div>
+    </div>
+  </div>
+  <table class="pdf-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Item Name</th>
+        <th>Bell Weight (kg)</th>
+        <th>No. of Bells</th>
+        <th>Total Weight (kg)</th>
+        <th>Notes</th>
+        <th>Date</th>
+      </tr>
+    </thead>
+    <tbody id="pdfTableBody"></tbody>
+  </table>
+</div>
+
+<div id="appDoubleNav" class="double-nav-container"></div>
+
+<div class="toast" id="toast"></div>
+<script src="shared.js"></script>
+<script>
+// ── Globals ──────────────────────────────────────────
+let allBells = [];
+
+// ── Toast ─────────────────────────────────────────────
+function showToast(msg,err){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.style.background=err?'#1f0000':'#00111a';
+  t.style.borderColor=err?'#dc2626':'#4338ca';
+  t.style.color=err?'#f87171':'#818cf8';
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── Access Guard ────────────────────────────────────
+function checkAccess(){
+  if (!requireAuth()) return;
+  const r=getRole();
+  if(r!=='special'&&r!=='super_user'){
+    showToast('Bells register is reserved for Super User', true);
+    setTimeout(() => { location.replace('dashboard.html'); }, 600);
+  }
+}
+
+// ── Auto-calculate preview ───────────────────────────
+function calcPreview(){
+  const w=parseFloat(document.getElementById('inBellWeight').value)||0;
+  const n=parseInt(document.getElementById('inTotalBells').value)||0;
+  const total=(w*n);
+  const el=document.getElementById('calcVal');
+  if(w>0&&n>0){
+    el.textContent=total.toFixed(2)+' kg';
+    document.getElementById('calcPreview').style.borderColor='#4338ca';
+  } else {
+    el.textContent='—';
+    document.getElementById('calcPreview').style.borderColor='#1a1f3a';
+  }
+}
+
+// ── Save Bell ────────────────────────────────────────
+async function saveBell(){
+  const name=document.getElementById('inItemName').value.trim();
+  const weight=parseFloat(document.getElementById('inBellWeight').value);
+  const count=parseInt(document.getElementById('inTotalBells').value);
+  const notes=document.getElementById('inNotes').value.trim();
+
+  if(!name){showToast('Please enter item name',true);return;}
+  if(!weight||weight<=0){showToast('Please enter a valid bell weight',true);return;}
+  if(!count||count<1){showToast('Please enter total number of bells',true);return;}
+
+  const btn=document.querySelector('.bells-btn');
+  btn.textContent='Saving…';btn.disabled=true;
+
+  const totalWeight = parseFloat((weight * count).toFixed(2));
+  const data={
+    item_name: name,
+    bell_weight: weight,
+    total_bells: count,
+    total_weight: totalWeight,
+    notes: notes||null
+  };
+  const res=await sbInsert('bells',data);
+
+  btn.textContent='+ Register Bell';btn.disabled=false;
+
+  if(res){
+    showToast('Bell registered successfully!');
+    document.getElementById('inItemName').value='';
+    document.getElementById('inBellWeight').value='';
+    document.getElementById('inTotalBells').value='';
+    document.getElementById('inNotes').value='';
+    calcPreview();
+    loadBells();
+  } else {
+    showToast('Failed to save. Check console.',true);
+  }
+}
+
+// ── Delete Bell ──────────────────────────────────────
+async function deleteBell(id, name){
+  if(!confirm('Delete "'+name+'"?'))return;
+  const ok=await sbDelete('bells',id);
+  if(ok){showToast('Deleted');loadBells();}
+  else showToast('Delete failed',true);
+}
+
+// ── Load & Render ────────────────────────────────────
+async function loadBells(){
+  allBells=await sbGet('bells');
+  if (Array.isArray(allBells)) {
+    allBells.forEach(b => {
+      if (b.total_weight === undefined || b.total_weight === null || b.total_weight === 0) {
+        b.total_weight = ((parseFloat(b.bell_weight) || 0) * (parseInt(b.total_bells) || 0)).toFixed(2);
+      }
+    });
+  }
+  renderBells(allBells);
+  updateHero(allBells);
+}
+
+function updateHero(data){
+  const totalBells=data.reduce((s,r)=>s+(parseInt(r.total_bells)||0),0);
+  const totalWeight=data.reduce((s,r)=>s+(parseFloat(r.total_weight)||0),0);
+  document.getElementById('heroTotalBells').textContent=totalBells.toLocaleString();
+  document.getElementById('heroTotalWeight').textContent=totalWeight.toFixed(2);
+  document.getElementById('heroItemCount').textContent=data.length;
+}
+
+function renderBells(data){
+  const container=document.getElementById('bellsList');
+  if(!data||data.length===0){
+    container.innerHTML='<div class="bells-empty"><div class="bells-empty-icon">📦</div><div>No bells registered yet</div></div>';
+    return;
+  }
+  const role=getRole();
+  const canDel = (role === 'admin' || role === 'super_user' || role === 'special');
+  container.innerHTML=data.map((b,i)=>{
+    const tw=parseFloat(b.total_weight||0).toFixed(2);
+    const bw=parseFloat(b.bell_weight||0).toFixed(2);
+    const date=b.created_at?new Date(b.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    const safeName = (b.item_name || 'Bell').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    const delBtn = canDel ?
+      `<button class="bell-delete-btn" onclick="deleteBell('${b.id}','${safeName}')" title="Delete">×</button>` : '';
+    return `<div class="bell-card">
+      <div class="bell-row">
+        <div class="bell-icon" style="font-size:14px;font-weight:800;color:#818cf8">B</div>
+        <div class="bell-info">
+          <div class="bell-name">${escapeHtml(b.item_name || 'Bell')}</div>
+          <div class="bell-meta">${b.total_bells} bell${b.total_bells!==1?'s':''} × ${bw} kg${b.notes?' · '+escapeHtml(b.notes):''}</div>
+          <div class="bell-meta" style="color:#333">${date}</div>
+        </div>
+        <div class="bell-weight-badge">
+          <div class="bell-total-w">${tw} kg</div>
+          <div class="bell-total-lbl">Total Wt.</div>
+        </div>
+        ${delBtn}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PDF Export ───────────────────────────────────────
+function exportPDF(){
+  if(!allBells||!allBells.length){ showToast('No bells to export', true); return; }
+
+  const totalWeight = allBells.reduce((a,b) => a + (parseFloat(b.total_weight)||0), 0);
+  const totalBells  = allBells.reduce((a,b) => a + (parseInt(b.total_bells)||0), 0);
+  const formattedDate = new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+  const rows = allBells.map((b, i) => {
+    const tw   = parseFloat(b.total_weight||0).toFixed(2);
+    const bw   = parseFloat(b.bell_weight||0).toFixed(2);
+    const date = b.created_at ? new Date(b.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    const bg   = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+    return '<tr style="background:' + bg + '">'
+      + '<td style="padding:9px 12px;font-weight:600;color:#0f172a;border-bottom:1px solid #e2e8f0">' + (b.item_name||'—') + '</td>'
+      + '<td style="padding:9px 12px;color:#6366f1;font-weight:700;border-bottom:1px solid #e2e8f0;text-align:center">' + (b.total_bells||0) + '</td>'
+      + '<td style="padding:9px 12px;color:#334155;border-bottom:1px solid #e2e8f0;text-align:right">' + bw + ' kg</td>'
+      + '<td style="padding:9px 12px;font-weight:700;color:#6366f1;border-bottom:1px solid #e2e8f0;text-align:right">' + tw + ' kg</td>'
+      + '<td style="padding:9px 12px;color:#64748b;font-size:11px;border-bottom:1px solid #e2e8f0">' + (b.notes||'—') + '</td>'
+      + '<td style="padding:9px 12px;color:#94a3b8;font-size:11px;border-bottom:1px solid #e2e8f0">' + date + '</td>'
+      + '</tr>';
+  }).join('');
+
+  const html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
+    + '<title>Bells Register Report</title>'
+    + '<style>'
+    + '*{box-sizing:border-box;margin:0;padding:0}'
+    + 'body{font-family:Arial,Helvetica,sans-serif;color:#1e293b;background:#fff}'
+    + '@page{size:A4 landscape;margin:12mm 14mm}'
+    + '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.noprint{display:none!important}tr{page-break-inside:avoid}}'
+    + '.wrap{padding:24px 28px}'
+    + '.header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}'
+    + '.header h1{font-size:20px;font-weight:900;color:#0f172a;letter-spacing:-0.3px;margin-bottom:4px}'
+    + '.header p{font-size:12px;color:#64748b}'
+    + '.badge{background:#f1f0ff;border:2px solid #6366f1;border-radius:8px;padding:10px 16px;text-align:center}'
+    + '.badge-val{font-size:24px;font-weight:900;color:#6366f1}'
+    + '.badge-lbl{font-size:9px;color:#818cf8;text-transform:uppercase;letter-spacing:1px;margin-top:2px}'
+    + '.accent{height:3px;background:linear-gradient(90deg,#6366f1,#a5b4fc,transparent);border-radius:2px;margin:14px 0}'
+    + '.cards{display:flex;gap:12px;margin-bottom:20px}'
+    + '.card{flex:1;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center}'
+    + '.card-val{font-size:22px;font-weight:900;color:#6366f1}'
+    + '.card-lbl{font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:3px}'
+    + 'table{width:100%;border-collapse:collapse;font-size:12px}'
+    + 'thead tr{background:#0f172a}'
+    + 'th{padding:9px 12px;color:#fff;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap}'
+    + 'tfoot tr{background:#f1f0ff}'
+    + 'tfoot td{padding:9px 12px;font-weight:700;color:#6366f1;font-size:12px;border-top:2px solid #6366f1}'
+    + '.footer{margin-top:14px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:10px;color:#94a3b8}'
+    + '.print-btn{display:block;margin:20px auto;padding:12px 32px;background:#6366f1;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:Arial}'
+    + '</style></head><body>'
+    + '<div class="wrap">'
+    + '<div class="header">'
+    + '<div><h1>Rags Heaven — BELLS REGISTER</h1><p>Generated: ' + formattedDate + '</p></div>'
+    + '<div class="badge"><div class="badge-val">' + allBells.length + '</div><div class="badge-lbl">Total Entries</div></div>'
+    + '</div>'
+    + '<div class="accent"></div>'
+    + '<div class="cards">'
+    + '<div class="card"><div class="card-val">' + allBells.length + '</div><div class="card-lbl">Unique Items</div></div>'
+    + '<div class="card"><div class="card-val">' + totalBells + '</div><div class="card-lbl">Total Bells</div></div>'
+    + '<div class="card"><div class="card-val">' + totalWeight.toFixed(2) + ' kg</div><div class="card-lbl">Total Weight</div></div>'
+    + '</div>'
+    + '<table>'
+    + '<colgroup><col style="width:auto"><col style="width:80px"><col style="width:90px"><col style="width:90px"><col style="width:auto"><col style="width:100px"></colgroup>'
+    + '<thead><tr>'
+    + '<th>Item Name</th>'
+    + '<th style="text-align:center">Bells</th>'
+    + '<th style="text-align:right">Bell Weight</th>'
+    + '<th style="text-align:right">Total Weight</th>'
+    + '<th>Notes</th>'
+    + '<th>Date Added</th>'
+    + '</tr></thead>'
+    + '<tbody>' + rows + '</tbody>'
+    + '<tfoot><tr>'
+    + '<td>TOTALS</td>'
+    + '<td style="text-align:center">' + totalBells + '</td>'
+    + '<td></td>'
+    + '<td style="text-align:right">' + totalWeight.toFixed(2) + ' kg</td>'
+    + '<td></td><td></td>'
+    + '</tr></tfoot>'
+    + '</table>'
+    + '<div class="footer">'
+    + '<span>Rags Heaven Inventory System — Bells Register</span>'
+    + '<span>' + allBells.length + ' entries · ' + totalBells + ' bells · ' + totalWeight.toFixed(2) + ' kg</span>'
+    + '</div>'
+    + '</div>'
+    + '<button class="print-btn noprint" onclick="window.print()">🖨 Print / Save as PDF</button>'
+    + '</body></html>';
+
+  const w = window.open('', '_blank', 'width=1000,height=700');
+  if(!w){ showToast('Allow popups to generate PDF', true); return; }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { try{ w.focus(); w.print(); }catch(e){} }, 800);
+}
+
+// ── Init ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded',()=>{
+  checkAccess();
+  initRole('bells');
+  showLoader();
+  loadBells().finally(()=>hideLoader());
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>AB Grade Stock - Rags Heaven</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  .qty-stepper-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 10px 0 6px;
+  }
+  .stepper-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    color: var(--text-main);
+    transition: all 0.15s;
+  }
+  .stepper-btn:hover {
+    border-color: var(--burgundy);
+    background: #fff1f2;
+    color: var(--burgundy);
+  }
+  .stepper-btn:active {
+    transform: scale(0.95);
+  }
+  .stepper-btn.sub {
+    color: #be123c;
+  }
+  .stepper-btn.add {
+    color: #059669;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Topbar -->
+  <div class="topbar">
+    <img src="logo.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='favicon.png'">
+    <div class="topbar-title">AB Grade Stock</div>
+    <div id="roleBadge" class="role-badge">Staff</div>
+    <button onclick="handleGlobalProfileClick()" style="background:none;border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="User Profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+  </div>
+
+  <div class="content">
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">AB Grade Inventory</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="totalPcsSummary">Loading stock count...</div>
+      </div>
+      <!-- Add Item is only shown for Admin and Super User -->
+      <button class="btn-add" id="addBtn" onclick="openModal()" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add Item
+      </button>
+    </div>
+
+    <!-- Search & Filter -->
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="si" type="text" placeholder="Search AB Grade items, racks, categories..." oninput="render(this.value)">
+    </div>
+
+    <!-- Helper Notice -->
+    <div id="roleInstructionNotice" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:#1e40af;font-weight:600;">
+      <!-- Dynamic role guidance text -->
+    </div>
+
+    <div id="msg" style="text-align:center;padding:34px;color:var(--muted);font-size:13px">Loading AB Grade stock from Supabase...</div>
+    <div class="item-list" id="list" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<div id="appDoubleNav" class="double-nav-container"></div>
+
+<!-- Modal: Add / Edit AB Grade Item (Admin & Super User only) -->
+<div class="modal-overlay" id="mo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="mt">Add AB Grade Item</div>
+    <div class="field">
+      <label>Item Name</label>
+      <input id="fn" placeholder="e.g. Ralph Lauren Oxford Shirts">
+    </div>
+    <div class="field">
+      <label>Storage Location / Rack</label>
+      <input id="fl" placeholder="e.g. Rack A-01 or Bin 14">
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <input id="fc" placeholder="e.g. Shirts, Workwear, Denim">
+    </div>
+    <div class="field">
+      <label>Total Pieces (Pcs)</label>
+      <input id="fp" type="number" placeholder="0" min="0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeM()">Cancel</button>
+      <button class="btn-save" onclick="save()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+// Auth gate: don't open the app until user can login
+if (!requireAuth()) {
+  throw new Error("Auth Required");
+}
+
+let all = [], eid = null;
+
+function getCategoryColor(cat) {
+  if (!cat) return 'chip';
+  const c = cat.toLowerCase();
+  if (c.includes('shirt') || c.includes('polo')) return 'chip red';
+  if (c.includes('denim') || c.includes('jean') || c.includes('pant')) return 'chip blue';
+  if (c.includes('fleece') || c.includes('jacket') || c.includes('workwear')) return 'chip gold';
+  return 'chip green';
+}
+
+async function init() {
+  showLoader();
+  initRole('ab_grade');
+
+  const role = getRole();
+  const notice = document.getElementById('roleInstructionNotice');
+
+  if (role === 'floor_helper') {
+    notice.style.display = 'block';
+    notice.innerHTML = '👷 <strong>Floor Assistant Mode:</strong> Use the <strong>+</strong> and <strong>-</strong> quantity buttons below to record warehouse stock movements.';
+  } else if (role === 'grader') {
+    notice.style.display = 'block';
+    notice.innerHTML = '✂ <strong>Grader Mode:</strong> Adjust stock counts when picking items, or tap <strong>Take to Grade</strong> to sort into categories.';
+  }
+
+  // Only Administrator and Super User can add or delete full items
+  if (canEditEverything()) {
+    document.getElementById('addBtn').style.display = 'inline-flex';
+  }
+  
+  // Fetch from Supabase
+  all = await sbGet('ab_grade_items');
+  if (!all.length) {
+    all = getLocalTable('ab_grade_items');
+  }
+
+  document.getElementById('msg').style.display = 'none';
+  document.getElementById('list').style.display = '';
+  render('');
+  hideLoader();
+}
+
+function render(q) {
+  const d = all.filter(x => !q || ((x.name || '') + (x.location || '') + (x.category || '')).toLowerCase().includes(q.toLowerCase()));
+  const el = document.getElementById('list');
+  
+  const totalPcs = all.reduce((sum, item) => sum + (parseInt(item.pcs) || 0), 0);
+  document.getElementById('totalPcsSummary').textContent = `${all.length} categories · ${totalPcs.toLocaleString()} total pieces in stock`;
+
+  if (!d.length) {
+    el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>No AB Grade items found</div>';
+    return;
+  }
+
+  const role = getRole();
+  const isSuperOrAdmin = canEditEverything();
+  const isGraderRole = isGrader();
+
+  el.innerHTML = d.map(x => {
+    const pcs = parseInt(x.pcs) || 0;
+    return `
+    <div class="item-card">
+      <div class="item-card-top">
+        <div class="item-name">${escapeHtml(x.name || 'Unnamed Item')}</div>
+        <span class="${getCategoryColor(x.category)}">${escapeHtml(x.category || 'General')}</span>
+      </div>
+
+      <div class="item-meta">
+        <span class="chip" style="background:#f8fafc">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          ${escapeHtml(x.location || 'Unassigned Rack')}
+        </span>
+      </div>
+
+      <div class="qty-row">
+        <span class="qty-label">Current Stock</span>
+        <span class="qty-val" id="pcs_val_${x.id}">
+          ${pcs.toLocaleString()} <span style="font-size:12px;font-weight:600;color:var(--muted)">pcs</span>
+        </span>
+      </div>
+
+      <!-- Quick Add & Subtract Quantity Stepper for Floor Helpers & Graders -->
+      <div class="qty-stepper-box">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;">Adjust Pcs:</span>
+        <div style="display:flex;gap:4px;">
+          <button type="button" class="stepper-btn sub" title="Subtract 10" onclick="quickAdjust('${x.id}', -10)">-10</button>
+          <button type="button" class="stepper-btn sub" title="Subtract 1" onclick="quickAdjust('${x.id}', -1)">-1</button>
+          <button type="button" class="stepper-btn add" title="Add 1" onclick="quickAdjust('${x.id}', 1)">+1</button>
+          <button type="button" class="stepper-btn add" title="Add 10" onclick="quickAdjust('${x.id}', 10)">+10</button>
+        </div>
+      </div>
+
+      <div class="act-row">
+        ${isGraderRole ? `
+          <button class="btn-edit" style="background:var(--burgundy);color:#fff;" onclick="takeToGrade('${escapeHtml(x.name || '')}', ${pcs})">
+            ✂ Take to Grade
+          </button>
+        ` : ''}
+
+        ${isSuperOrAdmin ? `
+          <button class="btn-edit" onclick="openModal('${x.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Edit
+          </button>
+          <button class="btn-del" onclick="del('${x.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete
+          </button>
+        ` : ''}
+      </div>
+
+    </div>
+  `}).join('');
+}
+
+// ── Quick Adjust Quantity Function ────────────────────────────────────
+// Allows Graders and Floor Helpers to subtract & add quantities effortlessly
+async function quickAdjust(id, delta) {
+  const item = all.find(x => x.id == id);
+  if (!item) return;
+
+  const currentPcs = parseInt(item.pcs) || 0;
+  const newPcs = Math.max(0, currentPcs + delta);
+  item.pcs = newPcs;
+
+  // Immediate UI update
+  const el = document.getElementById('pcs_val_' + id);
+  if (el) {
+    el.innerHTML = `${newPcs.toLocaleString()} <span style="font-size:12px;font-weight:600;color:var(--muted)">pcs</span>`;
+  }
+
+  // Update in Supabase
+  await adjustStockQuantity(id, delta, item.name);
+  render(document.getElementById('si').value);
+}
+
+function takeToGrade(itemName, pcs) {
+  sessionStorage.setItem('grade_prefill_item', itemName);
+  sessionStorage.setItem('grade_prefill_pcs', pcs);
+  location.href = 'grading.html?action=log_batch';
+}
+
+function openModal(id) {
+  eid = id || null;
+  const x = id ? all.find(a => a.id == id) : {};
+  document.getElementById('mt').textContent = id ? 'Edit AB Grade Item' : 'Add AB Grade Item';
+  document.getElementById('fn').value = x.name || '';
+  document.getElementById('fl').value = x.location || '';
+  document.getElementById('fc').value = x.category || '';
+  document.getElementById('fp').value = x.pcs != null ? x.pcs : '';
+  document.getElementById('mo').classList.add('open');
+}
+
+function closeM() {
+  document.getElementById('mo').classList.remove('open');
+  eid = null;
+}
+
+async function save() {
+  const name = document.getElementById('fn').value.trim();
+  if (!name) {
+    showToast('Item name is required', true);
+    return;
+  }
+  const payload = {
+    name,
+    location: document.getElementById('fl').value.trim(),
+    category: document.getElementById('fc').value.trim(),
+    pcs: parseInt(document.getElementById('fp').value) || 0
+  };
+
+  const btn = document.querySelector('#mo .btn-save');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  if (eid) {
+    await sbUpdate('ab_grade_items', eid, payload);
+  } else {
+    await sbInsert('ab_grade_items', payload);
+  }
+
+  btn.textContent = 'Save Item';
+  btn.disabled = false;
+  closeM();
+
+  all = await sbGet('ab_grade_items');
+  render(document.getElementById('si').value);
+  showToast(eid ? 'AB Grade item updated!' : 'AB Grade item added!');
+}
+
+async function del(id) {
+  if (!confirm('Are you sure you want to remove this AB Grade item?')) return;
+  await sbDelete('ab_grade_items', id);
+  all = await sbGet('ab_grade_items');
+  render(document.getElementById('si').value);
+  showToast('Item deleted successfully');
+}
+
+document.getElementById('mo').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeM();
+});
+
+init();
+</script>
+</body>
+</html>

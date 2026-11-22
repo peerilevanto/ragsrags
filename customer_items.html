@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Customer Ready Stock - Rags Heaven</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+.qty-stepper-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 10px 0 6px;
+}
+.stepper-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--text-main);
+  transition: all 0.15s;
+}
+.stepper-btn:hover {
+  border-color: var(--burgundy);
+  background: #fff1f2;
+  color: var(--burgundy);
+}
+.stepper-btn:active {
+  transform: scale(0.95);
+}
+.stepper-btn.sub {
+  color: #be123c;
+}
+.stepper-btn.add {
+  color: #059669;
+}
+.filter-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  scrollbar-width: none;
+}
+.filter-tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.tab-btn.active {
+  background: var(--burgundy);
+  color: #fff;
+  border-color: var(--burgundy);
+  box-shadow: 0 2px 6px rgba(136, 19, 55, 0.2);
+}
+.btn-export-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--gold-soft);
+  color: var(--gold-dark);
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn-export-pdf:hover {
+  background: #fef08a;
+}
+.btn-export-pdf:active {
+  transform: scale(0.97);
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Topbar -->
+  <div class="topbar">
+    <img src="logo.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='favicon.png'">
+    <div class="topbar-title">Customer Ready Stock</div>
+    <div id="roleBadge" class="role-badge">Admin</div>
+    <button onclick="handleTopNavClick()" style="background:none;border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="User Profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+  </div>
+
+  <div class="content">
+    <!-- Header with Action Buttons -->
+    <div class="sec-head">
+      <div>
+        <div class="sec-title">Customer Inventory</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="stockSummary">Tracking customer orders</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-export-pdf" onclick="openPdfModal()" title="Export PDF Manifest">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>PDF
+        </button>
+        <button class="btn-add" id="addBtn" onclick="openAddModal()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add Item
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Metrics -->
+    <div class="stat-grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+      <div class="stat-card" style="padding:12px 14px">
+        <div class="stat-label" style="font-size:10px">Ready Pieces</div>
+        <div class="stat-num gold" style="font-size:24px" id="m_ready_pcs">0</div>
+      </div>
+      <div class="stat-card" style="padding:12px 14px">
+        <div class="stat-label" style="font-size:10px">In Progress</div>
+        <div class="stat-num" style="font-size:24px;color:var(--blue)" id="m_pending">0</div>
+      </div>
+    </div>
+
+    <!-- Status Tabs -->
+    <div class="filter-tabs">
+      <button class="tab-btn active" onclick="setTab('All', this)">All Items</button>
+      <button class="tab-btn" onclick="setTab('Ready', this)">Ready Stock</button>
+      <button class="tab-btn" onclick="setTab('In Progress', this)">In Progress</button>
+      <button class="tab-btn" onclick="setTab('Dispatched', this)">Dispatched</button>
+    </div>
+
+    <!-- Search Input -->
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="si" type="text" placeholder="Search customer, item, rack, shelf..." oninput="filterData()">
+    </div>
+
+    <div id="msg" style="text-align:center;padding:34px;color:var(--muted);font-size:13px">Loading customer items...</div>
+    <div class="item-list" id="list" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<div id="appDoubleNav" class="double-nav-container"></div>
+
+<!-- Modal: Add / Edit Customer Stock Item -->
+<div class="modal-overlay" id="mo">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="mt">Add Customer Ready Stock</div>
+
+    <div class="field">
+      <label>Customer Name *</label>
+      <input id="cn" placeholder="e.g. Vintage Hub London, Manchester Retro Vault" list="custList" required>
+      <datalist id="custList"></datalist>
+    </div>
+
+    <div class="field">
+      <label>Item Name / Description *</label>
+      <input id="ci_name" placeholder="e.g. Heavy Carhartt Canvas Jackets" required>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field">
+        <label>Category</label>
+        <select id="ci_cat">
+          <option value="Workwear">Workwear</option>
+          <option value="Fleeces">Fleeces</option>
+          <option value="Denim">Denim</option>
+          <option value="Shirts">Shirts</option>
+          <option value="Sportswear">Sportswear</option>
+          <option value="Hoodies">Hoodies</option>
+          <option value="Sweaters">Sweaters</option>
+          <option value="Jackets">Jackets</option>
+          <option value="Accessories">Accessories</option>
+          <option value="General">General</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Storage Location / Rack</label>
+        <input id="ci_rack" placeholder="e.g. Shelf C-1, Box #14">
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field">
+        <label>Total Pieces (Pcs) *</label>
+        <input type="number" id="ci_qty" placeholder="0" min="0" required>
+      </div>
+      <div class="field">
+        <label>Order Status</label>
+        <select id="ci_status">
+          <option value="Ready">Ready</option>
+          <option value="In Progress">In Progress</option>
+          <option value="Dispatched">Dispatched</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Order Notes / Packaging Remarks</label>
+      <input id="ci_notes" placeholder="e.g. Packed in Box 1 & 2, export ready">
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" onclick="closeM()">Cancel</button>
+      <button type="button" class="btn-save" id="btnSaveStock" onclick="save()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Export PDF -->
+<div class="modal-overlay" id="pdfModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Export Customer Stock Manifest</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Generate formatted printable PDF with packing summaries and sign-off blocks.</div>
+
+    <div class="field">
+      <label>Target Customer</label>
+      <select id="pdfCustomer">
+        <option value="ALL">All Customers (Combined Master Stock)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Status Filter</label>
+      <select id="pdfStatus">
+        <option value="ALL">All Statuses (Ready + In Progress + Dispatched)</option>
+        <option value="Ready" selected>Ready Stock Only</option>
+        <option value="In Progress">In Progress Only</option>
+        <option value="Dispatched">Dispatched Only</option>
+      </select>
+    </div>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" onclick="closePdfModal()">Cancel</button>
+      <button type="button" class="btn-save" onclick="executeExportPDF()" style="background:var(--burgundy)">Generate PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+if (!requireAuth()) {
+  throw new Error("Auth Required");
+}
+
+let all = [], eid = null, currentTab = 'All';
+
+document.addEventListener('DOMContentLoaded', () => {
+  initRole('customer');
+  init();
+
+  const mo = document.getElementById('mo');
+  if (mo) {
+    mo.addEventListener('click', e => {
+      if (e.target === mo) closeM();
+    });
+  }
+
+  const pdfModal = document.getElementById('pdfModal');
+  if (pdfModal) {
+    pdfModal.addEventListener('click', e => {
+      if (e.target === pdfModal) closePdfModal();
+    });
+  }
+});
+
+function handleTopNavClick() {
+  const role = getRole();
+  if (role === 'super_user' || role === 'special') {
+    location.href = 'account.html';
+  } else if (['grader', 'checker', 'floor_helper'].includes(role)) {
+    location.href = 'my_attendance.html';
+  } else {
+    location.href = 'dashboard.html';
+  }
+}
+
+async function init() {
+  showLoader();
+  try {
+    all = await sbGet('customer_items');
+    if (!all || !all.length) {
+      all = getLocalTable('customer_items');
+    }
+  } catch(e) {
+    all = getLocalTable('customer_items');
+  }
+
+  updateMetrics();
+  populateCustomerFilter();
+  document.getElementById('msg').style.display = 'none';
+  document.getElementById('list').style.display = '';
+  filterData();
+  hideLoader();
+}
+
+function updateMetrics() {
+  const readyPcs = all.filter(x => (x.status || 'Ready') === 'Ready').reduce((acc, x) => acc + (parseInt(x.qty) || 0), 0);
+  const inProgCount = all.filter(x => x.status === 'In Progress').length;
+
+  document.getElementById('m_ready_pcs').textContent = readyPcs.toLocaleString();
+  document.getElementById('m_pending').textContent = inProgCount;
+  document.getElementById('stockSummary').textContent = `${all.length} items logged in inventory`;
+}
+
+function populateCustomerFilter() {
+  const select = document.getElementById('pdfCustomer');
+  const datalist = document.getElementById('custList');
+  const customers = Array.from(new Set(all.map(x => (x.customer_name || '').trim()))).filter(Boolean).sort();
+
+  if (select) {
+    select.innerHTML = '<option value="ALL">All Customers (Combined Master Stock)</option>' +
+      customers.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+  }
+
+  if (datalist) {
+    datalist.innerHTML = customers.map(c => `<option value="${escapeHtml(c)}"></option>`).join('');
+  }
+}
+
+function setTab(tab, btn) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterData();
+}
+
+function filterData() {
+  const q = (document.getElementById('si').value || '').toLowerCase().trim();
+  const filtered = all.filter(x => {
+    const matchesTab = currentTab === 'All' ? true : (x.status || 'Ready') === currentTab;
+    const matchesQuery = !q || (
+      (x.customer_name || '') + ' ' +
+      (x.name || '') + ' ' +
+      (x.category || '') + ' ' +
+      (x.rack || '') + ' ' +
+      (x.notes || '')
+    ).toLowerCase().includes(q);
+    return matchesTab && matchesQuery;
+  });
+
+  render(filtered);
+}
+
+function render(items) {
+  const el = document.getElementById('list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>No customer stock matches your filter</div>';
+    return;
+  }
+
+  el.innerHTML = items.map(x => {
+    const isReady = (x.status || 'Ready') === 'Ready';
+    const isProg = x.status === 'In Progress';
+    const statusClass = isReady ? 'chip green' : isProg ? 'chip amber' : 'chip';
+    const qty = parseInt(x.qty) || 0;
+
+    return `
+      <div class="item-card">
+        <div class="item-card-top">
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--burgundy);letter-spacing:0.3px;margin-bottom:2px">
+              👤 ${escapeHtml(x.customer_name || 'Valued Customer')}
+            </div>
+            <div class="item-name">${escapeHtml(x.name || 'Unnamed Item')}</div>
+          </div>
+          <span class="${statusClass}">${escapeHtml(x.status || 'Ready')}</span>
+        </div>
+
+        <div class="item-meta">
+          <span class="chip blue">${escapeHtml(x.category || 'Apparel')}</span>
+          <span class="chip" style="background:#f8fafc">📍 ${escapeHtml(x.rack || 'Shelf Unassigned')}</span>
+        </div>
+
+        ${x.notes ? `<div style="font-size:12px;color:var(--muted);background:var(--card-subtle);padding:6px 10px;border-radius:6px;margin:8px 0">📝 ${escapeHtml(x.notes)}</div>` : ''}
+
+        <div class="qty-row">
+          <span class="qty-label">Stock Quantity</span>
+          <span class="qty-val" style="color:var(--gold-dark)">${qty.toLocaleString()} <span style="font-size:12px;font-weight:600;color:var(--muted)">pcs</span></span>
+        </div>
+
+        <!-- Quick Stepper Box like AB Grade -->
+        <div class="qty-stepper-box">
+          <span style="font-size:11px;font-weight:700;color:var(--text-sub)">Quick Adjust</span>
+          <div style="display:flex;gap:4px">
+            <button type="button" class="stepper-btn sub" onclick="adjustCustomerQty('${x.id}', -5)" title="Subtract 5 pcs">-5</button>
+            <button type="button" class="stepper-btn sub" onclick="adjustCustomerQty('${x.id}', -1)" title="Subtract 1 pc">-1</button>
+            <button type="button" class="stepper-btn add" onclick="adjustCustomerQty('${x.id}', 1)" title="Add 1 pc">+1</button>
+            <button type="button" class="stepper-btn add" onclick="adjustCustomerQty('${x.id}', 5)" title="Add 5 pcs">+5</button>
+          </div>
+        </div>
+
+        <div class="act-row">
+          <button class="btn-edit" onclick="openEditModal('${x.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>Edit
+          </button>
+          <button class="btn-del" onclick="del('${x.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function adjustCustomerQty(itemId, delta) {
+  delta = parseInt(delta) || 0;
+  if (!delta) return;
+
+  const target = all.find(x => x.id == itemId);
+  if (!target) return;
+
+  const current = parseInt(target.qty) || 0;
+  const newQty = Math.max(0, current + delta);
+  target.qty = newQty;
+
+  updateMetrics();
+  filterData();
+
+  try {
+    await sbUpdate('customer_items', itemId, { qty: newQty });
+    saveLocalTable('customer_items', all);
+    const action = delta > 0 ? `+${delta}` : `${delta}`;
+    showToast(`${action} pcs (${target.name}: ${newQty} total)`);
+  } catch(e) {
+    showToast('Updated locally: ' + newQty + ' pcs');
+  }
+}
+
+function openAddModal() {
+  eid = null;
+  document.getElementById('mt').textContent = 'Add Customer Ready Stock';
+  document.getElementById('cn').value = '';
+  document.getElementById('ci_name').value = '';
+  document.getElementById('ci_cat').value = 'Workwear';
+  document.getElementById('ci_qty').value = '';
+  document.getElementById('ci_rack').value = '';
+  document.getElementById('ci_status').value = 'Ready';
+  document.getElementById('ci_notes').value = '';
+  document.getElementById('mo').classList.add('open');
+}
+
+function openEditModal(id) {
+  eid = id;
+  const x = all.find(a => a.id == id);
+  if (!x) return;
+  document.getElementById('mt').textContent = 'Edit Customer Stock';
+  document.getElementById('cn').value = x.customer_name || '';
+  document.getElementById('ci_name').value = x.name || '';
+  document.getElementById('ci_cat').value = x.category || 'General';
+  document.getElementById('ci_qty').value = x.qty != null ? x.qty : 0;
+  document.getElementById('ci_rack').value = x.rack || '';
+  document.getElementById('ci_status').value = x.status || 'Ready';
+  document.getElementById('ci_notes').value = x.notes || '';
+  document.getElementById('mo').classList.add('open');
+}
+
+function closeM() {
+  document.getElementById('mo').classList.remove('open');
+  eid = null;
+}
+
+async function save() {
+  const customer_name = document.getElementById('cn').value.trim();
+  const name = document.getElementById('ci_name').value.trim();
+  if (!customer_name) {
+    showToast('Customer name is required', true);
+    return;
+  }
+  if (!name) {
+    showToast('Item description is required', true);
+    return;
+  }
+
+  const payload = {
+    customer_name,
+    name,
+    category: document.getElementById('ci_cat').value.trim() || 'General',
+    qty: parseInt(document.getElementById('ci_qty').value) || 0,
+    rack: document.getElementById('ci_rack').value.trim(),
+    status: document.getElementById('ci_status').value,
+    notes: document.getElementById('ci_notes').value.trim()
+  };
+
+  const btn = document.getElementById('btnSaveStock');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+
+  try {
+    if (eid) {
+      await sbUpdate('customer_items', eid, payload);
+      const idx = all.findIndex(x => x.id == eid);
+      if (idx !== -1) all[idx] = Object.assign({}, all[idx], payload);
+    } else {
+      const ins = await sbInsert('customer_items', payload);
+      if (ins && ins[0]) {
+        all.unshift(ins[0]);
+      } else {
+        payload.id = 'ci_' + Date.now();
+        all.unshift(payload);
+      }
+    }
+    saveLocalTable('customer_items', all);
+    closeM();
+    updateMetrics();
+    populateCustomerFilter();
+    filterData();
+    showToast(eid ? 'Customer stock updated!' : 'Customer stock added!');
+  } catch(e) {
+    showToast('Error saving: ' + e.message, true);
+  } finally {
+    btn.textContent = 'Save Item';
+    btn.disabled = false;
+  }
+}
+
+async function del(id) {
+  if (!confirm('Delete this customer stock entry?')) return;
+  showLoader();
+  try {
+    await sbDelete('customer_items', id);
+    all = all.filter(x => x.id != id);
+    saveLocalTable('customer_items', all);
+    updateMetrics();
+    populateCustomerFilter();
+    filterData();
+    showToast('Customer stock entry removed');
+  } catch(e) {
+    showToast('Error deleting: ' + e.message, true);
+  } finally {
+    hideLoader();
+  }
+}
+
+// ── Export PDF Feature ───────────────────────────────────────────────
+function openPdfModal() {
+  document.getElementById('pdfModal').classList.add('open');
+}
+
+function closePdfModal() {
+  document.getElementById('pdfModal').classList.remove('open');
+}
+
+function executeExportPDF() {
+  const custFilter = document.getElementById('pdfCustomer').value;
+  const statusFilter = document.getElementById('pdfStatus').value;
+  closePdfModal();
+
+  let filtered = all.filter(x => {
+    const matchCust = custFilter === 'ALL' || (x.customer_name || '').trim() === custFilter;
+    const matchStatus = statusFilter === 'ALL' || (x.status || 'Ready') === statusFilter;
+    return matchCust && matchStatus;
+  });
+
+  if (!filtered.length) {
+    showToast('No items matching selected filters to export', true);
+    return;
+  }
+
+  buildAndDownloadCustomerPDF(filtered, custFilter, statusFilter);
+}
+
+function buildAndDownloadCustomerPDF(items, custFilter, statusFilter) {
+  const todayStr = new Date().toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+  const totalPieces = items.reduce((acc, x) => acc + (parseInt(x.qty) || 0), 0);
+  const totalEntries = items.length;
+  const targetCustomer = custFilter === 'ALL' ? 'ALL CUSTOMERS (MASTER STOCK)' : custFilter.toUpperCase();
+
+  const tableRows = items.map((x, i) => {
+    const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
+    const statusBg = (x.status || 'Ready') === 'Ready' ? '#ecfdf5' : '#fffbeb';
+    const statusColor = (x.status || 'Ready') === 'Ready' ? '#065f46' : '#92400e';
+
+    return `
+      <tr style="background:${bg};border-bottom:1px solid #e2e8f0">
+        <td style="padding:10px 12px;font-weight:700;color:#881337">${escapeHtml(x.customer_name || 'General')}</td>
+        <td style="padding:10px 12px;font-weight:600;color:#0f172a">${escapeHtml(x.name || 'Item')}</td>
+        <td style="padding:10px 12px;color:#475569">${escapeHtml(x.category || '-')}</td>
+        <td style="padding:10px 12px;color:#2563eb;font-weight:600">${escapeHtml(x.rack || '-')}</td>
+        <td style="padding:10px 12px;text-align:center">
+          <span style="background:${statusBg};color:${statusColor};padding:3px 8px;border-radius:12px;font-size:10px;font-weight:700">${escapeHtml(x.status || 'Ready')}</span>
+        </td>
+        <td style="padding:10px 12px;text-align:right;font-weight:800;color:#0f172a;font-size:13px">${(parseInt(x.qty) || 0).toLocaleString()} pcs</td>
+      </tr>
+    `;
+  }).join('');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>Rags Heaven - Customer Ready Stock Manifest</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, Helvetica, sans-serif; color: #0f172a; background: #fff; padding: 0; }
+        @page { size: A4 portrait; margin: 12mm 12mm; }
+        @media print {
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .noprint { display: none !important; }
+          tr { page-break-inside: avoid; }
+        }
+        .container { padding: 24px 28px; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #881337; padding-bottom: 16px; margin-bottom: 20px; }
+        .logo-title { display: flex; align-items: center; gap: 14px; }
+        .logo-img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; }
+        .brand-name { font-size: 24px; font-weight: 900; color: #881337; letter-spacing: -0.5px; }
+        .brand-tag { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .doc-meta { text-align: right; }
+        .doc-title { font-size: 14px; font-weight: 800; color: #0f172a; }
+        .doc-date { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+        .kpi-row { display: flex; gap: 12px; margin-bottom: 22px; }
+        .kpi-box { flex: 1; background: #f8fafc; border: 1.5px solid #e2e8f0; border-radius: 8px; padding: 12px 14px; text-align: center; }
+        .kpi-num { font-size: 24px; font-weight: 900; color: #881337; }
+        .kpi-lbl { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 3px; }
+
+        table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 24px; }
+        thead tr { background: #0f172a; color: #ffffff; }
+        th { padding: 9px 12px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+        th:last-child { text-align: right; }
+
+        .sign-row { display: flex; justify-content: space-between; margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; }
+        .sign-box { width: 200px; text-align: center; }
+        .sign-line { border-bottom: 1.5px solid #0f172a; margin-bottom: 6px; height: 35px; }
+        .sign-lbl { font-size: 11px; font-weight: 700; color: #475569; }
+
+        .btn-print { display: block; margin: 20px auto; padding: 12px 32px; background: #881337; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header-top">
+          <div class="logo-title">
+            <img src="logo.png" class="logo-img" alt="Rags Heaven">
+            <div>
+              <div class="brand-name">Rags Heaven</div>
+              <div class="brand-tag">Customer Ready Stock & Dispatch Manifest</div>
+            </div>
+          </div>
+          <div class="doc-meta">
+            <div class="doc-title">${escapeHtml(targetCustomer)}</div>
+            <div class="doc-date">Generated: ${todayStr}</div>
+          </div>
+        </div>
+
+        <div class="kpi-row">
+          <div class="kpi-box">
+            <div class="kpi-num">${totalPieces.toLocaleString()}</div>
+            <div class="kpi-lbl">Total Pieces (Pcs)</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-num">${totalEntries}</div>
+            <div class="kpi-lbl">Total Item Lots</div>
+          </div>
+          <div class="kpi-box">
+            <div class="kpi-num" style="color:#059669">${escapeHtml(statusFilter)}</div>
+            <div class="kpi-lbl">Manifest Status</div>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Item Description</th>
+              <th>Category</th>
+              <th>Location / Rack</th>
+              <th style="text-align:center">Status</th>
+              <th style="text-align:right">Quantity</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows}
+          </tbody>
+          <tfoot>
+            <tr style="background:#f1f5f9;border-top:2px solid #0f172a">
+              <td colspan="5" style="padding:10px 12px;font-weight:800;font-size:12px">TOTAL READY QUANTITY</td>
+              <td style="padding:10px 12px;text-align:right;font-weight:900;font-size:14px;color:#881337">${totalPieces.toLocaleString()} pcs</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <div class="sign-row">
+          <div class="sign-box">
+            <div class="sign-line"></div>
+            <div class="sign-lbl">Warehouse Manager</div>
+          </div>
+          <div class="sign-box">
+            <div class="sign-line"></div>
+            <div class="sign-lbl">Quality & Dispatch Checker</div>
+          </div>
+          <div class="sign-box">
+            <div class="sign-line"></div>
+            <div class="sign-lbl">Customer Acknowledgment</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-print noprint" onclick="window.print()">🖨️ Print or Save as PDF</button>
+    </body>
+    </html>
+  `;
+
+  const w = window.open('', '_blank', 'width=950,height=750');
+  if (!w) {
+    showToast('Please allow browser popups to preview PDF', true);
+    return;
+  }
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => {
+    try {
+      w.focus();
+      w.print();
+    } catch(e) {}
+  }, 700);
+}
+</script>
+</body>
+</html>

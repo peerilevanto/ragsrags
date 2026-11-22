@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Account & Staff | Rags Heaven</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .avatar-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--burgundy) 0%, var(--gold-dark) 100%);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+    .profile-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+    .sql-box {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      max-height: 240px;
+      overflow-y: auto;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <img src="logo.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='favicon.png'">
+    <div class="topbar-title">Staff & Workspace</div>
+    <div id="roleBadge" class="role-badge">Admin</div>
+  </div>
+
+  <div class="content">
+
+    <!-- Profile Card -->
+    <div class="profile-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div class="avatar-circle" id="profileAvatar">RH</div>
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <div style="font-size:15px;font-weight:800;color:var(--text-main);" id="profileName">Administrator</div>
+              <span class="chip burgundy" id="profileRoleTag">Admin</span>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+              Username: <strong id="profileUsername">admin</strong>
+            </div>
+          </div>
+        </div>
+        <button class="btn-del" style="padding:6px 12px;font-size:11px;" onclick="handleSignOut()">Sign Out</button>
+      </div>
+    </div>
+
+    <!-- Quick Operations Hub -->
+    <div class="sec-head">
+      <div class="sec-title">Quick Operations</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;">
+      <button class="btn-add" style="justify-content:center;background:var(--burgundy);" onclick="location.href='grading.html'">
+        Grading Station
+      </button>
+      <button class="btn-add" style="justify-content:center;background:#0f172a;" onclick="location.href='ab_grade.html'">
+        AB Grade Stock
+      </button>
+      <button class="btn-add" style="justify-content:center;background:#7c3aed;" onclick="location.href='employees.html'">
+        Employees & Att.
+      </button>
+      <button class="btn-add" style="justify-content:center;background:var(--gold-dark);" onclick="location.href='customer_items.html'">
+        Customer Stock
+      </button>
+      <button class="btn-add" id="suppliersBtn" style="justify-content:center;background:#0369a1;display:none;" onclick="location.href='suppliers.html'">
+        🏭 Suppliers
+      </button>
+      <button class="btn-add" id="buyersBtn" style="justify-content:center;background:#059669;display:none;" onclick="location.href='buyers.html'">
+        🛒 Buyers
+      </button>
+    </div>
+
+    <!-- Secondary Links -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;">
+      <button class="chip" id="suppliersChip" onclick="location.href='suppliers.html'" style="display:none;font-weight:700;color:#0369a1;border-color:#bae6fd;background:#f0f9ff;">
+        🏭 Suppliers
+      </button>
+      <button class="chip" id="buyersChip" onclick="location.href='buyers.html'" style="display:none;font-weight:700;color:#059669;border-color:#a7f3d0;background:#ecfdf5;">
+        🛒 Buyers
+      </button>
+      <button class="chip" id="pettyCashChip" onclick="location.href='petty_cash.html'" style="display:none;font-weight:700;color:#059669;border-color:#a7f3d0;background:#ecfdf5;">
+        💰 Petty Cash
+      </button>
+      <button class="chip" onclick="location.href='employees.html'">👥 Attendance Sheet</button>
+      <button class="chip" onclick="location.href='media.html'">📷 Media Entries</button>
+      <button class="chip" onclick="location.href='bells.html'">🔔 Bells Register</button>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- SUPER USER & ADMIN MODULE: USER & ROLE MANAGEMENT                 -->
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <div id="adminUserManagementSection" style="margin-bottom:24px;">
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">Staff & Role Accounts</div>
+          <div style="font-size:11px;color:var(--muted)">Manage login accounts with autogenerated credentials</div>
+        </div>
+        <button class="btn-add" style="font-size:11px;padding:6px 12px;" onclick="openAddUserModal()">
+          + Add Staff
+        </button>
+      </div>
+
+      <div id="usersListContainer" class="item-list">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- SUPER USER & ADMIN MODULE: SUPABASE CLOUD CONNECTION             -->
+    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <div id="adminSupabaseSection" style="margin-bottom:24px;">
+      <div class="sec-head">
+        <div>
+          <div class="sec-title">Supabase Cloud Database</div>
+          <div style="font-size:11px;color:var(--muted)">Live cloud database & PostgreSQL sync</div>
+        </div>
+        <div id="supabaseStatusBadge">
+          <span class="chip green">● Connected</span>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow-sm);">
+        <form onsubmit="handleSaveSupabase(event)">
+          <div class="field">
+            <label>Supabase Project URL</label>
+            <input type="url" id="sbUrlInput" value="https://deaqdbsqcmnzlhghjbpj.supabase.co" required>
+          </div>
+
+          <div class="field">
+            <label>Supabase Publishable / Anon Key</label>
+            <input type="text" id="sbKeyInput" value="sb_publishable_jpYI3CIHnImUp_5FdUmHLA_iln5rPLl" required>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
+            <button type="button" class="chip" onclick="openSQLSchemaModal()">
+              📋 View SQL Setup Script
+            </button>
+            <div style="display:flex;gap:6px;">
+              <button type="button" class="btn-del" style="font-size:11px;padding:6px 10px;" onclick="handleResetSupabase()">Reset Default</button>
+              <button type="submit" class="btn-save" style="font-size:11px;padding:6px 12px;background:var(--burgundy);">Save Config</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Navigation -->
+  <div id="appDoubleNav" class="double-nav-container"></div>
+
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: ADD STAFF USER WITH AUTOGENERATED CREDS                      -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="addUserModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Create New Staff User</div>
+
+    <form onsubmit="handleCreateUser(event)">
+      <div class="field">
+        <label>Full Staff Name *</label>
+        <input id="newStaffName" placeholder="e.g. Tariq Mehmood" required oninput="triggerAutoSuggest()">
+      </div>
+
+      <div class="field">
+        <label>Designated Role *</label>
+        <select id="newStaffRole" onchange="triggerAutoSuggest()">
+          <option value="grader">Grader (Subtract/Add Stock & Grade Batches)</option>
+          <option value="checker">Final Checker (Audit, Edit Qty & Movement)</option>
+          <option value="floor_helper">Floor Assistant (Add & Subtract Qty Only)</option>
+          <option value="super_user">Super User (Edit Everything + Petty Cash)</option>
+          <option value="admin">Administrator (Master View Everything)</option>
+          <option value="media">Media Entry (Photos & Video)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <label style="margin:0;">Username *</label>
+          <button type="button" class="chip" style="font-size:10px;padding:2px 6px;" onclick="generateRandomUsername()">Autogenerate</button>
+        </div>
+        <input id="newStaffUsername" placeholder="grader_tariq" required>
+      </div>
+
+      <div class="field">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <label style="margin:0;">Password *</label>
+          <button type="button" class="chip" style="font-size:10px;padding:2px 6px;" onclick="generateRandomPassword()">Autogenerate</button>
+        </div>
+        <input id="newStaffPassword" placeholder="RH-Grade#892" required>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeAddUserModal()">Cancel</button>
+        <button type="submit" class="btn-save" style="background:var(--burgundy);">Create Account</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- MODAL: SUPABASE SQL SETUP SCRIPT                                    -->
+<!-- ═════════════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="sqlModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Supabase Database Setup Script</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">Paste into your Supabase Dashboard &rarr; SQL Editor &rarr; click 'RUN':</div>
+    <div class="sql-box" id="sqlSchemaText"></div>
+    <div class="modal-actions" style="margin-top:14px;">
+      <button type="button" class="btn-cancel" onclick="closeSQLModal()">Close</button>
+      <button type="button" class="btn-save" style="background:var(--burgundy);" onclick="copySQLSchema()">📋 Copy SQL Script</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Scripts -->
+<script src="shared.js"></script>
+<script>
+  // Auth gate: strictly restricted to Super User
+  if (!requireAuth()) {
+    throw new Error("Auth Required");
+  }
+
+  if (!isSuperUser()) {
+    showToast('Accounts page is restricted to Super User', true);
+    const r = getRole();
+    setTimeout(() => {
+      if (['grader', 'checker', 'floor_helper'].includes(r)) {
+        location.replace('my_attendance.html');
+      } else {
+        location.replace('dashboard.html');
+      }
+    }, 400);
+    throw new Error("Super User Access Only");
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initRole('account');
+    renderProfile();
+    populateSupabaseSettings();
+    renderUsersList();
+
+    // Enable Petty Cash & Finance for Super User and Admin
+    if (canAccessPettyCash()) {
+      const pcChip = document.getElementById('pettyCashChip');
+      if (pcChip) pcChip.style.display = 'inline-flex';
+    }
+    if (isSuperUser()) {
+      const suppBtn = document.getElementById('suppliersBtn');
+      const buyBtn = document.getElementById('buyersBtn');
+      const suppChip = document.getElementById('suppliersChip');
+      const buyChip = document.getElementById('buyersChip');
+      if (suppBtn) suppBtn.style.display = 'flex';
+      if (buyBtn) buyBtn.style.display = 'flex';
+      if (suppChip) suppChip.style.display = 'inline-flex';
+      if (buyChip) buyChip.style.display = 'inline-flex';
+    }
+
+    // Click outside modal backdrop to dismiss
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) overlay.classList.remove('open');
+      });
+    });
+  });
+
+  function renderProfile() {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    document.getElementById('profileName').textContent = user.name || 'Staff User';
+    document.getElementById('profileRoleTag').textContent = getRoleName(user.role);
+    document.getElementById('profileUsername').textContent = user.username || user.role;
+
+    const parts = (user.name || 'Rags Heaven').trim().split(' ');
+    const initials = parts.length > 1 ? (parts[0][0] + parts[1][0]).toUpperCase() : parts[0].slice(0, 2).toUpperCase();
+    document.getElementById('profileAvatar').textContent = initials;
+
+    const isPrivileged = canEditEverything();
+    document.getElementById('adminUserManagementSection').style.display = isPrivileged ? 'block' : 'none';
+    document.getElementById('adminSupabaseSection').style.display = isPrivileged ? 'block' : 'none';
+  }
+
+  function renderUsersList() {
+    const container = document.getElementById('usersListContainer');
+    const users = getUsers();
+    const currentUser = getCurrentUser();
+
+    container.innerHTML = users.map(u => {
+      const isMe = currentUser && currentUser.username === u.username;
+      const roleColor = u.role === 'admin' ? 'burgundy' : u.role === 'super_user' ? 'gold' : u.role === 'grader' ? 'amber' : u.role === 'checker' ? 'purple' : 'blue';
+
+      return `
+        <div class="item-card">
+          <div class="item-card-top">
+            <div>
+              <div class="item-name">${escapeHtml(u.name)} ${isMe ? '<span style="font-size:10px;color:var(--burgundy);font-weight:700;">(You)</span>' : ''}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+                User: <code>${escapeHtml(u.username)}</code> &bull; Pass: <code>${escapeHtml(u.password)}</code>
+              </div>
+            </div>
+            <span class="chip ${roleColor}">${escapeHtml(getRoleName(u.role))}</span>
+          </div>
+
+          ${u.username !== 'admin' && u.username !== 'superuser' ? `
+            <div class="act-row">
+              <button class="btn-del" onclick="handleDeleteUser('${u.id}')">Remove</button>
+            </div>` : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function openAddUserModal() {
+    document.getElementById('newStaffName').value = '';
+    document.getElementById('newStaffRole').value = 'grader';
+    triggerAutoSuggest();
+    document.getElementById('addUserModal').classList.add('open');
+  }
+
+  function closeAddUserModal() {
+    document.getElementById('addUserModal').classList.remove('open');
+  }
+
+  function triggerAutoSuggest() {
+    const name = document.getElementById('newStaffName').value;
+    const role = document.getElementById('newStaffRole').value;
+    document.getElementById('newStaffUsername').value = autogenerateUsername(role, name);
+    document.getElementById('newStaffPassword').value = autogeneratePassword();
+  }
+
+  function generateRandomUsername() {
+    const name = document.getElementById('newStaffName').value;
+    const role = document.getElementById('newStaffRole').value;
+    document.getElementById('newStaffUsername').value = autogenerateUsername(role, name);
+  }
+
+  function generateRandomPassword() {
+    document.getElementById('newStaffPassword').value = autogeneratePassword();
+  }
+
+  async function handleCreateUser(e) {
+    e.preventDefault();
+    const name = document.getElementById('newStaffName').value.trim();
+    const role = document.getElementById('newStaffRole').value;
+    const username = document.getElementById('newStaffUsername').value.trim().toLowerCase();
+    const password = document.getElementById('newStaffPassword').value.trim();
+
+    if (!name || !username || !password) {
+      showToast('All fields required', true);
+      return;
+    }
+
+    await addUser({ name, role, username, password });
+    closeAddUserModal();
+    renderUsersList();
+    showToast(`Staff user @${username} created!`);
+  }
+
+  function handleDeleteUser(id) {
+    if (!confirm('Remove this staff user account?')) return;
+    deleteUser(id);
+    renderUsersList();
+    showToast('User removed');
+  }
+
+  function populateSupabaseSettings() {
+    const cfg = getSupabaseConfig();
+    document.getElementById('sbUrlInput').value = cfg.url || 'https://deaqdbsqcmnzlhghjbpj.supabase.co';
+    document.getElementById('sbKeyInput').value = cfg.key || 'sb_publishable_jpYI3CIHnImUp_5FdUmHLA_iln5rPLl';
+  }
+
+  function handleSaveSupabase(e) {
+    e.preventDefault();
+    const url = document.getElementById('sbUrlInput').value.trim();
+    const key = document.getElementById('sbKeyInput').value.trim();
+
+    if (!url || !key) {
+      showToast('URL and Anon Key are required', true);
+      return;
+    }
+
+    setSupabaseConfig(url, key);
+    showToast('Supabase settings saved and connected!');
+  }
+
+  function handleResetSupabase() {
+    setSupabaseConfig(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_KEY);
+    populateSupabaseSettings();
+    showToast('Reset to default Supabase project!');
+  }
+
+  function openSQLSchemaModal() {
+    document.getElementById('sqlSchemaText').textContent = getSupabaseSQLSchema();
+    document.getElementById('sqlModal').classList.add('open');
+  }
+
+  function closeSQLModal() {
+    document.getElementById('sqlModal').classList.remove('open');
+  }
+
+  function copySQLSchema() {
+    const text = getSupabaseSQLSchema();
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('SQL setup script copied to clipboard!');
+    }).catch(() => {
+      showToast('Please select text and copy manually', true);
+    });
+  }
+</script>
+</body>
+</html>

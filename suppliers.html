@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Suppliers &amp; Purchases — Rags Heaven</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+/* Page-specific refinements */
+.items-table th:last-child, .items-table td:last-child { text-align: center; width: 36px; }
+.btn-del-row { background: none; border: none; color: #ef4444; cursor: pointer; padding: 4px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; }
+.btn-del-row:hover { background: #fee2e2; }
+.custom-charge-row { display: grid; grid-template-columns: 1fr 100px 32px; gap: 6px; margin-bottom: 6px; align-items: center; }
+.btn-action-sm { padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; border: 1px solid var(--border); background: #fff; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; }
+.btn-action-sm:hover { background: #f8fafc; border-color: #94a3b8; }
+.btn-action-sm.primary { background: #0369a1; color: #fff; border-color: #0369a1; }
+.btn-action-sm.primary:hover { background: #0284c7; }
+.btn-action-sm.success { background: #059669; color: #fff; border-color: #059669; }
+.btn-action-sm.success:hover { background: #10b981; }
+.btn-action-sm.excel { background: #15803d; color: #fff; border-color: #15803d; }
+.btn-action-sm.excel:hover { background: #16a34a; }
+.party-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 2500; display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-overlay.open { display: flex; }
+.modal-content { background: #fff; border-radius: 14px; width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.25); position: relative; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+.modal-title { font-size: 16px; font-weight: 800; color: #0c4a6e; }
+.btn-modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); line-height: 1; }
+.field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.badge-currency { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Topbar -->
+  <div class="topbar">
+    <img src="logo_hd.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='logo.png'">
+    <div class="topbar-title">Suppliers &amp; Purchases</div>
+    <div id="roleBadge" class="role-badge">Super User</div>
+    <button onclick="handleGlobalProfileClick()" style="background:none;border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="User Profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+  </div>
+
+  <div class="content">
+
+    <!-- Financial Hero Summary Card -->
+    <div class="fin-hero">
+      <div class="fin-hero-label">Total Supplier Payables (Outstanding)</div>
+      <div class="fin-hero-val" id="heroTotalPayable">PKR 0.00</div>
+      <div class="fin-hero-grid">
+        <div class="fin-hero-stat">
+          <div class="fin-hero-stat-val" id="heroTotalPurchases">PKR 0</div>
+          <div class="fin-hero-stat-label">Total Purchases Recorded</div>
+        </div>
+        <div class="fin-hero-stat">
+          <div class="fin-hero-stat-val" id="heroTotalPaid" style="color:#4ade80;">PKR 0</div>
+          <div class="fin-hero-stat-label">Total Payments Settled</div>
+        </div>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:11px; color:#7dd3fc;">
+        <span>Active Suppliers: <strong id="heroSupplierCount" style="color:#fff;">0</strong></span>
+        <button class="btn-action-sm excel" onclick="exportOutstandingToExcel(getDecoratedSuppliers(), 'suppliers')" style="background:rgba(16,185,129,0.2); border-color:#10b981; color:#34d399;">
+          📊 Export Balances (Excel)
+        </button>
+      </div>
+    </div>
+
+    <!-- 4-Tab Navigation Switcher -->
+    <div class="fin-tabs cols-4">
+      <button class="fin-tab active" id="tabBtn-suppliers" onclick="switchTab('suppliers')">🏢 Suppliers</button>
+      <button class="fin-tab" id="tabBtn-purchase" onclick="switchTab('purchase')">📦 Purchase</button>
+      <button class="fin-tab" id="tabBtn-payment" onclick="switchTab('payment')">💳 Payment</button>
+      <button class="fin-tab" id="tabBtn-ledger" onclick="switchTab('ledger')">📑 Ledger</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         TAB 1: SUPPLIERS DIRECTORY
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="tab-suppliers" class="tab-panel">
+      <!-- Search & Controls -->
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <div class="search-wrap" style="flex:1; min-width:180px; margin-bottom:0;">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="supplierSearch" placeholder="Search suppliers, company, phone..." oninput="renderSupplierCards()">
+        </div>
+        <button class="btn-add" style="background:#0369a1;" onclick="openSupplierModal()">
+          + Add Supplier
+        </button>
+      </div>
+
+      <!-- Filter status -->
+      <div style="display:flex; gap:6px; margin-bottom:14px;">
+        <button class="btn-action-sm primary" id="filterStatusAll" onclick="setSupplierFilter('All')">All Suppliers</button>
+        <button class="btn-action-sm" id="filterStatusActive" onclick="setSupplierFilter('Active')">Active</button>
+        <button class="btn-action-sm" id="filterStatusArchived" onclick="setSupplierFilter('Archived')">Archived</button>
+      </div>
+
+      <!-- Suppliers List Container -->
+      <div id="supplierCardsList" class="party-grid">
+        <div style="padding:30px; text-align:center; color:var(--muted); font-size:13px;">Loading suppliers...</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         TAB 2: RECORD PURCHASE
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="tab-purchase" class="tab-panel" style="display:none;">
+      <div class="fin-form-card">
+        <div class="sec-title" style="color:#0c4a6e; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+          <span>📦 Record Supplier Purchase</span>
+          <span style="font-size:11px; color:var(--muted); font-family:monospace;" id="purchaseInvoiceNo">PUR-2026-00000</span>
+        </div>
+
+        <div class="field-grid-2">
+          <div class="field">
+            <label>Select Supplier *</label>
+            <select id="purSupplierSelect" onchange="onPurchaseSupplierChange()">
+              <option value="">-- Choose Supplier --</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Purchase Date *</label>
+            <input type="date" id="purDate">
+          </div>
+        </div>
+
+        <!-- Supplier Info Banner -->
+        <div id="purSupplierBanner" style="display:none; background:#f0f9ff; border:1px solid #bae6fd; border-radius:8px; padding:8px 12px; margin-bottom:14px; font-size:12px; color:#0369a1;">
+          Supplier Currency: <b id="purBannerCurrency">PKR</b> &bull; Current Dues: <b id="purBannerDues">PKR 0.00</b>
+        </div>
+
+        <!-- Line Items Table -->
+        <div style="margin:14px 0 8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-weight:700; font-size:12px; color:var(--text-main);">Purchased Items / Stock List *</label>
+            <button type="button" class="btn-action-sm" onclick="addPurchaseItemRow()">+ Add Item Row</button>
+          </div>
+          <table class="items-table" id="purItemsTable">
+            <thead>
+              <tr>
+                <th style="width:24px;">#</th>
+                <th>Item Description / Quality Grade</th>
+                <th style="width:65px;">Qty (pcs/kg)</th>
+                <th style="width:85px;">Rate (<span class="purCurLabel">PKR</span>)</th>
+                <th style="width:90px; text-align:right;">Total (<span class="purCurLabel">PKR</span>)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="purItemsBody">
+              <!-- Dynamically populated rows -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Additional Charges & Taxes -->
+        <div class="sec-title" style="font-size:13px; color:var(--muted); margin:16px 0 8px;">Additional Charges, Freight &amp; Taxes</div>
+        <div class="field-grid-2">
+          <div class="field">
+            <label>Freight / Transport</label>
+            <input type="number" id="purTransport" value="0" min="0" oninput="calculatePurchaseTotals()">
+          </div>
+          <div class="field">
+            <label>Labor / Loading / Unloading</label>
+            <input type="number" id="purLoading" value="0" min="0" oninput="calculatePurchaseTotals()">
+          </div>
+        </div>
+        <div class="field-grid-2">
+          <div class="field">
+            <label>Tax / Duties (<span class="purCurLabel">PKR</span>)</label>
+            <input type="number" id="purTax" value="0" min="0" oninput="calculatePurchaseTotals()">
+          </div>
+          <div class="field">
+            <label>Discount Deducted (<span class="purCurLabel">PKR</span>)</label>
+            <input type="number" id="purDiscount" value="0" min="0" oninput="calculatePurchaseTotals()">
+          </div>
+        </div>
+
+        <!-- Custom Extra Charges -->
+        <div style="margin-top:8px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <label style="font-size:11px; font-weight:700; color:var(--muted);">Other Custom Charges (e.g. Weighbridge, Packaging)</label>
+            <button type="button" class="btn-action-sm" onclick="addCustomChargeRow()">+ Extra Charge</button>
+          </div>
+          <div id="customChargesList"></div>
+        </div>
+
+        <!-- Grand Total Breakdown Box -->
+        <div class="grand-total-box">
+          <div class="grand-total-row"><span>Items Subtotal:</span><span id="purSubtotalDisplay">0.00</span></div>
+          <div class="grand-total-row"><span>Freight &amp; Handling:</span><span id="purFreightDisplay">0.00</span></div>
+          <div class="grand-total-row"><span>Taxes &amp; Custom Fees:</span><span id="purTaxDisplay">0.00</span></div>
+          <div class="grand-total-row" style="color:#f87171;"><span>Discount Allowed:</span><span id="purDiscountDisplay">-0.00</span></div>
+          <div class="grand-total-row final"><span>GRAND TOTAL DUE:</span><span id="purGrandTotalDisplay">0.00</span></div>
+        </div>
+
+        <div class="field">
+          <label>Notes / Vehicle / Gate Pass / Bales Information</label>
+          <textarea id="purNotes" rows="2" style="width:100%; border:1px solid var(--border); border-radius:6px; padding:8px; font-family:inherit; font-size:12px;" placeholder="e.g. Container #402, Driver Contact, 12 Bales Vintage mix"></textarea>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn-save" style="flex:1; background:#0369a1;" onclick="savePurchaseTransaction(false)">
+            💾 Save Purchase Transaction
+          </button>
+          <button class="btn-action-sm primary" style="padding:10px 14px;" onclick="savePurchaseTransaction(true)">
+            🖨 Save &amp; Print Invoice
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         TAB 3: RECORD PAYMENT
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="tab-payment" class="tab-panel" style="display:none;">
+      <div class="fin-form-card">
+        <div class="sec-title" style="color:#0c4a6e; margin-bottom:14px; display:flex; justify-content:space-between; align-items:center;">
+          <span>💳 Record Supplier Payment</span>
+          <span style="font-size:11px; color:var(--muted); font-family:monospace;" id="paymentReceiptNo">PV-2026-00000</span>
+        </div>
+
+        <div class="field">
+          <label>Select Supplier *</label>
+          <select id="paySupplierSelect" onchange="onPaymentSupplierChange()">
+            <option value="">-- Choose Supplier --</option>
+          </select>
+        </div>
+
+        <!-- Supplier Outstanding Box -->
+        <div id="payOutstandingBox" class="outstanding-banner" style="display:none;">
+          <div>
+            <div class="outstanding-banner-label">Current Outstanding Payable</div>
+            <div style="font-size:11px; color:var(--muted);" id="paySupplierSub">Currency: PKR</div>
+          </div>
+          <div class="outstanding-banner-val" id="payOutstandingVal">PKR 0.00</div>
+        </div>
+
+        <div class="field-grid-2">
+          <div class="field">
+            <label>Payment Date *</label>
+            <input type="date" id="payDate">
+          </div>
+          <div class="field">
+            <label>Payment Type</label>
+            <select id="payType" onchange="onPayTypeChange()">
+              <option value="payment">Full / Partial Bill Payment</option>
+              <option value="advance">Advance Payment (On Account)</option>
+              <option value="reversal">Adjustment / Reversal</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-grid-2">
+          <div class="field">
+            <label>Amount Paid (<span class="payCurLabel">PKR</span>) *</label>
+            <input type="number" id="payAmount" min="0" placeholder="0.00" oninput="calculatePaymentRemaining()">
+          </div>
+          <div class="field">
+            <label>Payment Method *</label>
+            <select id="payMethod" onchange="onPayMethodChange()">
+              <option value="Cash">Cash on Hand</option>
+              <option value="Bank Transfer">Bank Transfer / Online</option>
+              <option value="Cheque">Bank Cheque</option>
+              <option value="Other">Other Adjustments</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" id="payBankRefField" style="display:none;">
+          <label>Bank Reference / Cheque # / Transaction ID</label>
+          <input type="text" id="payBankRef" placeholder="e.g. Meezan Bank Ref #981244 / Chq #003192">
+        </div>
+
+        <div class="field">
+          <label>Link to Specific Purchase Invoice (Optional)</label>
+          <select id="payInvoiceSelect">
+            <option value="">-- General Payment on Supplier Account --</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>Payment Notes / Authorized By</label>
+          <input type="text" id="payNotes" placeholder="e.g. Cleared through Main Vault, Approved by Management">
+        </div>
+
+        <!-- Dynamic Remaining Balance Summary -->
+        <div class="grand-total-box" style="margin-top:14px;">
+          <div class="grand-total-row"><span>Outstanding Before:</span><span id="payBeforeDisplay">0.00</span></div>
+          <div class="grand-total-row paid-row"><span>Payment Being Recorded:</span><span id="payNowDisplay">-0.00</span></div>
+          <div class="grand-total-row final" style="color:#38bdf8;"><span>Remaining Supplier Balance:</span><span id="payRemainingDisplay">0.00</span></div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="btn-save" style="flex:1; background:#059669;" onclick="saveSupplierPayment(false)">
+            💾 Record Payment Voucher
+          </button>
+          <button class="btn-action-sm success" style="padding:10px 14px;" onclick="saveSupplierPayment(true)">
+            🖨 Save &amp; Print Voucher
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         TAB 4: LEDGER & REPORTS
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="tab-ledger" class="tab-panel" style="display:none;">
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px;">
+        <div class="field">
+          <label style="font-weight:700;">Select Supplier Ledger to View</label>
+          <select id="ledgerSupplierSelect" onchange="loadSupplierLedger()">
+            <option value="">-- Choose Supplier --</option>
+          </select>
+        </div>
+
+        <div id="ledgerInfoBanner" style="display:none; margin:10px 0;">
+          <div class="outstanding-banner" id="ledgerOutstandingBanner">
+            <div>
+              <div class="outstanding-banner-label" id="ledgerPartyName">Supplier Ledger</div>
+              <div style="font-size:11px; color:var(--muted);" id="ledgerPartyMeta">Currency: PKR</div>
+            </div>
+            <div class="outstanding-banner-val" id="ledgerOutstandingVal">0.00</div>
+          </div>
+        </div>
+
+        <!-- Action Toolbar -->
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:10px;">
+          <button class="btn-action-sm primary" onclick="printCurrentLedger()">
+            🖨 Print Full Ledger (PDF)
+          </button>
+          <button class="btn-action-sm excel" onclick="exportCurrentLedgerExcel()">
+            📊 Export Ledger to Excel
+          </button>
+          <button class="btn-action-sm" onclick="printOutstandingAllStatement()">
+            📑 Outstanding Statement
+          </button>
+        </div>
+      </div>
+
+      <!-- Ledger Table -->
+      <div class="ledger-table-wrap">
+        <table class="ledger-table" id="ledgerTable">
+          <thead>
+            <tr>
+              <th style="width:85px;">Date</th>
+              <th style="width:130px;">Ref #</th>
+              <th>Description / Particulars</th>
+              <th style="width:105px; text-align:right;">Debit (Purchase)</th>
+              <th style="width:105px; text-align:right;">Credit (Payment)</th>
+              <th style="width:115px; text-align:right;">Balance</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerTableBody">
+            <tr>
+              <td colspan="6" style="padding:24px; text-align:center; color:var(--muted);">Select a supplier above to display their financial ledger.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Add / Edit Supplier -->
+<div class="modal-overlay" id="supplierModal">
+  <div class="modal-content">
+    <div class="modal-head">
+      <div class="modal-title" id="supplierModalTitle">Add New Supplier</div>
+      <button class="btn-modal-close" onclick="closeSupplierModal()">&times;</button>
+    </div>
+    
+    <div class="field">
+      <label>Supplier Full Name / Contact Person *</label>
+      <input type="text" id="suppName" placeholder="e.g. Muhammad Ismail">
+    </div>
+
+    <div class="field-grid-2">
+      <div class="field">
+        <label>Company / Firm Name</label>
+        <input type="text" id="suppCompany" placeholder="e.g. Al-Madina Textiles">
+      </div>
+      <div class="field">
+        <label>Accounting Currency *</label>
+        <select id="suppCurrency">
+          <option value="PKR">PKR - Pakistani Rupee</option>
+          <option value="USD">USD - US Dollar</option>
+          <option value="EUR">EUR - Euro</option>
+          <option value="GBP">GBP - British Pound</option>
+          <option value="AED">AED - UAE Dirham</option>
+          <option value="SAR">SAR - Saudi Riyal</option>
+          <option value="CNY">CNY - Chinese Yuan</option>
+          <option value="CAD">CAD - Canadian Dollar</option>
+          <option value="AUD">AUD - Australian Dollar</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-grid-2">
+      <div class="field">
+        <label>Phone / WhatsApp</label>
+        <input type="text" id="suppPhone" placeholder="+92 300 1234567">
+      </div>
+      <div class="field">
+        <label>City / Location</label>
+        <input type="text" id="suppCity" placeholder="e.g. Karachi">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Email Address</label>
+      <input type="email" id="suppEmail" placeholder="supplier@example.com">
+    </div>
+
+    <div class="field">
+      <label>Full Address / Warehouse Location</label>
+      <input type="text" id="suppAddress" placeholder="e.g. Plot 42, SITE Industrial Area">
+    </div>
+
+    <div class="field">
+      <label>Opening Balance (Amount we owe this supplier at start)</label>
+      <input type="number" id="suppOpeningBalance" value="0" min="0" placeholder="0.00">
+    </div>
+
+    <div class="field">
+      <label>Notes / Terms</label>
+      <input type="text" id="suppNotes" placeholder="e.g. 15-day credit terms, delivers vintage jackets">
+    </div>
+
+    <div class="field" id="suppStatusWrap" style="display:none;">
+      <label>Supplier Status</label>
+      <select id="suppStatus">
+        <option value="Active">Active</option>
+        <option value="Archived">Archived</option>
+      </select>
+    </div>
+
+    <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:16px;">
+      <button class="btn-cancel" onclick="closeSupplierModal()">Cancel</button>
+      <button class="btn-save" style="background:#0369a1;" onclick="saveSupplierRecord()">Save Supplier Profile</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<div id="appDoubleNav" class="double-nav-container"></div>
+<div class="toast" id="toast"></div>
+
+<script src="shared.js"></script>
+<script src="document_engine.js"></script>
+<script>
+// ── Auth Gatekeeper: Super User Only ──────────────────────────────────
+if (!requireAuth()) {
+  throw new Error("Authentication required");
+}
+
+if (!canAccessFinance()) {
+  showToast("Suppliers & Finance is restricted to Super Users", true);
+  setTimeout(() => location.replace('dashboard.html'), 800);
+  throw new Error("Access denied");
+}
+
+// ── Application State ─────────────────────────────────────────────────
+let suppliers = [];
+let supplierTransactions = [];
+let supplierPayments = [];
+let activeTab = 'suppliers';
+let supplierStatusFilter = 'All';
+let editingSupplierId = null;
+let selectedLedgerSupplierId = null;
+
+// ── Lifecycle Initialization ──────────────────────────────────────────
+async function init() {
+  showLoader();
+  initRole('suppliers');
+
+  // Set today's date in form fields
+  const today = new Date().toISOString().slice(0, 10);
+  document.getElementById('purDate').value = today;
+  document.getElementById('payDate').value = today;
+
+  // Generate initial doc numbers
+  refreshDocNumbers();
+
+  // Load database records
+  await loadData();
+
+  // Render initial views
+  renderSupplierCards();
+  populateSupplierDropdowns();
+  updateFinancialHero();
+
+  // Add default first item row in purchase form
+  addPurchaseItemRow();
+
+  hideLoader();
+}
+
+function refreshDocNumbers() {
+  document.getElementById('purchaseInvoiceNo').textContent = generateDocNumber('PUR');
+  document.getElementById('paymentReceiptNo').textContent = generateDocNumber('PV');
+}
+
+async function loadData() {
+  try {
+    const [suppList, txList, pmList] = await Promise.all([
+      sbGet('suppliers'),
+      sbGet('supplier_transactions'),
+      sbGet('supplier_payments')
+    ]);
+    suppliers = suppList || [];
+    supplierTransactions = txList || [];
+    supplierPayments = pmList || [];
+  } catch(e) {
+    console.error("Error loading data:", e);
+    suppliers = getLocalTable('suppliers');
+    supplierTransactions = getLocalTable('supplier_transactions');
+    supplierPayments = getLocalTable('supplier_payments');
+  }
+}
+
+// ── Financial Calculation Core ────────────────────────────────────────
+function calculateSupplierBalance(supplierId) {
+  const supp = suppliers.find(s => s.id == supplierId);
+  if (!supp) return { opening: 0, purchases: 0, payments: 0, outstanding: 0, currency: 'PKR' };
+
+  const opening = parseFloat(supp.opening_balance) || 0;
+  const purchases = supplierTransactions
+    .filter(tx => tx.supplier_id == supplierId)
+    .reduce((sum, tx) => sum + (parseFloat(tx.grand_total) || 0), 0);
+  const payments = supplierPayments
+    .filter(pm => pm.supplier_id == supplierId)
+    .reduce((sum, pm) => sum + (parseFloat(pm.amount) || 0), 0);
+
+  const outstanding = (opening + purchases) - payments;
+  return {
+    opening,
+    purchases,
+    payments,
+    outstanding,
+    currency: supp.currency || 'PKR'
+  };
+}
+
+function getDecoratedSuppliers() {
+  return suppliers.map(s => {
+    const bal = calculateSupplierBalance(s.id);
+    return Object.assign({}, s, {
+      totalPurchases: bal.purchases,
+      totalPaid: bal.payments,
+      outstanding: bal.outstanding
+    });
+  });
+}
+
+function updateFinancialHero() {
+  let totalPayables = 0;
+  let totalPurchases = 0;
+  let totalPaid = 0;
+
+  suppliers.forEach(s => {
+    const bal = calculateSupplierBalance(s.id);
+    totalPayables += bal.outstanding;
+    totalPurchases += bal.purchases;
+    totalPaid += bal.payments;
+  });
+
+  document.getElementById('heroTotalPayable').textContent = 'PKR ' + totalPayables.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('heroTotalPurchases').textContent = 'PKR ' + totalPurchases.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('heroTotalPaid').textContent = 'PKR ' + totalPaid.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('heroSupplierCount').textContent = suppliers.filter(s => s.status !== 'Archived').length;
+}
+
+// ── Tab Navigation ────────────────────────────────────────────────────
+function switchTab(tabId) {
+  activeTab = tabId;
+  document.querySelectorAll('.tab-panel').forEach(p => p.style.display = 'none');
+  document.querySelectorAll('.fin-tab').forEach(b => b.classList.remove('active'));
+
+  const panel = document.getElementById('tab-' + tabId);
+  const btn = document.getElementById('tabBtn-' + tabId);
+  if (panel) panel.style.display = 'block';
+  if (btn) btn.classList.add('active');
+
+  if (tabId === 'purchase') {
+    populateSupplierDropdowns();
+  } else if (tabId === 'payment') {
+    populateSupplierDropdowns();
+  } else if (tabId === 'ledger') {
+    populateSupplierDropdowns();
+    if (selectedLedgerSupplierId) {
+      document.getElementById('ledgerSupplierSelect').value = selectedLedgerSupplierId;
+      loadSupplierLedger();
+    }
+  }
+}
+
+// ── TAB 1: Suppliers Directory & Profile ───────────────────────────────
+function setSupplierFilter(status) {
+  supplierStatusFilter = status;
+  document.querySelectorAll('#filterStatusAll, #filterStatusActive, #filterStatusArchived').forEach(b => b.classList.remove('primary'));
+  if (status === 'All') document.getElementById('filterStatusAll').classList.add('primary');
+  if (status === 'Active') document.getElementById('filterStatusActive').classList.add('primary');
+  if (status === 'Archived') document.getElementById('filterStatusArchived').classList.add('primary');
+  renderSupplierCards();
+}
+
+function renderSupplierCards() {
+  const query = (document.getElementById('supplierSearch').value || '').toLowerCase().trim();
+  const container = document.getElementById('supplierCardsList');
+
+  let filtered = suppliers.filter(s => {
+    const matchesStatus = (supplierStatusFilter === 'All') || (s.status === supplierStatusFilter) || (!s.status && supplierStatusFilter === 'Active');
+    const matchesSearch = !query ||
+      (s.name && s.name.toLowerCase().includes(query)) ||
+      (s.company && s.company.toLowerCase().includes(query)) ||
+      (s.phone && s.phone.toLowerCase().includes(query)) ||
+      (s.city && s.city.toLowerCase().includes(query));
+    return matchesStatus && matchesSearch;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--muted);background:#fff;border-radius:12px;border:1px dashed var(--border);">
+      No suppliers found matching your filters. Click <b>+ Add Supplier</b> to create one.
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(s => {
+    const bal = calculateSupplierBalance(s.id);
+    const isArchived = s.status === 'Archived';
+    const cur = s.currency || 'PKR';
+    const balClass = bal.outstanding > 0 ? 'owe' : 'clear';
+    const balText = bal.outstanding > 0
+      ? cur + ' ' + bal.outstanding.toLocaleString(undefined, {minimumFractionDigits: 2}) + ' Due'
+      : 'All Cleared';
+
+    return `
+      <div class="party-card" onclick="openSupplierLedger('${s.id}')">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
+          <div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="party-card-name">${escapeHtml(s.name)}</span>
+              <span class="badge-currency">${cur}</span>
+              ${isArchived ? '<span class="chip red" style="font-size:9px;">Archived</span>' : ''}
+            </div>
+            <div class="party-card-sub">
+              ${escapeHtml(s.company || 'Private Supplier')} &bull; ${escapeHtml(s.phone || 'No phone')} ${s.city ? '&bull; ' + escapeHtml(s.city) : ''}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span class="party-bal-badge ${balClass}">${balText}</span>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; padding-top:10px; border-top:1px solid var(--border-subtle);" onclick="event.stopPropagation()">
+          <div style="font-size:11px; color:var(--muted);">
+            Purchases: <b>${cur} ${bal.purchases.toLocaleString()}</b> &bull; Paid: <b style="color:#059669;">${cur} ${bal.payments.toLocaleString()}</b>
+          </div>
+          <div style="display:flex; gap:4px;">
+            <button class="btn-action-sm primary" title="View Ledger" onclick="openSupplierLedger('${s.id}')">📑 Ledger</button>
+            <button class="btn-action-sm" title="Add Purchase" onclick="goToAddPurchase('${s.id}')">+ Purchase</button>
+            <button class="btn-action-sm success" title="Add Payment" onclick="goToAddPayment('${s.id}')">💳 Pay</button>
+            <button class="btn-action-sm" title="Edit Supplier" onclick="openEditSupplierModal('${s.id}')">✏</button>
+            <button class="btn-action-sm" title="Archive Supplier" onclick="toggleArchiveSupplier('${s.id}')" style="color:#ef4444;">${isArchived ? 'Active' : 'Archive'}</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function openSupplierModal() {
+  editingSupplierId = null;
+  document.getElementById('supplierModalTitle').textContent = 'Add New Supplier';
+  document.getElementById('suppName').value = '';
+  document.getElementById('suppCompany').value = '';
+  document.getElementById('suppCurrency').value = 'PKR';
+  document.getElementById('suppPhone').value = '';
+  document.getElementById('suppCity').value = '';
+  document.getElementById('suppEmail').value = '';
+  document.getElementById('suppAddress').value = '';
+  document.getElementById('suppOpeningBalance').value = '0';
+  document.getElementById('suppNotes').value = '';
+  document.getElementById('suppStatusWrap').style.display = 'none';
+
+  document.getElementById('supplierModal').classList.add('open');
+}
+
+function openEditSupplierModal(id) {
+  const s = suppliers.find(x => x.id == id);
+  if (!s) return;
+  editingSupplierId = id;
+  document.getElementById('supplierModalTitle').textContent = 'Edit Supplier Profile';
+  document.getElementById('suppName').value = s.name || '';
+  document.getElementById('suppCompany').value = s.company || '';
+  document.getElementById('suppCurrency').value = s.currency || 'PKR';
+  document.getElementById('suppPhone').value = s.phone || '';
+  document.getElementById('suppCity').value = s.city || '';
+  document.getElementById('suppEmail').value = s.email || '';
+  document.getElementById('suppAddress').value = s.address || '';
+  document.getElementById('suppOpeningBalance').value = s.opening_balance || 0;
+  document.getElementById('suppNotes').value = s.notes || '';
+  document.getElementById('suppStatusWrap').style.display = 'block';
+  document.getElementById('suppStatus').value = s.status || 'Active';
+
+  document.getElementById('supplierModal').classList.add('open');
+}
+
+function closeSupplierModal() {
+  document.getElementById('supplierModal').classList.remove('open');
+}
+
+async function saveSupplierRecord() {
+  const name = document.getElementById('suppName').value.trim();
+  if (!name) {
+    showToast('Supplier Name is required', true);
+    return;
+  }
+
+  const payload = {
+    name,
+    company: document.getElementById('suppCompany').value.trim(),
+    currency: document.getElementById('suppCurrency').value || 'PKR',
+    phone: document.getElementById('suppPhone').value.trim(),
+    city: document.getElementById('suppCity').value.trim(),
+    email: document.getElementById('suppEmail').value.trim(),
+    address: document.getElementById('suppAddress').value.trim(),
+    opening_balance: parseFloat(document.getElementById('suppOpeningBalance').value) || 0,
+    notes: document.getElementById('suppNotes').value.trim(),
+    status: editingSupplierId ? document.getElementById('suppStatus').value : 'Active',
+    updated_at: new Date().toISOString()
+  };
+
+  showLoader();
+  try {
+    if (editingSupplierId) {
+      await sbUpdate('suppliers', editingSupplierId, payload);
+      const idx = suppliers.findIndex(x => x.id == editingSupplierId);
+      if (idx !== -1) suppliers[idx] = Object.assign({}, suppliers[idx], payload);
+      showToast('Supplier updated successfully');
+    } else {
+      payload.created_at = new Date().toISOString();
+      const res = await sbInsert('suppliers', payload);
+      if (res && res.length) suppliers.unshift(res[0]);
+      showToast('Supplier created successfully');
+    }
+
+    closeSupplierModal();
+    renderSupplierCards();
+    populateSupplierDropdowns();
+    updateFinancialHero();
+  } catch(err) {
+    console.error(err);
+    showToast('Failed to save supplier', true);
+  }
+  hideLoader();
+}
+
+async function toggleArchiveSupplier(id) {
+  const s = suppliers.find(x => x.id == id);
+  if (!s) return;
+  const newStatus = (s.status === 'Archived') ? 'Active' : 'Archived';
+  if (!confirm(`Are you sure you want to mark "${s.name}" as ${newStatus}?`)) return;
+
+  showLoader();
+  try {
+    await sbUpdate('suppliers', id, { status: newStatus });
+    s.status = newStatus;
+    renderSupplierCards();
+    updateFinancialHero();
+    showToast(`Supplier marked as ${newStatus}`);
+  } catch(e) {
+    showToast('Failed to update status', true);
+  }
+  hideLoader();
+}
+
+function populateSupplierDropdowns() {
+  const activeSuppliers = suppliers.filter(s => s.status !== 'Archived');
+
+  const purSelect = document.getElementById('purSupplierSelect');
+  const paySelect = document.getElementById('paySupplierSelect');
+  const ledSelect = document.getElementById('ledgerSupplierSelect');
+
+  const buildOptions = (includeDues) => {
+    return '<option value="">-- Choose Supplier --</option>' + activeSuppliers.map(s => {
+      const bal = calculateSupplierBalance(s.id);
+      const cur = s.currency || 'PKR';
+      const duesStr = includeDues ? ` (${cur} ${bal.outstanding.toLocaleString()} due)` : ` [${cur}]`;
+      return `<option value="${s.id}">${escapeHtml(s.name)}${s.company ? ' - ' + escapeHtml(s.company) : ''}${duesStr}</option>`;
+    }).join('');
+  };
+
+  if (purSelect) purSelect.innerHTML = buildOptions(false);
+  if (paySelect) paySelect.innerHTML = buildOptions(true);
+  if (ledSelect) ledSelect.innerHTML = '<option value="">-- Choose Supplier --</option>' + suppliers.map(s => {
+    return `<option value="${s.id}">${escapeHtml(s.name)} (${s.company || 'Private'}) [${s.currency || 'PKR'}]</option>`;
+  }).join('');
+}
+
+// ── TAB 2: Purchase Line Items Form ───────────────────────────────────
+function onPurchaseSupplierChange() {
+  const sId = document.getElementById('purSupplierSelect').value;
+  const banner = document.getElementById('purSupplierBanner');
+  if (!sId) {
+    banner.style.display = 'none';
+    return;
+  }
+  const s = suppliers.find(x => x.id == sId);
+  if (!s) return;
+  const bal = calculateSupplierBalance(sId);
+  const cur = s.currency || 'PKR';
+
+  banner.style.display = 'block';
+  document.getElementById('purBannerCurrency').textContent = cur;
+  document.getElementById('purBannerDues').textContent = cur + ' ' + bal.outstanding.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+  document.querySelectorAll('.purCurLabel').forEach(el => el.textContent = cur);
+  calculatePurchaseTotals();
+}
+
+let purItemCount = 0;
+function addPurchaseItemRow(desc = '', qty = 1, rate = 0) {
+  purItemCount++;
+  const tbody = document.getElementById('purItemsBody');
+  const tr = document.createElement('tr');
+  tr.id = 'purItemRow_' + purItemCount;
+  tr.innerHTML = `
+    <td style="font-size:11px; color:var(--muted); text-align:center;">${purItemCount}</td>
+    <td><input type="text" class="item-desc" placeholder="Item description / Bales / Garments" value="${escapeHtml(desc)}"></td>
+    <td><input type="number" class="item-qty" value="${qty}" min="1" step="any" oninput="calculatePurchaseTotals()"></td>
+    <td><input type="number" class="item-rate" value="${rate}" min="0" step="any" oninput="calculatePurchaseTotals()"></td>
+    <td style="text-align:right; font-weight:700;"><span class="item-row-total">0.00</span></td>
+    <td><button type="button" class="btn-del-row" onclick="removePurchaseItemRow('${tr.id}')" title="Delete Row">&times;</button></td>
+  `;
+  tbody.appendChild(tr);
+  calculatePurchaseTotals();
+}
+
+function removePurchaseItemRow(rowId) {
+  const tbody = document.getElementById('purItemsBody');
+  if (tbody.children.length <= 1) {
+    showToast('At least 1 item is required in a purchase order', true);
+    return;
+  }
+  const tr = document.getElementById(rowId);
+  if (tr) tr.remove();
+  calculatePurchaseTotals();
+}
+
+let customChargeCount = 0;
+function addCustomChargeRow(label = '', amt = 0) {
+  customChargeCount++;
+  const container = document.getElementById('customChargesList');
+  const div = document.createElement('div');
+  div.className = 'custom-charge-row';
+  div.id = 'customChargeRow_' + customChargeCount;
+  div.innerHTML = `
+    <input type="text" class="custom-charge-label" placeholder="Charge Name (e.g. Weighbridge)" value="${escapeHtml(label)}">
+    <input type="number" class="custom-charge-amt" placeholder="Amount" value="${amt || ''}" min="0" oninput="calculatePurchaseTotals()">
+    <button type="button" class="btn-del-row" onclick="this.parentElement.remove(); calculatePurchaseTotals();">&times;</button>
+  `;
+  container.appendChild(div);
+}
+
+function calculatePurchaseTotals() {
+  let subtotal = 0;
+  const rows = document.querySelectorAll('#purItemsBody tr');
+  rows.forEach((r, idx) => {
+    const qty = parseFloat(r.querySelector('.item-qty').value) || 0;
+    const rate = parseFloat(r.querySelector('.item-rate').value) || 0;
+    const lineTotal = qty * rate;
+    subtotal += lineTotal;
+    r.querySelector('.item-row-total').textContent = lineTotal.toLocaleString(undefined, {minimumFractionDigits: 2});
+    r.children[0].textContent = idx + 1;
+  });
+
+  const transport = parseFloat(document.getElementById('purTransport').value) || 0;
+  const loading = parseFloat(document.getElementById('purLoading').value) || 0;
+  const freight = transport + loading;
+
+  const tax = parseFloat(document.getElementById('purTax').value) || 0;
+  const discount = parseFloat(document.getElementById('purDiscount').value) || 0;
+
+  let customTotal = 0;
+  document.querySelectorAll('.custom-charge-amt').forEach(inp => {
+    customTotal += (parseFloat(inp.value) || 0);
+  });
+
+  const grandTotal = Math.max(0, (subtotal + freight + tax + customTotal) - discount);
+
+  document.getElementById('purSubtotalDisplay').textContent = subtotal.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('purFreightDisplay').textContent = freight.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('purTaxDisplay').textContent = (tax + customTotal).toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('purDiscountDisplay').textContent = '-' + discount.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('purGrandTotalDisplay').textContent = grandTotal.toLocaleString(undefined, {minimumFractionDigits: 2});
+
+  return { subtotal, transport, loading, freight, tax, discount, customTotal, grandTotal };
+}
+
+async function savePurchaseTransaction(autoPrint = false) {
+  const supplierId = document.getElementById('purSupplierSelect').value;
+  if (!supplierId) {
+    showToast('Please select a supplier', true);
+    return;
+  }
+
+  const supplier = suppliers.find(s => s.id == supplierId);
+  const cur = supplier ? (supplier.currency || 'PKR') : 'PKR';
+
+  // Gather items
+  const items = [];
+  const rows = document.querySelectorAll('#purItemsBody tr');
+  rows.forEach(r => {
+    const desc = r.querySelector('.item-desc').value.trim();
+    const qty = parseFloat(r.querySelector('.item-qty').value) || 0;
+    const rate = parseFloat(r.querySelector('.item-rate').value) || 0;
+    if (desc && qty > 0) {
+      items.push({ desc, qty, rate, amount: qty * rate });
+    }
+  });
+
+  if (!items.length) {
+    showToast('Please enter at least 1 valid line item description and quantity', true);
+    return;
+  }
+
+  const totals = calculatePurchaseTotals();
+  if (totals.grandTotal <= 0) {
+    showToast('Grand total must be greater than zero', true);
+    return;
+  }
+
+  // Gather custom charges
+  const customCharges = [];
+  document.querySelectorAll('.custom-charge-row').forEach(row => {
+    const label = row.querySelector('.custom-charge-label').value.trim();
+    const amount = parseFloat(row.querySelector('.custom-charge-amt').value) || 0;
+    if (label && amount > 0) {
+      customCharges.push({ label, amount });
+    }
+  });
+
+  const invoiceNo = generateDocNumber('PUR');
+  const user = getCurrentUser();
+
+  const payload = {
+    supplier_id: supplierId,
+    type: 'purchase',
+    invoice_no: invoiceNo,
+    date: document.getElementById('purDate').value || new Date().toISOString().slice(0, 10),
+    items,
+    subtotal: totals.subtotal,
+    transport: totals.transport,
+    loading: totals.loading,
+    tax: totals.tax,
+    discount: totals.discount,
+    custom_charges: customCharges,
+    grand_total: totals.grandTotal,
+    notes: document.getElementById('purNotes').value.trim(),
+    created_by: user ? user.name : 'Super User',
+    created_at: new Date().toISOString()
+  };
+
+  showLoader();
+  try {
+    const res = await sbInsert('supplier_transactions', payload);
+    const savedTx = (res && res.length) ? res[0] : payload;
+    supplierTransactions.unshift(savedTx);
+
+    showToast(`Purchase recorded successfully (${invoiceNo})`);
+
+    // Reset Form
+    document.getElementById('purItemsBody').innerHTML = '';
+    purItemCount = 0;
+    addPurchaseItemRow();
+    document.getElementById('purTransport').value = '0';
+    document.getElementById('purLoading').value = '0';
+    document.getElementById('purTax').value = '0';
+    document.getElementById('purDiscount').value = '0';
+    document.getElementById('customChargesList').innerHTML = '';
+    document.getElementById('purNotes').value = '';
+    refreshDocNumbers();
+    calculatePurchaseTotals();
+    updateFinancialHero();
+
+    if (autoPrint) {
+      const htmlDoc = buildPurchaseInvoice(supplier, savedTx, []);
+      previewDocument(htmlDoc, `Purchase Invoice - ${invoiceNo}`);
+    }
+  } catch(e) {
+    console.error(e);
+    showToast('Failed to record purchase transaction', true);
+  }
+  hideLoader();
+}
+
+function goToAddPurchase(supplierId) {
+  switchTab('purchase');
+  document.getElementById('purSupplierSelect').value = supplierId;
+  onPurchaseSupplierChange();
+}
+
+// ── TAB 3: Supplier Payment Form ──────────────────────────────────────
+function onPaymentSupplierChange() {
+  const sId = document.getElementById('paySupplierSelect').value;
+  const box = document.getElementById('payOutstandingBox');
+  const invSelect = document.getElementById('payInvoiceSelect');
+
+  if (!sId) {
+    box.style.display = 'none';
+    invSelect.innerHTML = '<option value="">-- General Payment on Supplier Account --</option>';
+    return;
+  }
+
+  const s = suppliers.find(x => x.id == sId);
+  const bal = calculateSupplierBalance(sId);
+  const cur = s ? (s.currency || 'PKR') : 'PKR';
+
+  box.style.display = 'flex';
+  document.getElementById('payOutstandingVal').textContent = cur + ' ' + bal.outstanding.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('paySupplierSub').textContent = `Supplier: ${s.name} • Currency: ${cur}`;
+  document.querySelectorAll('.payCurLabel').forEach(el => el.textContent = cur);
+
+  // Populate supplier's invoices
+  const suppTxs = supplierTransactions.filter(tx => tx.supplier_id == sId);
+  invSelect.innerHTML = '<option value="">-- General Payment on Supplier Account --</option>' + suppTxs.map(tx => {
+    return `<option value="${tx.id}">${tx.invoice_no} (${tx.date}) - Total: ${cur} ${parseFloat(tx.grand_total).toLocaleString()}</option>`;
+  }).join('');
+
+  calculatePaymentRemaining();
+}
+
+function onPayTypeChange() {
+  const type = document.getElementById('payType').value;
+  const sId = document.getElementById('paySupplierSelect').value;
+  if (type === 'payment' && sId) {
+    const bal = calculateSupplierBalance(sId);
+    if (bal.outstanding > 0) {
+      document.getElementById('payAmount').value = bal.outstanding;
+    }
+  }
+  calculatePaymentRemaining();
+}
+
+function onPayMethodChange() {
+  const method = document.getElementById('payMethod').value;
+  const bankField = document.getElementById('payBankRefField');
+  if (method === 'Bank Transfer' || method === 'Cheque') {
+    bankField.style.display = 'block';
+  } else {
+    bankField.style.display = 'none';
+  }
+}
+
+function calculatePaymentRemaining() {
+  const sId = document.getElementById('paySupplierSelect').value;
+  const bal = sId ? calculateSupplierBalance(sId).outstanding : 0;
+  const payAmt = parseFloat(document.getElementById('payAmount').value) || 0;
+  const rem = bal - payAmt;
+
+  document.getElementById('payBeforeDisplay').textContent = bal.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('payNowDisplay').textContent = '-' + payAmt.toLocaleString(undefined, {minimumFractionDigits: 2});
+  document.getElementById('payRemainingDisplay').textContent = rem.toLocaleString(undefined, {minimumFractionDigits: 2});
+}
+
+async function saveSupplierPayment(autoPrint = false) {
+  const supplierId = document.getElementById('paySupplierSelect').value;
+  if (!supplierId) {
+    showToast('Please select a supplier', true);
+    return;
+  }
+
+  const amount = parseFloat(document.getElementById('payAmount').value) || 0;
+  if (amount <= 0) {
+    showToast('Payment amount must be greater than zero', true);
+    return;
+  }
+
+  const supplier = suppliers.find(s => s.id == supplierId);
+  const balBefore = calculateSupplierBalance(supplierId).outstanding;
+  const balAfter = balBefore - amount;
+  const receiptNo = generateDocNumber('PV');
+  const user = getCurrentUser();
+
+  const payload = {
+    supplier_id: supplierId,
+    transaction_id: document.getElementById('payInvoiceSelect').value || null,
+    receipt_no: receiptNo,
+    date: document.getElementById('payDate').value || new Date().toISOString().slice(0, 10),
+    amount: amount,
+    payment_method: document.getElementById('payMethod').value,
+    bank_ref: document.getElementById('payBankRef').value.trim(),
+    type: document.getElementById('payType').value,
+    notes: document.getElementById('payNotes').value.trim(),
+    created_by: user ? user.name : 'Super User',
+    created_at: new Date().toISOString()
+  };
+
+  showLoader();
+  try {
+    const res = await sbInsert('supplier_payments', payload);
+    const savedPm = (res && res.length) ? res[0] : payload;
+    supplierPayments.unshift(savedPm);
+
+    showToast(`Payment recorded successfully (${receiptNo})`);
+
+    // Reset Form
+    document.getElementById('payAmount').value = '';
+    document.getElementById('payBankRef').value = '';
+    document.getElementById('payNotes').value = '';
+    refreshDocNumbers();
+    onPaymentSupplierChange();
+    updateFinancialHero();
+
+    if (autoPrint) {
+      const htmlDoc = buildPaymentVoucher(supplier, savedPm, balBefore, balAfter);
+      previewDocument(htmlDoc, `Payment Voucher - ${receiptNo}`);
+    }
+  } catch(e) {
+    console.error(e);
+    showToast('Failed to record supplier payment', true);
+  }
+  hideLoader();
+}
+
+function goToAddPayment(supplierId) {
+  switchTab('payment');
+  document.getElementById('paySupplierSelect').value = supplierId;
+  onPaymentSupplierChange();
+  onPayTypeChange();
+}
+
+// ── TAB 4: Supplier Ledger & Reports ──────────────────────────────────
+function openSupplierLedger(supplierId) {
+  selectedLedgerSupplierId = supplierId;
+  switchTab('ledger');
+}
+
+function loadSupplierLedger() {
+  const sId = document.getElementById('ledgerSupplierSelect').value;
+  selectedLedgerSupplierId = sId;
+  const tbody = document.getElementById('ledgerTableBody');
+  const banner = document.getElementById('ledgerInfoBanner');
+
+  if (!sId) {
+    banner.style.display = 'none';
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:24px; text-align:center; color:var(--muted);">Select a supplier above to display their financial ledger.</td></tr>`;
+    return;
+  }
+
+  const s = suppliers.find(x => x.id == sId);
+  if (!s) return;
+
+  const cur = s.currency || 'PKR';
+  const openBal = parseFloat(s.opening_balance) || 0;
+
+  // Build combined chronologically sorted rows
+  const rows = [];
+  rows.push({
+    date: s.created_at ? s.created_at.slice(0, 10) : 'Opening',
+    ref: 'OPENING',
+    desc: 'Opening Balance on Account Setup',
+    debit: openBal,
+    credit: 0,
+    isOpening: true
+  });
+
+  const txs = supplierTransactions.filter(tx => tx.supplier_id == sId);
+  txs.forEach(tx => {
+    rows.push({
+      date: tx.date,
+      ref: tx.invoice_no,
+      desc: 'Purchase: ' + (tx.notes || (tx.items && tx.items.length ? tx.items[0].desc : 'Goods')),
+      debit: parseFloat(tx.grand_total) || 0,
+      credit: 0,
+      txObj: tx
+    });
+  });
+
+  const pms = supplierPayments.filter(pm => pm.supplier_id == sId);
+  pms.forEach(pm => {
+    rows.push({
+      date: pm.date,
+      ref: pm.receipt_no,
+      desc: `Payment (${pm.payment_method})` + (pm.bank_ref ? ' - Ref: ' + pm.bank_ref : ''),
+      debit: 0,
+      credit: parseFloat(pm.amount) || 0,
+      pmObj: pm
+    });
+  });
+
+  // Sort rows ascending by date
+  rows.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  let runningBal = 0;
+  let totalDebit = 0;
+  let totalCredit = 0;
+
+  tbody.innerHTML = rows.map((r, i) => {
+    if (i === 0) {
+      runningBal = r.debit;
+    } else {
+      runningBal += (r.debit - r.credit);
+      totalDebit += r.debit;
+      totalCredit += r.credit;
+    }
+
+    const trClass = r.isOpening ? '' : (r.debit > 0 ? 'debit' : 'credit');
+    const refClick = r.txObj
+      ? `onclick="previewDocument(buildPurchaseInvoice(suppliers.find(x=>x.id=='${sId}'), supplierTransactions.find(t=>t.id=='${r.txObj.id}'), []), 'Invoice ${r.ref}')"`
+      : (r.pmObj ? `onclick="previewDocument(buildPaymentVoucher(suppliers.find(x=>x.id=='${sId}'), supplierPayments.find(p=>p.id=='${r.pmObj.id}'), 0, 0), 'Voucher ${r.ref}')"` : '');
+
+    return `
+      <tr class="${trClass}">
+        <td>${r.date || '-'}</td>
+        <td style="font-weight:700; color:#0369a1; cursor:pointer;" ${refClick}>${escapeHtml(r.ref)}</td>
+        <td>${escapeHtml(r.desc)}</td>
+        <td style="text-align:right; font-weight:700; color:#be123c;">${r.debit > 0 ? cur + ' ' + r.debit.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+        <td style="text-align:right; font-weight:700; color:#059669;">${r.credit > 0 ? cur + ' ' + r.credit.toLocaleString(undefined, {minimumFractionDigits: 2}) : '-'}</td>
+        <td class="bal-cell ${runningBal > 0 ? 'neg' : ''}" style="text-align:right;">${cur} ${runningBal.toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+      </tr>
+    `;
+  }).join('');
+
+  // Update banner
+  banner.style.display = 'block';
+  document.getElementById('ledgerPartyName').textContent = s.name + (s.company ? ' (' + s.company + ')' : '');
+  document.getElementById('ledgerPartyMeta').textContent = `Currency: ${cur} • Total Debits: ${cur} ${totalDebit.toLocaleString()} • Total Credits: ${cur} ${totalCredit.toLocaleString()}`;
+  document.getElementById('ledgerOutstandingVal').textContent = cur + ' ' + runningBal.toLocaleString(undefined, {minimumFractionDigits: 2});
+}
+
+function printCurrentLedger() {
+  const sId = document.getElementById('ledgerSupplierSelect').value;
+  if (!sId) {
+    showToast('Please select a supplier first', true);
+    return;
+  }
+  const s = suppliers.find(x => x.id == sId);
+  const txs = supplierTransactions.filter(tx => tx.supplier_id == sId);
+  const pms = supplierPayments.filter(pm => pm.supplier_id == sId);
+
+  const htmlDoc = buildSupplierLedger(s, txs, pms);
+  previewDocument(htmlDoc, `Supplier Ledger - ${s.name}`);
+}
+
+function exportCurrentLedgerExcel() {
+  const sId = document.getElementById('ledgerSupplierSelect').value;
+  if (!sId) {
+    showToast('Please select a supplier first', true);
+    return;
+  }
+  const s = suppliers.find(x => x.id == sId);
+  const txs = supplierTransactions.filter(tx => tx.supplier_id == sId);
+  const pms = supplierPayments.filter(pm => pm.supplier_id == sId);
+
+  exportLedgerToExcel(s, 'suppliers', txs, pms);
+}
+
+function printOutstandingAllStatement() {
+  const decorated = getDecoratedSuppliers();
+  const htmlDoc = buildOutstandingStatement(decorated, 'suppliers');
+  previewDocument(htmlDoc, 'All Suppliers Outstanding Balance Statement');
+}
+
+// ── Run Lifecycle Initialization ──────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

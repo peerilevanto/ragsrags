@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#881337">
+<title>Dashboard - Rags Heaven</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+.activity-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  background: var(--surface);
+}
+.activity-row:last-child {
+  border-bottom: none;
+}
+.activity-row:hover {
+  background: #fff1f2;
+  transform: translateX(3px);
+}
+.activity-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8);
+}
+.activity-info {
+  flex: 1;
+  min-width: 0;
+}
+.activity-info-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.activity-info-sub {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Topbar -->
+  <div class="topbar">
+    <img src="logo.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='favicon.png'">
+    <div class="topbar-title">Rags Heaven</div>
+    <div id="roleBadge" class="role-badge">Admin</div>
+    <button onclick="handleGlobalProfileClick()" style="background:none;border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:var(--shadow-xs);transition:all 0.2s ease" title="User Profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+  </div>
+
+  <div class="content">
+    <!-- Hero Card (Cleaned without duplicate signout button) -->
+    <div class="dash-hero anim-fade-up">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div class="dash-greeting">Inventory & Quality Control</div>
+          <div class="dash-name" id="heroName">Loading...</div>
+          <div class="dash-sub" id="heroDate">Loading date...</div>
+        </div>
+        <div class="hero-live-pill">
+          <span class="pulse-dot"></span>
+          <span>Live Workspace</span>
+        </div>
+      </div>
+      <div class="dash-gold-line"></div>
+    </div>
+
+    <!-- Stats Grid with Micro-Interactions -->
+    <div class="stat-grid">
+      <!-- AB Grade Stock -->
+      <div class="stat-card anim-fade-up delay-1" onclick="location.href='ab_grade.html'">
+        <div class="stat-card-accent" style="background:var(--burgundy)"></div>
+        <div class="stat-label">AB Grade Stock</div>
+        <div class="stat-num burgundy" id="s_ab_grade">—</div>
+        <div class="stat-desc">Warehouse pieces count</div>
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      </div>
+
+      <!-- Customer Ready Stock -->
+      <div class="stat-card anim-fade-up delay-2" onclick="location.href='customer_items.html'">
+        <div class="stat-card-accent" style="background:var(--gold)"></div>
+        <div class="stat-label">Customer Ready</div>
+        <div class="stat-num gold" id="s_customer_items">—</div>
+        <div class="stat-desc">Order ready stock</div>
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      </div>
+
+      <!-- Grading Today & Accuracy KPI -->
+      <div class="stat-card full anim-fade-up delay-3" onclick="location.href='grading.html'">
+        <div class="stat-card-accent" style="background:linear-gradient(180deg, var(--green), var(--blue))"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="stat-label">Graded Batches Today</div>
+            <div class="stat-num green" id="s_graded_pcs">—</div>
+            <div class="stat-desc" id="s_grading_summary">Tracking output</div>
+          </div>
+          <div style="text-align:right">
+            <div class="stat-label">QA Accuracy Rate</div>
+            <div class="stat-num" style="font-size:26px;color:var(--burgundy)" id="s_qa_rate">—</div>
+            <div class="stat-desc" id="s_approval_status">Audit Score</div>
+          </div>
+        </div>
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      </div>
+
+      <!-- Factory Workforce & Attendance (Excludes Super User & Administrator) -->
+      <div class="stat-card full anim-fade-up delay-4" onclick="location.href='employees.html'">
+        <div class="stat-card-accent" style="background:var(--purple)"></div>
+        <div class="workforce-split-box">
+          <div>
+            <div class="stat-label">Factory Floor Workforce</div>
+            <div class="stat-num purple" id="s_attendance_rate">—</div>
+            <div class="stat-desc" id="s_attendance_summary">Daily floor presence</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div class="gauge-svg-wrap">
+              <svg class="gauge-svg" viewBox="0 0 36 36">
+                <path stroke="#f1f5f9" stroke-width="3.5" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
+                <path id="gaugePath" stroke="var(--burgundy)" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" style="transition: stroke-dasharray 1s ease;"/>
+              </svg>
+              <div class="gauge-center-text" id="gaugeCenterText">0%</div>
+            </div>
+            <span class="chip burgundy" style="font-size:11px;">View Staff &rarr;</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- BEAUTIFUL DASHBOARD ANALYTICS & GRAPHS SECTION                      -->
+    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    
+    <!-- Graph 1: Weekly Grading & Quality Throughput Graph -->
+    <div class="dash-chart-card anim-fade-up">
+      <div class="dash-chart-head">
+        <div>
+          <div class="dash-chart-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--burgundy)" stroke-width="2.2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+            <span>Weekly Grading & QA Throughput</span>
+          </div>
+          <div class="dash-chart-sub">Daily garment batch inspection volume (Past 7 Days)</div>
+        </div>
+        <span class="dash-chart-badge" id="chartWeekTotal">0 pcs</span>
+      </div>
+
+      <div class="chart-canvas-container">
+        <canvas id="gradingChartCanvas" style="width:100%;height:100%;display:block;"></canvas>
+      </div>
+
+      <div class="chart-legend-row">
+        <div class="legend-item">
+          <span class="legend-color-dot" style="background:var(--burgundy)"></span>
+          <span>Graded Pieces</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color-dot" style="background:var(--green)"></span>
+          <span>Passed QA</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-color-dot" style="background:#f59e0b;height:2px;border-radius:1px;width:14px"></span>
+          <span>Target (90%)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Graph 2: Stock Allocation & Warehouse Balance -->
+    <div class="dash-chart-card anim-fade-up">
+      <div class="dash-chart-head">
+        <div>
+          <div class="dash-chart-title">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--gold-dark)" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10H12V2z"/></svg>
+            <span>Stock Allocation & Balance</span>
+          </div>
+          <div class="dash-chart-sub">Raw warehouse inventory vs finished customer packs</div>
+        </div>
+        <span class="dash-chart-badge" id="totalStockPieces">Total: 0 pcs</span>
+      </div>
+
+      <!-- Proportional Ratio Bar -->
+      <div class="ratio-progress-container">
+        <div class="ratio-bar-segment" id="barAbGrade" style="width:50%;background:linear-gradient(90deg, #881337, #be123c);" title="AB Grade Stock"></div>
+        <div class="ratio-bar-segment" id="barCustomer" style="width:50%;background:linear-gradient(90deg, #b48a3c, #d4af37);" title="Customer Ready"></div>
+      </div>
+
+      <div class="ratio-legend-grid">
+        <div class="ratio-legend-box" onclick="location.href='ab_grade.html'" style="cursor:pointer">
+          <div>
+            <div style="font-size:10.5px;font-weight:700;color:var(--burgundy);text-transform:uppercase;">AB Grade Stock</div>
+            <div style="font-size:15px;font-weight:800;color:var(--text-main);margin-top:2px;" id="ratioAbCount">0</div>
+          </div>
+          <span class="chip burgundy" id="ratioAbPct">50%</span>
+        </div>
+
+        <div class="ratio-legend-box" onclick="location.href='customer_items.html'" style="cursor:pointer">
+          <div>
+            <div style="font-size:10.5px;font-weight:700;color:var(--gold-dark);text-transform:uppercase;">Customer Ready</div>
+            <div style="font-size:15px;font-weight:800;color:var(--text-main);margin-top:2px;" id="ratioCustCount">0</div>
+          </div>
+          <span class="chip gold" id="ratioCustPct">50%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Operations -->
+    <div class="sec-head" style="margin-top:16px">
+      <div class="sec-title">Quick Operations</div>
+    </div>
+
+    <div class="quick-links">
+      <div class="quick-card" onclick="location.href='ab_grade.html'">
+        <div class="quick-icon" style="background:var(--burgundy-soft);color:var(--burgundy)">
+          <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">AB Grade Stock</div>
+          <div class="quick-sub">Adjust stock quantity</div>
+        </div>
+      </div>
+
+      <div class="quick-card" onclick="location.href='grading.html'">
+        <div class="quick-icon" style="background:var(--green-soft);color:var(--green)">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Grader Desk</div>
+          <div class="quick-sub">Log batch & push to QA</div>
+        </div>
+      </div>
+
+      <div class="quick-card" onclick="location.href='grading.html?view=checker'">
+        <div class="quick-icon" style="background:var(--purple-soft);color:var(--purple)">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Final Checker</div>
+          <div class="quick-sub">Audit, edit qty & move</div>
+        </div>
+      </div>
+
+      <div class="quick-card" onclick="location.href='employees.html'">
+        <div class="quick-icon" style="background:#f1f5f9;color:var(--text-main)">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Attendance & Graphs</div>
+          <div class="quick-sub">Monthly export & staff</div>
+        </div>
+      </div>
+
+      <!-- Petty Cash (Enabled for Super User & Admin) -->
+      <div class="quick-card" id="pettyCashQuickCard" onclick="location.href='petty_cash.html'" style="display:none;">
+        <div class="quick-icon" style="background:#ecfdf5;color:#059669">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Petty Cash</div>
+          <div class="quick-sub">Cash balance & records</div>
+        </div>
+      </div>
+
+      <!-- Suppliers & Buyers Finance (Enabled for Super Users) -->
+      <div class="quick-card" id="suppliersQuickCard" onclick="location.href='suppliers.html'" style="display:none;">
+        <div class="quick-icon" style="background:#f0f9ff;color:#0369a1">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Suppliers</div>
+          <div class="quick-sub">Purchases & Payables</div>
+        </div>
+      </div>
+
+      <div class="quick-card" id="buyersQuickCard" onclick="location.href='buyers.html'" style="display:none;">
+        <div class="quick-icon" style="background:#ecfdf5;color:#059669">
+          <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Buyers</div>
+          <div class="quick-sub">Sales & Receivables</div>
+        </div>
+      </div>
+
+      <div class="quick-card" onclick="location.href='customer_items.html'">
+        <div class="quick-icon" style="background:var(--gold-soft);color:var(--gold-dark)">
+          <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Customer Ready</div>
+          <div class="quick-sub">Export pack PDF</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Grading Activity -->
+    <div style="margin-top:14px;margin-bottom:20px">
+      <div class="sec-head">
+        <div class="sec-title">Recent Grading Batches</div>
+        <button onclick="location.href='grading.html'" style="background:none;border:none;color:var(--burgundy);font-size:12px;font-weight:700;cursor:pointer">View All &rarr;</button>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm)" id="recentList">
+        <div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Loading recent activity...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Bottom Navigation Bar -->
+<div id="appDoubleNav" class="double-nav-container"></div>
+
+<div class="toast" id="toast"></div>
+
+<script src="shared.js"></script>
+<script>
+// Auth Gate: don't open app until user can login
+if (!requireAuth()) {
+  throw new Error("Auth Required");
+}
+
+// Smooth numeric counter animation
+function rhAnimateValue(id, start, end, duration, suffix = '') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (isNaN(end)) {
+    el.textContent = end + suffix;
+    return;
+  }
+  const range = end - start;
+  if (range === 0) {
+    el.textContent = end.toLocaleString() + suffix;
+    return;
+  }
+  const startTime = performance.now();
+  function update(currentTime) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = Math.floor(start + range * ease);
+    el.textContent = current.toLocaleString() + suffix;
+    if (progress < 1) {
+      requestAnimationFrame(update);
+    } else {
+      el.textContent = end.toLocaleString() + suffix;
+    }
+  }
+  requestAnimationFrame(update);
+}
+
+async function init() {
+  showLoader();
+  initRole('dashboard');
+
+  const now = new Date();
+  const role = getRole();
+  const user = getCurrentUser();
+  const displayName = user ? user.name : getRoleName(role);
+
+  document.getElementById('heroName').textContent = displayName;
+  document.getElementById('heroDate').textContent = now.toLocaleDateString('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  });
+
+  // Enable Petty Cash for Super User & Admin
+  if (canAccessPettyCash()) {
+    const pcCard = document.getElementById('pettyCashQuickCard');
+    if (pcCard) pcCard.style.display = 'flex';
+  }
+
+  // Enable Finance modules for Super Users
+  if (canAccessFinance()) {
+    const suppCard = document.getElementById('suppliersQuickCard');
+    const buyCard = document.getElementById('buyersQuickCard');
+    if (suppCard) suppCard.style.display = 'flex';
+    if (buyCard) buyCard.style.display = 'flex';
+  }
+
+  try {
+    const [abItems, customerItems, gradingRecords, attendanceRecords, employees] = await Promise.all([
+      sbGet('ab_grade_items'),
+      sbGet('customer_items'),
+      sbGet('grading_records'),
+      sbGet('attendance_records'),
+      sbGet('employees')
+    ]);
+
+    // Total AB Grade pieces
+    const abPcs = (abItems || []).reduce((acc, x) => acc + (parseInt(x.pcs) || 0), 0);
+    rhAnimateValue('s_ab_grade', 0, abPcs, 900);
+
+    // Total Customer Ready pieces
+    const custPcs = (customerItems || []).reduce((acc, x) => acc + (parseInt(x.qty) || 0), 0);
+    rhAnimateValue('s_customer_items', 0, custPcs, 900);
+
+    // Today's grading records
+    const todayStr = now.toISOString().slice(0, 10);
+    const todayGrading = (gradingRecords || []).filter(x => x.created_at && x.created_at.startsWith(todayStr));
+    const todayPcs = todayGrading.reduce((acc, x) => acc + (parseInt(x.total_pcs) || 0), 0);
+    
+    if (todayPcs > 0) {
+      rhAnimateValue('s_graded_pcs', 0, todayPcs, 800, ' pcs');
+    } else {
+      document.getElementById('s_graded_pcs').textContent = todayGrading.length + ' batches';
+    }
+    document.getElementById('s_grading_summary').textContent = todayGrading.length + ' batches logged today';
+
+    // QA Approval Rate
+    const evaluated = (gradingRecords || []).filter(x => x.status === 'Approved' || x.status === 'Approved & Moved' || x.status === 'Rejected');
+    if (evaluated.length > 0) {
+      const approved = evaluated.filter(x => x.status === 'Approved' || x.status === 'Approved & Moved').length;
+      const rate = Math.round((approved / evaluated.length) * 100);
+      rhAnimateValue('s_qa_rate', 0, rate, 800, '%');
+      document.getElementById('s_approval_status').textContent = approved + ' of ' + evaluated.length + ' approved';
+    } else {
+      document.getElementById('s_qa_rate').textContent = '100%';
+      document.getElementById('s_approval_status').textContent = 'Audit Standard';
+    }
+
+    // ── ATTENDANCE: EXCLUDE SUPER USER & ADMINISTRATOR ────────────────
+    // Step 1: Build operational staff list from employees table
+    let operationalStaff = (employees || []).filter(e => isOperationalStaff(e.role));
+
+    // Step 2: If employees list is empty/failed, derive from attendance records (by role field)
+    if (operationalStaff.length === 0) {
+      const attWithRoles = (attendanceRecords || []).filter(x => x.role && isOperationalStaff(x.role));
+      const uniqueNames = [...new Set(attWithRoles.map(x => x.employee_name).filter(Boolean))];
+      operationalStaff = uniqueNames.map(n => ({ name: n }));
+    }
+
+    const totalOpStaffCount = operationalStaff.length > 0 ? operationalStaff.length : 5;
+    const opIds = new Set(operationalStaff.map(e => e.id).filter(Boolean));
+    const opNames = new Set(operationalStaff.map(e => e.name).filter(Boolean));
+
+    // Step 3: Filter today's attendance — match by role field (most reliable) OR by id/name
+    let todayOpAtt = (attendanceRecords || []).filter(x => {
+      if (x.date !== todayStr) return false;
+      if (x.role) return isOperationalStaff(x.role);          // role field present → use it
+      if (opIds.size > 0 && opIds.has(x.employee_id)) return true;  // match by ID
+      if (opNames.size > 0 && opNames.has(x.employee_name)) return true; // match by name
+      // No role field and no matching employee: include if not explicitly executive
+      return !['admin','super_user','administrator','special'].includes((x.employee_id || '').toLowerCase());
+    });
+
+    // Step 4: If NO records for today yet, check most recent date to show actual state
+    if (todayOpAtt.length === 0) {
+      const allOpAtt = (attendanceRecords || []).filter(x =>
+        x.role ? isOperationalStaff(x.role) : (opIds.has(x.employee_id) || opNames.has(x.employee_name))
+      );
+      if (allOpAtt.length > 0) {
+        const sortedDates = [...new Set(allOpAtt.map(x => x.date))].filter(Boolean).sort().reverse();
+        const latestDate = sortedDates[0];
+        // Only use recent data if it's within the last 2 days (not stale)
+        const twoDaysAgo = new Date(now); twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+        if (latestDate && latestDate >= twoDaysAgo.toISOString().slice(0, 10)) {
+          todayOpAtt = allOpAtt.filter(x => x.date === latestDate);
+        }
+      }
+    }
+
+    const presentCount = todayOpAtt.filter(x => x.status === 'Present' || x.status === 'Half Day').length;
+    const attRate = totalOpStaffCount > 0 ? Math.round((presentCount / totalOpStaffCount) * 100) : 0;
+
+    rhAnimateValue('s_attendance_rate', 0, attRate, 800, '%');
+    document.getElementById('s_attendance_summary').textContent = `${presentCount} of ${totalOpStaffCount} floor staff on duty`;
+
+    // Circular gauge animation
+    const gaugeEl = document.getElementById('gaugePath');
+    const gaugeText = document.getElementById('gaugeCenterText');
+    if (gaugeEl) {
+      setTimeout(() => {
+        gaugeEl.setAttribute('stroke-dasharray', `${attRate}, 100`);
+      }, 200);
+    }
+    if (gaugeText) {
+      rhAnimateValue('gaugeCenterText', 0, attRate, 800, '%');
+    }
+
+    // ── GRAPH 1: RENDER 7-DAY GRADING THROUGHPUT ──────────────────────
+    renderWeeklyGradingGraph(gradingRecords || []);
+
+    // ── GRAPH 2: RENDER STOCK ALLOCATION BALANCE ──────────────────────
+    renderStockRatio(abPcs, custPcs);
+
+    // Render Recent 5 grading batches
+    const recent = (gradingRecords || []).slice(0, 5);
+    const el = document.getElementById('recentList');
+    if (!recent.length) {
+      el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--muted);font-size:13px">No grading entries recorded yet</div>';
+    } else {
+      el.innerHTML = recent.map(x => {
+        const d = x.created_at ? new Date(x.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
+        const isMoved = x.status === 'Approved & Moved';
+        const isApproved = x.status === 'Approved';
+        const isRejected = x.status === 'Rejected';
+        const dotBg = isMoved ? 'var(--green)' : isApproved ? 'var(--blue)' : isRejected ? 'var(--burgundy)' : 'var(--amber)';
+        const badgeClass = isMoved ? 'chip green' : isApproved ? 'chip blue' : isRejected ? 'chip red' : 'chip amber';
+
+        return `<div class="activity-row" onclick="location.href='grading.html'">
+          <div class="activity-dot" style="background:${dotBg}"></div>
+          <div class="activity-info">
+            <div class="activity-info-name">${escapeHtml(x.item_name || 'Graded Batch')} (${x.total_pcs || 0} pcs)</div>
+            <div class="activity-info-sub">Grader: ${escapeHtml(x.grader_name || 'Staff')} &bull; ${escapeHtml(x.lot_no || 'Lot #')} &bull; ${d}</div>
+          </div>
+          <div>
+            <span class="${badgeClass}">${escapeHtml(x.status || 'Pending')}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) {
+    console.error('Dashboard init error:', e);
+  }
+
+  hideLoader();
+}
+
+// ── Weekly Grading & QA Chart Renderer ────────────────────────────────
+function renderWeeklyGradingGraph(records) {
+  const canvas = document.getElementById('gradingChartCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx.scale(dpr, dpr);
+
+  const w = rect.width;
+  const h = rect.height;
+  ctx.clearRect(0, 0, w, h);
+
+  // Build past 7 days data
+  const days = [];
+  const today = new Date();
+  let weekTotalPcs = 0;
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().slice(0, 10);
+    const dayLabel = d.toLocaleDateString('en-GB', { weekday: 'short' });
+
+    const dayRecords = records.filter(r => r.created_at && r.created_at.startsWith(dateStr));
+    let totalPcs = dayRecords.reduce((sum, r) => sum + (parseInt(r.total_pcs) || 0), 0);
+    let approvedPcs = dayRecords.filter(r => r.status && r.status.includes('Approved'))
+                                .reduce((sum, r) => sum + (parseInt(r.total_pcs) || 0), 0);
+
+    // Real data only — no mock injection. Zero means nothing graded that day.
+    weekTotalPcs += totalPcs;
+    days.push({ label: dayLabel, date: dateStr, total: totalPcs, approved: approvedPcs });
+  }
+
+  if (weekTotalPcs === 0) {
+    document.getElementById('chartWeekTotal').textContent = `0 pcs (7D Total)`;
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No grading activity recorded this week', w / 2, h / 2 - 10);
+    ctx.font = '11px sans-serif';
+    ctx.fillText('Records will appear once batches are logged', w / 2, h / 2 + 10);
+    return;
+  }
+  document.getElementById('chartWeekTotal').textContent = `${weekTotalPcs.toLocaleString()} pcs (7D Total)`;
+
+  const paddingLeft = 36;
+  const paddingBottom = 26;
+  const paddingTop = 16;
+  const paddingRight = 14;
+  const chartW = w - paddingLeft - paddingRight;
+  const chartH = h - paddingTop - paddingBottom;
+
+  const maxVal = Math.max(...days.map(d => d.total), 100) * 1.15;
+
+  // Grid lines
+  ctx.strokeStyle = '#f1f5f9';
+  ctx.lineWidth = 1;
+  ctx.font = '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.fillStyle = '#94a3b8';
+  ctx.textAlign = 'right';
+
+  [0, 0.5, 1].forEach(pct => {
+    const val = Math.round(maxVal * pct);
+    const y = paddingTop + chartH - (pct * chartH);
+    ctx.beginPath();
+    ctx.moveTo(paddingLeft, y);
+    ctx.lineTo(w - paddingRight, y);
+    ctx.stroke();
+    ctx.fillText(val.toString(), paddingLeft - 6, y + 3);
+  });
+
+  const gap = chartW / days.length;
+  const barWidth = Math.min(26, gap * 0.55);
+
+  days.forEach((day, i) => {
+    const x = paddingLeft + (i * gap) + (gap - barWidth) / 2;
+    const barH = (day.total / maxVal) * chartH;
+    const y = paddingTop + chartH - barH;
+
+    // Gradient bar for graded pieces
+    const grad = ctx.createLinearGradient(0, y, 0, paddingTop + chartH);
+    grad.addColorStop(0, '#881337');
+    grad.addColorStop(1, '#be123c');
+
+    ctx.fillStyle = grad;
+    // Rounded top bar
+    ctx.beginPath();
+    const r = 4;
+    ctx.moveTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.arcTo(x + barWidth, y, x + barWidth, y + r, r);
+    ctx.lineTo(x + barWidth, paddingTop + chartH);
+    ctx.lineTo(x, paddingTop + chartH);
+    ctx.closePath();
+    ctx.fill();
+
+    // Value on top of bar
+    ctx.fillStyle = '#475569';
+    ctx.font = 'bold 9.5px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(day.total.toString(), x + barWidth / 2, y - 5);
+
+    // X axis day label
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px sans-serif';
+    ctx.fillText(day.label, x + barWidth / 2, h - 8);
+  });
+
+  // Approved QA target curve
+  ctx.beginPath();
+  ctx.strokeStyle = '#059669';
+  ctx.lineWidth = 2.5;
+
+  days.forEach((day, i) => {
+    const x = paddingLeft + (i * gap) + gap / 2;
+    const y = paddingTop + chartH - ((day.approved) / maxVal) * chartH;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Dots on curve
+  days.forEach((day, i) => {
+    const x = paddingLeft + (i * gap) + gap / 2;
+    const y = paddingTop + chartH - ((day.approved) / maxVal) * chartH;
+    ctx.beginPath();
+    ctx.arc(x, y, 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.strokeStyle = '#059669';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+// ── Stock Ratio & Allocation Renderer ─────────────────────────────────
+function renderStockRatio(abPcs, custPcs) {
+  const total = abPcs + custPcs;
+  const abPct = total > 0 ? Math.round((abPcs / total) * 100) : 50;
+  const custPct = total > 0 ? (100 - abPct) : 50;
+
+  document.getElementById('totalStockPieces').textContent = `Total: ${total.toLocaleString()} pcs`;
+  
+  const barAb = document.getElementById('barAbGrade');
+  const barCust = document.getElementById('barCustomer');
+  if (barAb) barAb.style.width = abPct + '%';
+  if (barCust) barCust.style.width = custPct + '%';
+
+  rhAnimateValue('ratioAbCount', 0, abPcs, 800);
+  rhAnimateValue('ratioCustCount', 0, custPcs, 800);
+
+  document.getElementById('ratioAbPct').textContent = abPct + '%';
+  document.getElementById('ratioCustPct').textContent = custPct + '%';
+}
+
+init();
+</script>
+</body>
+</html>
