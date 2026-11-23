@@ -80,6 +80,7 @@ html, body {
   line-height: 1.5;
   overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 a {
@@ -92,9 +93,12 @@ a {
   min-height: 100dvh;
   padding-bottom: calc(var(--nav-h) + 24px);
   max-width: 560px;
+  width: 100%;
   margin: 0 auto;
   background: var(--surface);
   position: relative;
+  overflow-x: hidden;
+  box-sizing: border-box;
 }
 
 @media (min-width: 640px) {
@@ -455,8 +459,6 @@ body.nav-expanded .page {
 }
 body.nav-folded .page {
   padding-bottom: 96px !important;
-}
-  padding-bottom: 92px !important;
 }
 
 /* Content Area */
@@ -1080,9 +1082,17 @@ body.nav-folded .page {
 /* Quick Access Grid */
 .quick-links {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (max-width: 340px) {
+  .quick-links {
+    grid-template-columns: 1fr;
+  }
 }
 
 .quick-card {
@@ -1096,6 +1106,14 @@ body.nav-folded .page {
   cursor: pointer;
   box-shadow: var(--shadow-xs);
   transition: all 0.15s;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.quick-card > div:not(.quick-icon) {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .quick-card:hover {
@@ -1132,12 +1150,18 @@ body.nav-folded .page {
   font-size: 13px;
   font-weight: 700;
   color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .quick-sub {
   font-size: 11px;
   color: var(--muted);
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Luxury Soft Loader */
@@ -1742,6 +1766,8 @@ body.nav-expanded-finance .page {
   background: #ffffff !important;
   transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
   cursor: pointer;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
 }
 
 .quick-card:hover {
