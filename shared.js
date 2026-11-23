@@ -606,33 +606,54 @@ async function sbReq(table, method, body, filter) {
       headers['Prefer'] = 'return=representation';
     }
 
+    let writeBody = (method === 'POST' || method === 'PATCH') && body ? Object.assign({}, body) : body;
     try {
-      const res = await fetch(url, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined
-      });
+      for (let attempt = 0; attempt < 12; attempt++) {
+        const res = await fetch(url, {
+          method,
+          headers,
+          body: writeBody ? JSON.stringify(writeBody) : undefined
+        });
 
-      if (res.ok) {
-        if (method === 'DELETE') return true;
-        const txt = await res.text();
-        const data = txt ? JSON.parse(txt) : true;
-        // Keep local cache mirrored
-        if (method === 'GET' && Array.isArray(data)) {
-          saveLocalTable(table, data);
+        if (res.ok) {
+          if (method === 'DELETE') return true;
+          const txt = await res.text();
+          const data = txt ? JSON.parse(txt) : true;
+          // Keep local cache mirrored
+          if (method === 'GET' && Array.isArray(data)) {
+            saveLocalTable(table, data);
+          }
+          return data;
         }
-        return data;
-      } else {
+
         const errText = await res.text();
-        // PGRST205: table not created yet in schema cache
-        console.warn(`Supabase notice on [${table}]:`, errText);
+        let errMsg = errText;
+        try { const ej = JSON.parse(errText); errMsg = ej.message || ej.hint || ej.details || errText; } catch(e) {}
+
+        // Live tables can lag behind the app schema (e.g. buyers.company).
+        // Drop the unknown column and retry so the rest of the row still saves.
+        const missingCol = (errMsg.match(/Could not find the '([^']+)' column/) || [])[1];
+        if ((method === 'POST' || method === 'PATCH') && missingCol && writeBody && Object.prototype.hasOwnProperty.call(writeBody, missingCol)) {
+          console.warn('Supabase schema mismatch on [' + table + ']: dropping column "' + missingCol + '" and retrying');
+          delete writeBody[missingCol];
+          continue;
+        }
+
+        if (method !== 'GET') {
+          console.error(`Supabase [${method}] error on [${table}] (HTTP ${res.status}):`, errMsg);
+          throw new Error('Supabase: ' + errMsg);
+        }
+        console.warn(`Supabase GET notice on [${table}]:`, errMsg);
+        break;
       }
     } catch(err) {
-      console.warn('Network issue reaching Supabase, utilizing cached store:', err);
+      // Re-throw write errors so caller can surface them
+      if (method !== 'GET') throw err;
+      console.warn('Network issue reaching Supabase, utilizing cached store:', err.message);
     }
   }
 
-  // 2. Local Storage Emulation Adapter
+  // 2. Local Storage Emulation Adapter (only used when Supabase is not connected, or for GET fallbacks)
   const localData = getLocalTable(table);
   if (method === 'GET') {
     if (filter) {
@@ -1170,6 +1191,8 @@ if (typeof document !== 'undefined') {
 }
 
 // Ã¢â€â‚¬Ã¢â€â‚¬ Luxury Loader Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+let _loaderSafetyTimer = null;
+
 function showLoader() {
   if (document.getElementById('tk-loader')) return;
   const el = document.createElement('div');
@@ -1178,14 +1201,34 @@ function showLoader() {
     + '<div class="ldr-ring"></div>'
     + '<div class="ldr-text">Rags Heaven</div>';
   document.body.appendChild(el);
+
+  // Auto-dismiss safety guard: Never let loader permanently block touches if network hangs
+  if (_loaderSafetyTimer) clearTimeout(_loaderSafetyTimer);
+  _loaderSafetyTimer = setTimeout(() => {
+    hideLoader();
+  }, 5000);
 }
 
 function hideLoader() {
+  if (_loaderSafetyTimer) {
+    clearTimeout(_loaderSafetyTimer);
+    _loaderSafetyTimer = null;
+  }
   const el = document.getElementById('tk-loader');
   if (!el) return;
-  el.style.transition = 'opacity 0.25s ease-out';
+  // Instantly release touch events so user is never blocked
+  el.style.pointerEvents = 'none';
+  el.style.transition = 'opacity 0.22s ease-out';
   el.style.opacity = '0';
-  setTimeout(() => el.remove(), 260);
+  setTimeout(() => {
+    try {
+      if (el.parentNode) {
+        el.parentNode.removeChild(el);
+      } else if (typeof el.remove === 'function') {
+        el.remove();
+      }
+    } catch(e) {}
+  }, 240);
 }
 
 // Ã¢â€â‚¬Ã¢â€â‚¬ Sign Out Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
@@ -1347,6 +1390,112 @@ CREATE TABLE IF NOT EXISTS public.media_items (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS public.buyers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    company TEXT,
+    contact_person TEXT,
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    city TEXT,
+    country TEXT,
+    currency TEXT DEFAULT 'PKR',
+    opening_balance NUMERIC(14,2) DEFAULT 0,
+    status TEXT DEFAULT 'Active',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS company TEXT;
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS contact_person TEXT;
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS opening_balance NUMERIC(14,2) DEFAULT 0;
+
+CREATE TABLE IF NOT EXISTS public.buyer_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    buyer_id UUID NOT NULL REFERENCES public.buyers(id) ON DELETE CASCADE,
+    type TEXT NOT NULL CHECK (type IN ('purchase', 'sale', 'return', 'adjustment')),
+    invoice_no TEXT NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    items JSONB DEFAULT '[]',
+    subtotal NUMERIC(14,2) DEFAULT 0,
+    transport NUMERIC(14,2) DEFAULT 0,
+    loading NUMERIC(14,2) DEFAULT 0,
+    tax NUMERIC(14,2) DEFAULT 0,
+    discount NUMERIC(14,2) DEFAULT 0,
+    custom_charges JSONB DEFAULT '[]',
+    grand_total NUMERIC(14,2) DEFAULT 0,
+    notes TEXT,
+    created_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.buyer_payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    buyer_id UUID NOT NULL REFERENCES public.buyers(id) ON DELETE CASCADE,
+    transaction_id UUID,
+    receipt_no TEXT NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    amount NUMERIC(14,2) NOT NULL,
+    payment_method TEXT DEFAULT 'Cash',
+    bank_ref TEXT,
+    type TEXT DEFAULT 'receipt' CHECK (type IN ('receipt', 'advance', 'reversal')),
+    notes TEXT,
+    created_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.suppliers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL,
+    company TEXT,
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    city TEXT,
+    currency TEXT DEFAULT 'PKR',
+    opening_balance NUMERIC(14,2) DEFAULT 0,
+    status TEXT DEFAULT 'Active',
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.supplier_transactions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    supplier_id UUID NOT NULL REFERENCES public.suppliers(id) ON DELETE CASCADE,
+    type TEXT NOT NULL CHECK (type IN ('purchase', 'return', 'adjustment')),
+    invoice_no TEXT NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    items JSONB DEFAULT '[]',
+    subtotal NUMERIC(14,2) DEFAULT 0,
+    transport NUMERIC(14,2) DEFAULT 0,
+    loading NUMERIC(14,2) DEFAULT 0,
+    tax NUMERIC(14,2) DEFAULT 0,
+    discount NUMERIC(14,2) DEFAULT 0,
+    custom_charges JSONB DEFAULT '[]',
+    grand_total NUMERIC(14,2) DEFAULT 0,
+    notes TEXT,
+    created_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.supplier_payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    supplier_id UUID NOT NULL REFERENCES public.suppliers(id) ON DELETE CASCADE,
+    transaction_id UUID,
+    receipt_no TEXT NOT NULL,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    amount NUMERIC(14,2) NOT NULL,
+    payment_method TEXT DEFAULT 'Cash',
+    bank_ref TEXT,
+    type TEXT DEFAULT 'payment' CHECK (type IN ('payment', 'advance', 'reversal')),
+    notes TEXT,
+    created_by TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- DISABLE ROW LEVEL SECURITY (RLS) FOR ALL TABLES
 ALTER TABLE public.rh_users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.employees DISABLE ROW LEVEL SECURITY;
@@ -1359,6 +1508,12 @@ ALTER TABLE public.petty_cash DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory_movements DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bells DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.media_items DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.buyers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.buyer_transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.buyer_payments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.suppliers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.supplier_transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.supplier_payments DISABLE ROW LEVEL SECURITY;
 
 GRANT ALL ON ALL TABLES IN SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO anon, authenticated, service_role;

@@ -66,11 +66,12 @@
       </div>
     </div>
 
-    <!-- 4-Tab Navigation Switcher -->
-    <div class="fin-tabs cols-4">
+    <!-- 5-Tab Navigation Switcher -->
+    <div class="fin-tabs cols-5">
       <button class="fin-tab active" id="tabBtn-buyers" onclick="switchTab('buyers')">🛒 Buyers</button>
       <button class="fin-tab" id="tabBtn-sales" onclick="switchTab('sales')">📦 Record Sale</button>
       <button class="fin-tab" id="tabBtn-receipts" onclick="switchTab('receipts')">💵 Receipt</button>
+      <button class="fin-tab" id="tabBtn-invoices" onclick="switchTab('invoices')">🧾 Invoices & Receipts</button>
       <button class="fin-tab" id="tabBtn-ledger" onclick="switchTab('ledger')">📑 Ledger</button>
     </div>
 
@@ -298,7 +299,47 @@
     </div>
 
     <!-- ══════════════════════════════════════════════════════════════════
-         TAB 4: BUYER LEDGER & STATEMENTS
+         TAB 4: SALES INVOICES & PAYMENT RECEIPTS HISTORY
+         ══════════════════════════════════════════════════════════════════ -->
+    <div id="tab-invoices" class="tab-panel" style="display:none;">
+      <!-- Search & Filters -->
+      <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+          <div>
+            <div class="sec-title" style="margin:0; font-size:14px; color:#065f46;">🧾 Sales Invoices &amp; Receipts History</div>
+            <div style="font-size:11px; color:var(--muted); margin-top:2px;">Search, view item breakdown, recover totals, or reprint any invoice/receipt</div>
+          </div>
+          <div style="font-size:11px; color:#065f46; font-weight:700;" id="invoicesSummaryCount">0 documents</div>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+          <div class="search-wrap" style="flex:2; min-width:200px; margin-bottom:0;">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="invoiceSearchInput" placeholder="Search Invoice # (e.g. INV-00001), Buyer, Item..." oninput="renderInvoicesList()">
+          </div>
+          <div style="flex:1; min-width:160px;">
+            <select id="invoiceBuyerFilter" onchange="renderInvoicesList()" style="width:100%; height:38px; border:1px solid var(--border); border-radius:8px; padding:0 8px; font-size:12px; font-weight:600;">
+              <option value="">-- All Buyers --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Filter Chips -->
+        <div style="display:flex; gap:6px;">
+          <button class="btn-action-sm primary" id="docFilterAll" onclick="setDocTypeFilter('all')">All Documents</button>
+          <button class="btn-action-sm" id="docFilterInvoices" onclick="setDocTypeFilter('invoices')">📦 Invoices Only</button>
+          <button class="btn-action-sm" id="docFilterPayments" onclick="setDocTypeFilter('payments')">💵 Receipts Only</button>
+        </div>
+      </div>
+
+      <!-- Invoices and Receipts List Container -->
+      <div id="invoicesCardsContainer">
+        <div style="padding:30px; text-align:center; color:var(--muted); font-size:13px;">Loading documents...</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════
+         TAB 5: BUYER LEDGER & STATEMENTS
          ══════════════════════════════════════════════════════════════════ -->
     <div id="tab-ledger" class="tab-panel" style="display:none;">
       <div style="background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:14px; margin-bottom:14px;">
@@ -464,6 +505,8 @@ let activeTab = 'buyers';
 let buyerStatusFilter = 'All';
 let editingBuyerId = null;
 let selectedLedgerBuyerId = null;
+let docTypeFilter = 'all';
+let selectedInvoiceBuyerId = null;
 
 // ── Lifecycle Initialization ──────────────────────────────────────────
 async function init() {
@@ -491,6 +534,14 @@ function refreshDocNumbers() {
   document.getElementById('paymentReceiptDocNo').textContent = generateDocNumber('REC');
 }
 
+function normalizeBuyerRow(b) {
+  if (!b || typeof b !== 'object') return b;
+  return Object.assign({}, b, {
+    company: b.company || b.contact_person || '',
+    opening_balance: parseFloat(b.opening_balance) || 0
+  });
+}
+
 async function loadData() {
   try {
     const [buyList, txList, pmList] = await Promise.all([
@@ -498,12 +549,12 @@ async function loadData() {
       sbGet('buyer_transactions'),
       sbGet('buyer_payments')
     ]);
-    buyers = buyList || [];
+    buyers = (buyList || []).map(normalizeBuyerRow);
     buyerTransactions = txList || [];
     buyerPayments = pmList || [];
   } catch(e) {
     console.error("Error loading buyer data:", e);
-    buyers = getLocalTable('buyers');
+    buyers = getLocalTable('buyers').map(normalizeBuyerRow);
     buyerTransactions = getLocalTable('buyer_transactions');
     buyerPayments = getLocalTable('buyer_payments');
   }
@@ -576,6 +627,9 @@ function switchTab(tabId) {
     populateBuyerDropdowns();
   } else if (tabId === 'receipts') {
     populateBuyerDropdowns();
+  } else if (tabId === 'invoices') {
+    populateInvoiceBuyerFilter();
+    renderInvoicesList();
   } else if (tabId === 'ledger') {
     populateBuyerDropdowns();
     if (selectedLedgerBuyerId) {
@@ -647,8 +701,9 @@ function renderBuyerCards() {
           <div style="font-size:11px; color:var(--muted);">
             Sales: <b>${cur} ${bal.sales.toLocaleString()}</b> &bull; Received: <b style="color:#059669;">${cur} ${bal.receipts.toLocaleString()}</b>
           </div>
-          <div style="display:flex; gap:4px;">
+          <div style="display:flex; gap:4px; flex-wrap:wrap;">
             <button class="btn-action-sm primary" title="View Ledger" onclick="openBuyerLedger('${b.id}')">📑 Ledger</button>
+            <button class="btn-action-sm" title="View Invoices & Receipts" style="background:#ecfdf5; color:#047857; border-color:#a7f3d0;" onclick="openBuyerInvoices('${b.id}')">🧾 Invoices</button>
             <button class="btn-action-sm" title="Add Sale" onclick="goToAddSale('${b.id}')">+ Sale</button>
             <button class="btn-action-sm success" title="Record Receipt" onclick="goToAddReceipt('${b.id}')">💵 Receipt</button>
             <button class="btn-action-sm" title="Edit Buyer" onclick="openEditBuyerModal('${b.id}')">✏</button>
@@ -708,9 +763,11 @@ async function saveBuyerRecord() {
     return;
   }
 
+  const company = document.getElementById('buyCompany').value.trim();
   const payload = {
     name,
-    company: document.getElementById('buyCompany').value.trim(),
+    company,
+    contact_person: company,
     currency: document.getElementById('buyCurrency').value || 'PKR',
     phone: document.getElementById('buyPhone').value.trim(),
     city: document.getElementById('buyCity').value.trim(),
@@ -727,12 +784,15 @@ async function saveBuyerRecord() {
     if (editingBuyerId) {
       await sbUpdate('buyers', editingBuyerId, payload);
       const idx = buyers.findIndex(x => x.id == editingBuyerId);
-      if (idx !== -1) buyers[idx] = Object.assign({}, buyers[idx], payload);
+      if (idx !== -1) buyers[idx] = normalizeBuyerRow(Object.assign({}, buyers[idx], payload));
       showToast('Buyer profile updated');
     } else {
       payload.created_at = new Date().toISOString();
+      payload.status = 'Active';
       const res = await sbInsert('buyers', payload);
-      if (res && res.length) buyers.unshift(res[0]);
+      // res may be an array [row], a single object, or null — handle all cases
+      const saved = Array.isArray(res) ? res[0] : (res && typeof res === 'object' && res.id ? res : null);
+      buyers.unshift(normalizeBuyerRow(saved || Object.assign({ id: 'local_' + Date.now() }, payload)));
       showToast('Buyer created successfully');
     }
 
@@ -742,7 +802,7 @@ async function saveBuyerRecord() {
     updateFinancialHero();
   } catch(err) {
     console.error(err);
-    showToast('Failed to save buyer profile', true);
+    showToast('Failed to save buyer: ' + (err.message || 'unknown error'), true);
   }
   hideLoader();
 }
@@ -934,7 +994,7 @@ async function saveSaleTransaction(autoPrint = false) {
 
   const payload = {
     buyer_id: buyerId,
-    type: 'sale',
+    type: 'purchase',
     invoice_no: invoiceNo,
     date: document.getElementById('saleDate').value || new Date().toISOString().slice(0, 10),
     items,
@@ -976,7 +1036,7 @@ async function saveSaleTransaction(autoPrint = false) {
     }
   } catch(e) {
     console.error(e);
-    showToast('Failed to record sales invoice', true);
+    showToast('Failed to save invoice: ' + (e.message || 'unknown error'), true);
   }
   hideLoader();
 }
@@ -1105,7 +1165,7 @@ async function saveBuyerReceipt(autoPrint = false) {
     }
   } catch(e) {
     console.error(e);
-    showToast('Failed to record customer receipt', true);
+    showToast('Failed to save receipt: ' + (e.message || 'unknown error'), true);
   }
   hideLoader();
 }
@@ -1244,6 +1304,249 @@ function printOutstandingAllBuyersStatement() {
   const decorated = getDecoratedBuyers();
   const htmlDoc = buildOutstandingStatement(decorated, 'buyers');
   previewDocument(htmlDoc, 'All Buyers Outstanding Balance Statement');
+}
+
+// ── TAB 4: Sales Invoices & Payment Receipts History ───────────────────
+function setDocTypeFilter(type) {
+  docTypeFilter = type;
+  document.querySelectorAll('#docFilterAll, #docFilterInvoices, #docFilterPayments').forEach(b => b.classList.remove('primary'));
+  if (type === 'all') document.getElementById('docFilterAll').classList.add('primary');
+  if (type === 'invoices') document.getElementById('docFilterInvoices').classList.add('primary');
+  if (type === 'payments') document.getElementById('docFilterPayments').classList.add('primary');
+  renderInvoicesList();
+}
+
+function populateInvoiceBuyerFilter() {
+  const sel = document.getElementById('invoiceBuyerFilter');
+  if (!sel) return;
+  const curr = selectedInvoiceBuyerId || sel.value;
+  sel.innerHTML = '<option value="">-- All Buyers --</option>' +
+    buyers.map(b => `<option value="${b.id}" ${b.id == curr ? 'selected' : ''}>${escapeHtml(b.name)}${b.company ? ' (' + escapeHtml(b.company) + ')' : ''}</option>`).join('');
+  if (selectedInvoiceBuyerId) {
+    sel.value = selectedInvoiceBuyerId;
+  }
+}
+
+function openBuyerInvoices(buyerId) {
+  selectedInvoiceBuyerId = buyerId;
+  switchTab('invoices');
+}
+
+function renderInvoicesList() {
+  const query = (document.getElementById('invoiceSearchInput').value || '').toLowerCase().trim();
+  const buyerFilter = document.getElementById('invoiceBuyerFilter').value;
+  const container = document.getElementById('invoicesCardsContainer');
+  if (!container) return;
+
+  const docs = [];
+
+  // 1. Gather invoices
+  if (docTypeFilter === 'all' || docTypeFilter === 'invoices') {
+    buyerTransactions.forEach(tx => {
+      const b = buyers.find(x => x.id == tx.buyer_id) || {};
+      docs.push({
+        type: 'invoice',
+        id: tx.id,
+        ref: tx.invoice_no || 'SAL-INVOICE',
+        date: tx.date || (tx.created_at ? tx.created_at.slice(0, 10) : ''),
+        buyer: b,
+        amount: parseFloat(tx.grand_total) || 0,
+        currency: b.currency || 'PKR',
+        txObj: tx
+      });
+    });
+  }
+
+  // 2. Gather receipts
+  if (docTypeFilter === 'all' || docTypeFilter === 'payments') {
+    buyerPayments.forEach(pm => {
+      const b = buyers.find(x => x.id == pm.buyer_id) || {};
+      docs.push({
+        type: 'receipt',
+        id: pm.id,
+        ref: pm.receipt_no || 'REC-RECEIPT',
+        date: pm.date || (pm.created_at ? pm.created_at.slice(0, 10) : ''),
+        buyer: b,
+        amount: parseFloat(pm.amount) || 0,
+        currency: b.currency || 'PKR',
+        pmObj: pm
+      });
+    });
+  }
+
+  // Sort descending by date
+  docs.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+
+  // Filter
+  const filtered = docs.filter(doc => {
+    if (buyerFilter && doc.buyer.id != buyerFilter) return false;
+    if (!query) return true;
+
+    const refMatch = (doc.ref || '').toLowerCase().includes(query);
+    const buyerMatch = (doc.buyer.name || '').toLowerCase().includes(query) || (doc.buyer.company || '').toLowerCase().includes(query);
+    const dateMatch = (doc.date || '').includes(query);
+    
+    // Search within line items if invoice
+    let itemMatch = false;
+    if (doc.txObj && Array.isArray(doc.txObj.items)) {
+      itemMatch = doc.txObj.items.some(it => (it.desc || '').toLowerCase().includes(query));
+    }
+    const notesMatch = doc.txObj ? (doc.txObj.notes || '').toLowerCase().includes(query) : (doc.pmObj ? (doc.pmObj.notes || '').toLowerCase().includes(query) : false);
+
+    return refMatch || buyerMatch || dateMatch || itemMatch || notesMatch;
+  });
+
+  const countEl = document.getElementById('invoicesSummaryCount');
+  if (countEl) countEl.textContent = `${filtered.length} document${filtered.length === 1 ? '' : 's'}`;
+
+  if (!filtered.length) {
+    container.innerHTML = `<div style="padding:40px 20px; text-align:center; color:var(--muted); background:#fff; border-radius:12px; border:1px dashed var(--border);">
+      No sales invoices or payment receipts found matching your criteria.
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(doc => {
+    if (doc.type === 'invoice') {
+      const tx = doc.txObj;
+      const b = doc.buyer;
+      const cur = doc.currency;
+      const items = Array.isArray(tx.items) ? tx.items : [];
+      const itemsCount = items.length;
+
+      return `
+        <div class="doc-card" style="border-left:4px solid #059669;">
+          <div class="doc-card-head">
+            <div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                <span class="doc-ref-badge" style="color:#065f46; background:#ecfdf5; border-color:#a7f3d0;">${escapeHtml(doc.ref)}</span>
+                <span class="chip green" style="font-size:10px;">SALES INVOICE</span>
+              </div>
+              <div class="doc-party">${escapeHtml(b.name || 'Unknown Buyer')}${b.company ? ' <span style="font-weight:400;color:var(--muted);font-size:11px;">(' + escapeHtml(b.company) + ')</span>' : ''}</div>
+              <div class="doc-meta">
+                <span>📅 ${doc.date || '-'}</span>
+                <span>📦 ${itemsCount} article${itemsCount === 1 ? '' : 's'}</span>
+                ${tx.created_by ? `<span>👤 By ${escapeHtml(tx.created_by)}</span>` : ''}
+              </div>
+            </div>
+            <div>
+              <div class="doc-amount" style="color:#059669;">${cur} ${doc.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+              <div style="font-size:10px; color:var(--muted); text-align:right;">Total Invoiced</div>
+            </div>
+          </div>
+
+          <!-- Items Breakdown Preview -->
+          <div class="doc-breakdown-box" style="background:#f0fdf4; border-color:#bbf7d0;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-weight:700; color:#064e3b; font-size:11.5px; border-bottom:1px solid #bbf7d0; padding-bottom:4px; margin-bottom:4px;">
+              <span>Garment Articles &amp; Quantity Breakdown</span>
+              <span>Subtotal: ${cur} ${(parseFloat(tx.subtotal) || doc.amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>
+            </div>
+            <table class="doc-items-list">
+              <thead>
+                <tr>
+                  <th>Article Description</th>
+                  <th style="text-align:center;">Qty</th>
+                  <th style="text-align:right;">Rate</th>
+                  <th style="text-align:right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${items.map(it => `
+                  <tr>
+                    <td style="font-weight:600; color:var(--text-main);">${escapeHtml(it.desc || it.name || 'Garment Item')}</td>
+                    <td style="text-align:center; font-weight:700; color:#059669;">${it.qty || 0}</td>
+                    <td style="text-align:right; color:var(--muted);">${cur} ${(parseFloat(it.rate) || 0).toLocaleString()}</td>
+                    <td style="text-align:right; font-weight:700; color:#064e3b;">${cur} ${(parseFloat(it.amount) || ((it.qty || 0) * (it.rate || 0))).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <!-- Additional charges row if any -->
+            ${((parseFloat(tx.transport) || 0) > 0 || (parseFloat(tx.tax) || 0) > 0 || (parseFloat(tx.discount) || 0) > 0) ? `
+              <div style="display:flex; gap:12px; margin-top:8px; padding-top:6px; border-top:1px dashed #86efac; font-size:10.5px; color:var(--muted); flex-wrap:wrap;">
+                ${(parseFloat(tx.transport) || 0) > 0 ? `<span>Shipping: <b>${cur} ${parseFloat(tx.transport).toLocaleString()}</b></span>` : ''}
+                ${(parseFloat(tx.tax) || 0) > 0 ? `<span>Tax: <b>${cur} ${parseFloat(tx.tax).toLocaleString()}</b></span>` : ''}
+                ${(parseFloat(tx.discount) || 0) > 0 ? `<span style="color:#ef4444;">Discount: <b>-${cur} ${parseFloat(tx.discount).toLocaleString()}</b></span>` : ''}
+              </div>
+            ` : ''}
+
+            ${tx.notes ? `<div style="font-size:11px; color:#334155; margin-top:6px; font-style:italic;">📝 Notes: ${escapeHtml(tx.notes)}</div>` : ''}
+          </div>
+
+          <div class="doc-actions">
+            <button class="btn-action-sm primary" style="background:#059669; color:#fff;" onclick="reprintSalesInvoice('${tx.id}')">
+              🖨 View / Reprint Sales Invoice (PDF)
+            </button>
+            <button class="btn-action-sm" onclick="openBuyerLedger('${b.id}')">
+              📑 View in Ledger
+            </button>
+          </div>
+        </div>
+      `;
+    } else {
+      // Payment receipt from buyer
+      const pm = doc.pmObj;
+      const b = doc.buyer;
+      const cur = doc.currency;
+
+      return `
+        <div class="doc-card payment" style="border-left:4px solid #0284c7;">
+          <div class="doc-card-head">
+            <div>
+              <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                <span class="doc-ref-badge" style="color:#0369a1; background:#f0f9ff; border-color:#bae6fd;">${escapeHtml(doc.ref)}</span>
+                <span class="chip blue" style="font-size:10px;">PAYMENT RECEIPT</span>
+              </div>
+              <div class="doc-party">${escapeHtml(b.name || 'Unknown Buyer')}${b.company ? ' <span style="font-weight:400;color:var(--muted);font-size:11px;">(' + escapeHtml(b.company) + ')</span>' : ''}</div>
+              <div class="doc-meta">
+                <span>📅 ${doc.date || '-'}</span>
+                <span>💵 Mode: <b>${escapeHtml(pm.payment_method || 'Cash')}</b></span>
+                ${pm.bank_ref ? `<span>Ref: ${escapeHtml(pm.bank_ref)}</span>` : ''}
+              </div>
+            </div>
+            <div>
+              <div class="doc-amount" style="color:#0284c7;">${cur} ${doc.amount.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+              <div style="font-size:10px; color:var(--muted); text-align:right;">Received</div>
+            </div>
+          </div>
+
+          ${pm.notes ? `<div style="font-size:11px; color:#334155; margin-top:4px; font-style:italic; background:#f0f9ff; padding:6px 10px; border-radius:6px;">📝 Notes: ${escapeHtml(pm.notes)}</div>` : ''}
+
+          <div class="doc-actions">
+            <button class="btn-action-sm primary" style="background:#0284c7; color:#fff;" onclick="reprintBuyerReceipt('${pm.id}')">
+              🖨 View / Reprint Official Receipt (PDF)
+            </button>
+            <button class="btn-action-sm" onclick="openBuyerLedger('${b.id}')">
+              📑 View in Ledger
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  }).join('');
+}
+
+function reprintSalesInvoice(txId) {
+  const tx = buyerTransactions.find(t => t.id == txId);
+  if (!tx) {
+    showToast('Sales invoice not found', true);
+    return;
+  }
+  const b = buyers.find(x => x.id == tx.buyer_id) || {};
+  const htmlDoc = buildSalesInvoice(b, tx, []);
+  previewDocument(htmlDoc, `Sales Invoice - ${tx.invoice_no}`);
+}
+
+function reprintBuyerReceipt(pmId) {
+  const pm = buyerPayments.find(p => p.id == pmId);
+  if (!pm) {
+    showToast('Payment receipt not found', true);
+    return;
+  }
+  const b = buyers.find(x => x.id == pm.buyer_id) || {};
+  const htmlDoc = buildPaymentReceipt(b, pm, 0, 0);
+  previewDocument(htmlDoc, `Payment Receipt - ${pm.receipt_no}`);
 }
 
 // ── Run Lifecycle Initialization ──────────────────────────────────────

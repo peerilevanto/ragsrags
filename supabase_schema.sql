@@ -295,10 +295,12 @@ CREATE TABLE IF NOT EXISTS public.buyers (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name             TEXT NOT NULL,
     company          TEXT,
+    contact_person   TEXT,
     phone            TEXT,
     email            TEXT,
     address          TEXT,
     city             TEXT,
+    country          TEXT,
     currency         TEXT DEFAULT 'PKR',
     opening_balance  NUMERIC(14,2) DEFAULT 0,
     status           TEXT DEFAULT 'Active',
@@ -306,6 +308,11 @@ CREATE TABLE IF NOT EXISTS public.buyers (
     created_at       TIMESTAMPTZ DEFAULT NOW(),
     updated_at       TIMESTAMPTZ DEFAULT NOW()
 );
+
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS company TEXT;
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS contact_person TEXT;
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS country TEXT;
+ALTER TABLE public.buyers ADD COLUMN IF NOT EXISTS opening_balance NUMERIC(14,2) DEFAULT 0;
 
 -- ─── 5. BUYER TRANSACTIONS ────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.buyer_transactions (

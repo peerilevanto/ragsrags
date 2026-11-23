@@ -130,14 +130,11 @@ function _documentStyles() {
     .doc-page {
       background: #ffffff;
       width: 210mm;
-      min-height: 297mm;
       margin: 0 auto;
       padding: 22mm 20mm;
       box-shadow: 0 4px 24px rgba(0,0,0,0.08);
       position: relative;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      display: block;
     }
 
     /* ── Header ── */
@@ -416,10 +413,108 @@ function _documentStyles() {
       font-size: 9.5px;
       color: #a1a1aa;
     }
+
+    /* ── Supplier Theme: Executive Navy & Burgundy ── */
+    .theme-supplier .header-doc-badge {
+      background: #0f2744 !important;
+      color: #fde047 !important;
+      border: 1px solid #b48a3c !important;
+      box-shadow: 0 2px 8px rgba(15, 39, 68, 0.2);
+    }
+    .theme-supplier .doc-table th {
+      background: #0f2744 !important;
+      color: #ffffff !important;
+      border-color: #0f2744 !important;
+    }
+    .theme-supplier .party-box.party-primary {
+      background: #f0f7ff !important;
+      border: 1.5px solid #bfdbfe !important;
+    }
+    .theme-supplier .totals-row.grand-total {
+      background: #0f2744 !important;
+      color: #fde047 !important;
+      border-top: 2px solid #b48a3c !important;
+    }
+    .theme-supplier .balance-status-strip {
+      border: 1.5px solid #0f2744 !important;
+      background: #f8fafc !important;
+    }
+
+    /* ── Buyer Theme: Luxury Emerald & Gold Prestige ── */
+    .theme-buyer .header-doc-badge {
+      background: #064e3b !important;
+      color: #fef08a !important;
+      border: 1.5px solid #d4af37 !important;
+      box-shadow: 0 2px 8px rgba(6, 78, 59, 0.2);
+    }
+    .theme-buyer .doc-table th {
+      background: #064e3b !important;
+      color: #ffffff !important;
+      border-color: #064e3b !important;
+    }
+    .theme-buyer .party-box.party-primary {
+      background: #f0fdf4 !important;
+      border: 1.5px solid #bbf7d0 !important;
+    }
+    .theme-buyer .totals-row.grand-total {
+      background: #064e3b !important;
+      color: #fef08a !important;
+      border-top: 2px solid #d4af37 !important;
+    }
+    .theme-buyer .balance-status-strip {
+      border: 1.5px solid #064e3b !important;
+      background: #f0fdf4 !important;
+    }
+
+    /* ── Supplier Payment Voucher (Disbursement Order) ── */
+    .theme-voucher {
+      border-left: 6px solid #881337 !important;
+    }
+    .theme-voucher .header-doc-badge {
+      background: #881337 !important;
+      color: #ffffff !important;
+      border: 1.5px solid #b48a3c !important;
+    }
+
+    /* ── Buyer Official Payment Receipt (Money Received) ── */
+    .theme-receipt {
+      border: 2px double #059669 !important;
+      border-radius: 8px !important;
+      padding: 16px !important;
+    }
+    .theme-receipt .header-doc-badge {
+      background: #059669 !important;
+      color: #ffffff !important;
+      border: 1.5px solid #047857 !important;
+    }
+    .official-receipt-seal {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: #ecfdf5;
+      border: 1.5px dashed #059669;
+      color: #047857;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 0.6px;
+      border-radius: 20px;
+      text-transform: uppercase;
+    }
+    .received-thanks-banner {
+      background: #f0fdf4;
+      border: 1px solid #a7f3d0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin: 12px 0;
+      color: #064e3b;
+      font-size: 11.5px;
+      line-height: 1.5;
+    }
   `;
 }
 
-function _docShell(title, bodyContent) {
+function _docShell(title, bodyContent, themeClass = '') {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -428,7 +523,7 @@ function _docShell(title, bodyContent) {
   <style>${_documentStyles()}</style>
 </head>
 <body>
-  <div class="doc-page">
+  <div class="doc-page ${themeClass}">
     <div>${bodyContent}</div>
     <div class="doc-footer">
       <span>Rags Heaven &bull; Karachi, Pakistan &bull; Tel: ${RH_BRAND.phone}</span>
@@ -440,7 +535,7 @@ function _docShell(title, bodyContent) {
 }
 
 // ── Shared Header Builder ─────────────────────────────────────────────
-function _renderHeader(docTitle, docRef, docDate) {
+function _renderHeader(docTitle, docRef, docDate, subBadge = '') {
   return `
     <div class="doc-header">
       <div class="header-brand">
@@ -454,6 +549,7 @@ function _renderHeader(docTitle, docRef, docDate) {
       </div>
       <div class="header-doc-box">
         <div class="header-doc-badge">${_esc(docTitle)}</div>
+        ${subBadge ? '<div style="font-size:9px; font-weight:700; color:#b48a3c; margin-top:2px; text-transform:uppercase; letter-spacing:0.5px;">' + subBadge + '</div>' : ''}
         <div class="header-doc-ref">${_esc(docRef)}</div>
         <div class="header-doc-date">Date: ${_formatDate(docDate)}</div>
       </div>
@@ -534,12 +630,12 @@ function buildPurchaseInvoice(supplier, transaction, payments) {
   }
 
   const body = `
-    ${_renderHeader('PURCHASE INVOICE', docNo, docDate)}
+    ${_renderHeader('PURCHASE INVOICE', docNo, docDate, 'Supplier Vendor Delivery &bull; Stock Inbound')}
 
     <div class="party-grid">
-      <div class="party-box">
-        <div class="party-box-title">Supplier / Vendor Details</div>
-        <div class="party-name">${_esc(supplier.name || 'Supplier')}</div>
+      <div class="party-box party-primary">
+        <div class="party-box-title" style="color:#0f2744;">Supplier / Vendor Details</div>
+        <div class="party-name" style="color:#0f2744;">${_esc(supplier.name || 'Supplier')}</div>
         <div class="party-detail"><strong>Company:</strong> ${_esc(supplier.company || '-')}</div>
         <div class="party-detail"><strong>Contact:</strong> ${_esc(supplier.phone || '-')}</div>
         <div class="party-detail"><strong>Location:</strong> ${_esc(supplier.city || supplier.address || '-')}</div>
@@ -605,7 +701,7 @@ function buildPurchaseInvoice(supplier, transaction, payments) {
     </div>
   `;
 
-  return _docShell('Purchase Invoice - ' + docNo, body);
+  return _docShell('Purchase Invoice - ' + docNo, body, 'theme-supplier');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -679,12 +775,12 @@ function buildSalesInvoice(buyer, transaction, payments) {
   }
 
   const body = `
-    ${_renderHeader('SALES INVOICE', docNo, docDate)}
+    ${_renderHeader('SALES INVOICE', docNo, docDate, 'Commercial Customer Pack &bull; Outbound Goods')}
 
     <div class="party-grid">
-      <div class="party-box">
-        <div class="party-box-title">Client / Buyer Information</div>
-        <div class="party-name">${_esc(buyer.name || 'Client')}</div>
+      <div class="party-box party-primary">
+        <div class="party-box-title" style="color:#064e3b;">Client / Buyer Information</div>
+        <div class="party-name" style="color:#064e3b;">${_esc(buyer.name || 'Client')}</div>
         <div class="party-detail"><strong>Company:</strong> ${_esc(buyer.company || '-')}</div>
         <div class="party-detail"><strong>Contact:</strong> ${_esc(buyer.phone || '-')}</div>
         <div class="party-detail"><strong>Shipping:</strong> ${_esc(buyer.city || buyer.address || '-')}</div>
@@ -750,11 +846,11 @@ function buildSalesInvoice(buyer, transaction, payments) {
     </div>
   `;
 
-  return _docShell('Sales Invoice - ' + docNo, body);
+  return _docShell('Sales Invoice - ' + docNo, body, 'theme-buyer');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// 3. PAYMENT VOUCHER (To Supplier)
+// 3. PAYMENT VOUCHER (To Supplier - Disbursement Order)
 // ═══════════════════════════════════════════════════════════════════════
 function buildPaymentVoucher(supplier, payment, outstandingBefore, outstandingAfter) {
   supplier = supplier || {};
@@ -766,22 +862,32 @@ function buildPaymentVoucher(supplier, payment, outstandingBefore, outstandingAf
   const amt = parseFloat(payment.amount) || 0;
 
   const body = `
-    ${_renderHeader('PAYMENT VOUCHER', voucherNo, docDate)}
+    ${_renderHeader('PAYMENT DISBURSEMENT VOUCHER', voucherNo, docDate, 'Disbursement Order &bull; Bill Settlement')}
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; background:#fff1f2; border:1.5px solid #be123c; color:#881337; font-weight:800; font-size:10.5px; border-radius:4px; letter-spacing:0.5px; text-transform:uppercase;">
+        ★ OFFICIAL DISBURSEMENT ORDER &bull; SUPPLIER SETTLEMENT
+      </div>
+      <div style="font-size:11px; color:#71717a;">
+        Payment Ref: <strong>${_esc(payment.receipt_no || voucherNo)}</strong>
+      </div>
+    </div>
 
     <div class="party-grid">
-      <div class="party-box">
-        <div class="party-box-title">Paid To (Beneficiary)</div>
-        <div class="party-name">${_esc(supplier.name || 'Supplier')}</div>
+      <div class="party-box party-primary">
+        <div class="party-box-title" style="color:#0f2744;">Paid To (Supplier Beneficiary)</div>
+        <div class="party-name" style="color:#0f2744;">${_esc(supplier.name || 'Supplier')}</div>
         <div class="party-detail"><strong>Company:</strong> ${_esc(supplier.company || '-')}</div>
         <div class="party-detail"><strong>Contact:</strong> ${_esc(supplier.phone || '-')}</div>
-        <div class="party-detail"><strong>Location:</strong> ${_esc(supplier.city || '-')}</div>
+        <div class="party-detail"><strong>Location:</strong> ${_esc(supplier.city || supplier.address || '-')}</div>
+        <div class="party-detail"><strong>Currency:</strong> ${cur}</div>
       </div>
       <div class="party-box">
         <div class="party-box-title">Paid From (Disbursing Entity)</div>
         <div class="party-name">${RH_BRAND.name}</div>
-        <div class="party-detail"><strong>Source:</strong> Main Vault / Bank Account</div>
+        <div class="party-detail"><strong>Source:</strong> Main Accounts Vault / Bank Account</div>
         <div class="party-detail"><strong>Telephone:</strong> ${RH_BRAND.phone}</div>
-        <div class="party-detail"><strong>Disbursed By:</strong> ${_esc(payment.created_by || 'Accounts')}</div>
+        <div class="party-detail"><strong>Disbursed By:</strong> ${_esc(payment.created_by || 'Accounts Department')}</div>
       </div>
     </div>
 
@@ -789,17 +895,18 @@ function buildPaymentVoucher(supplier, payment, outstandingBefore, outstandingAf
       <thead>
         <tr>
           <th>Payment Details &amp; Narration</th>
-          <th style="width:140px;" class="num">Amount Paid</th>
+          <th style="width:160px;" class="num">Amount Disbursed</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>
-            <div style="font-size:12px; font-weight:700; color:#000;">Supplier Bill Payment (${_esc(payment.payment_method || 'Cash')})</div>
-            ${payment.bank_ref ? `<div style="font-size:10.5px; color:#52525b; margin-top:3px;"><strong>Bank Ref / Cheque #:</strong> ${_esc(payment.bank_ref)}</div>` : ''}
-            ${payment.notes ? `<div style="font-size:10.5px; color:#52525b; margin-top:3px;"><strong>Notes:</strong> ${_esc(payment.notes)}</div>` : ''}
+          <td style="padding:14px 12px;">
+            <div style="font-size:13px; font-weight:800; color:#0f2744;">Supplier Bill Settlement (${_esc(payment.payment_method || 'Cash')})</div>
+            ${payment.bank_ref ? `<div style="font-size:11px; color:#52525b; margin-top:4px;"><strong>Bank Reference / Instrument #:</strong> <span style="font-family:monospace; font-weight:700;">${_esc(payment.bank_ref)}</span></div>` : ''}
+            ${payment.notes ? `<div style="font-size:11px; color:#52525b; margin-top:4px;"><strong>Narration:</strong> ${_esc(payment.notes)}</div>` : ''}
+            <div style="font-size:10px; color:#71717a; margin-top:6px; font-style:italic;">Debit effect applied to supplier ledger account balance.</div>
           </td>
-          <td class="num" style="font-size:14px; font-weight:800; color:#000;">
+          <td class="num" style="font-size:16px; font-weight:800; color:#881337; padding:14px 12px;">
             ${formatCurrency(amt, cur)}
           </td>
         </tr>
@@ -808,31 +915,31 @@ function buildPaymentVoucher(supplier, payment, outstandingBefore, outstandingAf
 
     <div class="balance-status-strip">
       <div>
-        <div class="balance-status-label">Account Balance Tracking</div>
-        <div style="font-size:10.5px; color:#52525b;">Dues Before: ${formatCurrency(outstandingBefore || (outstandingAfter + amt), cur)} &bull; Payment Made: ${formatCurrency(amt, cur)}</div>
+        <div class="balance-status-label">Supplier Ledger Balance Tracking</div>
+        <div style="font-size:10.5px; color:#52525b;">Dues Before: ${formatCurrency(outstandingBefore || (outstandingAfter + amt), cur)} &bull; Amount Settled: ${formatCurrency(amt, cur)}</div>
       </div>
-      <div class="balance-status-val">
-        REMAINING DUES: ${formatCurrency(outstandingAfter || 0, cur)}
+      <div class="balance-status-val ${outstandingAfter > 0 ? 'due' : 'cleared'}">
+        REMAINING PAYABLE: ${formatCurrency(outstandingAfter || 0, cur)}
       </div>
     </div>
 
-    <div class="signature-grid" style="margin-top:40px;">
+    <div class="signature-grid" style="margin-top:36px;">
       <div class="signature-box">
-        <div class="signature-title">Disbursed By (Accounts)</div>
-        <div class="signature-sub">Rags Heaven</div>
+        <div class="signature-title">Disbursed By (Accounts Officer)</div>
+        <div class="signature-sub">For Rags Heaven</div>
       </div>
       <div class="signature-box">
-        <div class="signature-title">Received By (Supplier / Vendor)</div>
-        <div class="signature-sub">${_esc(supplier.name || 'Authorized Signature')}</div>
+        <div class="signature-title">Received &amp; Acknowledged By</div>
+        <div class="signature-sub">${_esc(supplier.name || 'Supplier Signature / Stamp')}</div>
       </div>
     </div>
   `;
 
-  return _docShell('Payment Voucher - ' + voucherNo, body);
+  return _docShell('Payment Voucher - ' + voucherNo, body, 'theme-supplier theme-voucher');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// 4. PAYMENT RECEIPT (From Buyer)
+// 4. PAYMENT RECEIPT (From Buyer - Official Collection Receipt)
 // ═══════════════════════════════════════════════════════════════════════
 function buildPaymentReceipt(buyer, payment, outstandingBefore, outstandingAfter) {
   buyer = buyer || {};
@@ -844,20 +951,36 @@ function buildPaymentReceipt(buyer, payment, outstandingBefore, outstandingAfter
   const amt = parseFloat(payment.amount) || 0;
 
   const body = `
-    ${_renderHeader('PAYMENT RECEIPT', receiptNo, docDate)}
+    ${_renderHeader('OFFICIAL PAYMENT RECEIPT', receiptNo, docDate, 'Official Acknowledgment &bull; Collection Confirmed')}
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+      <div class="official-receipt-seal">
+        ✔ OFFICIAL PAYMENT CONFIRMED &bull; SEAL OF RECEIPT
+      </div>
+      <div style="font-size:11px; color:#71717a;">
+        Official Receipt #: <strong>${_esc(receiptNo)}</strong>
+      </div>
+    </div>
+
+    <div class="received-thanks-banner">
+      <strong>Received with thanks from:</strong> <span style="font-weight:800; font-size:12.5px;">${_esc(buyer.name || 'Valued Client')}</span>
+      ${buyer.company ? ` (${_esc(buyer.company)})` : ''}.
+      The sum of <strong style="color:#064e3b;">${formatCurrency(amt, cur)}</strong> has been credited to the customer account with gratitude.
+    </div>
 
     <div class="party-grid">
-      <div class="party-box">
-        <div class="party-box-title">Received From (Client)</div>
-        <div class="party-name">${_esc(buyer.name || 'Client')}</div>
+      <div class="party-box party-primary">
+        <div class="party-box-title" style="color:#064e3b;">Received From (Customer / Client)</div>
+        <div class="party-name" style="color:#064e3b;">${_esc(buyer.name || 'Client')}</div>
         <div class="party-detail"><strong>Company:</strong> ${_esc(buyer.company || '-')}</div>
         <div class="party-detail"><strong>Contact:</strong> ${_esc(buyer.phone || '-')}</div>
         <div class="party-detail"><strong>City:</strong> ${_esc(buyer.city || '-')}</div>
+        <div class="party-detail"><strong>Currency:</strong> ${cur}</div>
       </div>
       <div class="party-box">
-        <div class="party-box-title">Received By (Beneficiary)</div>
+        <div class="party-box-title">Received &amp; Verified By</div>
         <div class="party-name">${RH_BRAND.name}</div>
-        <div class="party-detail"><strong>Account:</strong> Accounts Department</div>
+        <div class="party-detail"><strong>Facility:</strong> Finance &amp; Cash Office</div>
         <div class="party-detail"><strong>Telephone:</strong> ${RH_BRAND.phone}</div>
         <div class="party-detail"><strong>Cashier / Agent:</strong> ${_esc(payment.created_by || 'Staff')}</div>
       </div>
@@ -866,18 +989,19 @@ function buildPaymentReceipt(buyer, payment, outstandingBefore, outstandingAfter
     <table class="doc-table" style="margin-top:10px;">
       <thead>
         <tr>
-          <th>Receipt Particulars &amp; Narration</th>
-          <th style="width:140px;" class="num">Amount Received</th>
+          <th>Receipt Particulars &amp; Channel</th>
+          <th style="width:160px;" class="num">Amount Credited</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>
-            <div style="font-size:12px; font-weight:700; color:#000;">Customer Deposit / Payment Received (${_esc(payment.payment_method || 'Cash')})</div>
-            ${payment.bank_ref ? `<div style="font-size:10.5px; color:#52525b; margin-top:3px;"><strong>Bank Ref / Slip #:</strong> ${_esc(payment.bank_ref)}</div>` : ''}
-            ${payment.notes ? `<div style="font-size:10.5px; color:#52525b; margin-top:3px;"><strong>Narration:</strong> ${_esc(payment.notes)}</div>` : ''}
+          <td style="padding:14px 12px;">
+            <div style="font-size:13px; font-weight:800; color:#064e3b;">Customer Deposit / Payment Received (${_esc(payment.payment_method || 'Cash')})</div>
+            ${payment.bank_ref ? `<div style="font-size:11px; color:#52525b; margin-top:4px;"><strong>Bank Slip / Transfer Ref:</strong> <span style="font-family:monospace; font-weight:700;">${_esc(payment.bank_ref)}</span></div>` : ''}
+            ${payment.notes ? `<div style="font-size:11px; color:#52525b; margin-top:4px;"><strong>Narration:</strong> ${_esc(payment.notes)}</div>` : ''}
+            <div style="font-size:10px; color:#71717a; margin-top:6px; font-style:italic;">Official receipt issued as proof of deposit.</div>
           </td>
-          <td class="num" style="font-size:14px; font-weight:800; color:#059669;">
+          <td class="num" style="font-size:16px; font-weight:800; color:#059669; padding:14px 12px;">
             ${formatCurrency(amt, cur)}
           </td>
         </tr>
@@ -889,24 +1013,24 @@ function buildPaymentReceipt(buyer, payment, outstandingBefore, outstandingAfter
         <div class="balance-status-label">Client Outstanding Balance Tracking</div>
         <div style="font-size:10.5px; color:#52525b;">Debt Before: ${formatCurrency(outstandingBefore || (outstandingAfter + amt), cur)} &bull; Payment Deposited: ${formatCurrency(amt, cur)}</div>
       </div>
-      <div class="balance-status-val">
+      <div class="balance-status-val ${outstandingAfter > 0 ? 'due' : 'cleared'}">
         REMAINING CLIENT DEBT: ${formatCurrency(outstandingAfter || 0, cur)}
       </div>
     </div>
 
-    <div class="signature-grid" style="margin-top:40px;">
+    <div class="signature-grid" style="margin-top:36px;">
       <div class="signature-box">
-        <div class="signature-title">Received By (Accounts)</div>
-        <div class="signature-sub">Rags Heaven</div>
+        <div class="signature-title">Authorized Cashier / Accounts</div>
+        <div class="signature-sub">For Rags Heaven</div>
       </div>
       <div class="signature-box">
-        <div class="signature-title">Depositor / Client Signature</div>
-        <div class="signature-sub">${_esc(buyer.name || 'Client')}</div>
+        <div class="signature-title">Depositor / Customer Confirmation</div>
+        <div class="signature-sub">${_esc(buyer.name || 'Client Signature')}</div>
       </div>
     </div>
   `;
 
-  return _docShell('Payment Receipt - ' + receiptNo, body);
+  return _docShell('Payment Receipt - ' + receiptNo, body, 'theme-buyer theme-receipt');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -966,22 +1090,22 @@ function buildSupplierLedger(supplier, transactions, payments) {
 
     return `<tr>
       <td>${_formatDate(r.date)}</td>
-      <td style="font-weight:700; font-family:monospace;">${_esc(r.ref)}</td>
+      <td style="font-weight:700; font-family:monospace; color:#0f2744;">${_esc(r.ref)}</td>
       <td>${_esc(r.desc)}</td>
       <td class="num" style="color:#be123c; font-weight:700;">${r.debit > 0 ? formatCurrency(r.debit, cur) : '-'}</td>
       <td class="num" style="color:#059669; font-weight:700;">${r.credit > 0 ? formatCurrency(r.credit, cur) : '-'}</td>
-      <td class="num" style="font-weight:800; color:#000;">${formatCurrency(runningBal, cur)}</td>
+      <td class="num" style="font-weight:800; color:#0f2744;">${formatCurrency(runningBal, cur)}</td>
     </tr>`;
   }).join('');
 
   const body = `
-    ${_renderHeader('SUPPLIER LEDGER', 'LEDGER-' + (supplier.id ? supplier.id.slice(0, 6) : '001'), new Date().toISOString())}
+    ${_renderHeader('SUPPLIER FINANCIAL STATEMENT', 'LEDGER-' + (supplier.id ? supplier.id.slice(0, 6) : '001'), new Date().toISOString(), 'Vendor Account History &bull; Complete Ledger')}
 
-    <div class="party-box" style="margin-bottom:14px;">
-      <div class="party-box-title">Supplier Statement of Account</div>
+    <div class="party-box party-primary" style="margin-bottom:14px;">
+      <div class="party-box-title" style="color:#0f2744;">Supplier Statement of Account</div>
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
-          <div class="party-name">${_esc(supplier.name)}</div>
+          <div class="party-name" style="color:#0f2744;">${_esc(supplier.name)}</div>
           <div class="party-detail"><strong>Company:</strong> ${_esc(supplier.company || '-')} &bull; <strong>Phone:</strong> ${_esc(supplier.phone || '-')}</div>
           <div class="party-detail"><strong>Location:</strong> ${_esc(supplier.city || supplier.address || '-')} &bull; <strong>Currency:</strong> ${cur}</div>
         </div>
@@ -1026,7 +1150,7 @@ function buildSupplierLedger(supplier, transactions, payments) {
     </div>
   `;
 
-  return _docShell('Supplier Ledger - ' + (supplier.name || 'Statement'), body);
+  return _docShell('Supplier Ledger - ' + (supplier.name || 'Statement'), body, 'theme-supplier');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1086,22 +1210,22 @@ function buildBuyerLedger(buyer, transactions, payments) {
 
     return `<tr>
       <td>${_formatDate(r.date)}</td>
-      <td style="font-weight:700; font-family:monospace;">${_esc(r.ref)}</td>
+      <td style="font-weight:700; font-family:monospace; color:#064e3b;">${_esc(r.ref)}</td>
       <td>${_esc(r.desc)}</td>
-      <td class="num" style="color:#000; font-weight:700;">${r.debit > 0 ? formatCurrency(r.debit, cur) : '-'}</td>
+      <td class="num" style="color:#0284c7; font-weight:700;">${r.debit > 0 ? formatCurrency(r.debit, cur) : '-'}</td>
       <td class="num" style="color:#059669; font-weight:700;">${r.credit > 0 ? formatCurrency(r.credit, cur) : '-'}</td>
-      <td class="num" style="font-weight:800; color:#000;">${formatCurrency(runningBal, cur)}</td>
+      <td class="num" style="font-weight:800; color:#064e3b;">${formatCurrency(runningBal, cur)}</td>
     </tr>`;
   }).join('');
 
   const body = `
-    ${_renderHeader('BUYER LEDGER', 'LEDGER-' + (buyer.id ? buyer.id.slice(0, 6) : '001'), new Date().toISOString())}
+    ${_renderHeader('BUYER FINANCIAL STATEMENT', 'LEDGER-' + (buyer.id ? buyer.id.slice(0, 6) : '001'), new Date().toISOString(), 'Customer Statement of Account &bull; Receivable History')}
 
-    <div class="party-box" style="margin-bottom:14px;">
-      <div class="party-box-title">Customer Statement of Account</div>
+    <div class="party-box party-primary" style="margin-bottom:14px;">
+      <div class="party-box-title" style="color:#064e3b;">Customer Statement of Account</div>
       <div style="display:flex; justify-content:space-between; align-items:flex-start;">
         <div>
-          <div class="party-name">${_esc(buyer.name)}</div>
+          <div class="party-name" style="color:#064e3b;">${_esc(buyer.name)}</div>
           <div class="party-detail"><strong>Company:</strong> ${_esc(buyer.company || '-')} &bull; <strong>Phone:</strong> ${_esc(buyer.phone || '-')}</div>
           <div class="party-detail"><strong>City:</strong> ${_esc(buyer.city || '-')} &bull; <strong>Currency:</strong> ${cur}</div>
         </div>
@@ -1128,7 +1252,7 @@ function buildBuyerLedger(buyer, transactions, payments) {
 
     <div class="summary-section">
       <div class="totals-box">
-        <div class="totals-row"><span>Total Sales Invoiced:</span><span>${formatCurrency(totalDebit, cur)}</span></div>
+        <div class="totals-row"><span>Total Sales Invoiced:</span><span style="color:#0284c7;">${formatCurrency(totalDebit, cur)}</span></div>
         <div class="totals-row"><span>Total Payments Received:</span><span style="color:#059669;">${formatCurrency(totalCredit, cur)}</span></div>
         <div class="totals-row grand-total"><span>NET RECEIVABLE:</span><span>${formatCurrency(runningBal, cur)}</span></div>
       </div>
@@ -1146,7 +1270,7 @@ function buildBuyerLedger(buyer, transactions, payments) {
     </div>
   `;
 
-  return _docShell('Buyer Ledger - ' + (buyer.name || 'Statement'), body);
+  return _docShell('Buyer Ledger - ' + (buyer.name || 'Statement'), body, 'theme-buyer');
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -1248,19 +1372,26 @@ function previewDocument(htmlString, title) {
       </div>
     </div>
     <div style="flex:1;overflow:auto;padding:24px;display:flex;justify-content:center;background:#18181b;">
-      <iframe id="rh-preview-iframe" style="width:210mm;height:297mm;min-height:100%;border:none;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,0.5);border-radius:4px;"></iframe>
+      <iframe id="rh-preview-iframe" style="width:210mm;min-height:400px;height:auto;border:none;background:#fff;box-shadow:0 10px 40px rgba(0,0,0,0.5);border-radius:4px;"></iframe>
     </div>
   `;
 
   document.body.appendChild(modal);
 
-  // Write HTML directly into the iframe (clean same-origin, images render perfectly!)
+  // Write HTML directly into the iframe then auto-resize to content height
   const iframe = document.getElementById('rh-preview-iframe');
   if (iframe) {
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write(htmlString);
     doc.close();
+    // Auto-resize iframe to actual content so no scrollbar or blank gap
+    setTimeout(() => {
+      try {
+        const h = iframe.contentWindow.document.body.scrollHeight;
+        if (h > 0) iframe.style.height = (h + 40) + 'px';
+      } catch(e) {}
+    }, 150);
   }
 }
 
@@ -1300,25 +1431,33 @@ window._rhPreviewDownloadPdf = function() {
   const title = window._rhCurrentDocTitle || 'RagsHeaven_Document';
   const cleanFilename = title.replace(/[^a-zA-Z0-9_\-]/g, '_') + '.pdf';
 
-  // Build a render container right in the main DOM to ensure html2pdf has direct access
+  // Build a render container in the DOM (hidden, fixed width = A4 at 96dpi)
   const container = document.createElement('div');
-  container.style.position = 'fixed';
-  container.style.left = '-99999px';
-  container.style.top = '0';
-  container.style.width = '794px'; // 210mm in pixels at 96dpi
-  container.style.background = '#ffffff';
+  container.style.cssText = 'position:fixed;left:-99999px;top:0;width:794px;background:#ffffff;z-index:-1;';
   container.innerHTML = window._rhCurrentDocHtml || '';
   document.body.appendChild(container);
 
-  const targetEl = container.querySelector('.doc-page') || container;
+  // Strip any min-height from .doc-page so html2pdf captures only real content height
+  const docPage = container.querySelector('.doc-page');
+  if (docPage) {
+    docPage.style.minHeight = 'none';
+    docPage.style.height = 'auto';
+    docPage.style.boxShadow = 'none';
+    docPage.style.margin = '0';
+    docPage.style.padding = '15mm 14mm';
+    docPage.style.width = '100%';
+  }
+
+  const targetEl = docPage || container;
 
   if (typeof html2pdf !== 'undefined') {
     const opt = {
-      margin: [8, 8, 8, 8],
+      margin: [6, 6, 6, 6],
       filename: cleanFilename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      image: { type: 'jpeg', quality: 0.97 },
+      html2canvas: { scale: 2, useCORS: true, logging: false, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
 
     html2pdf().set(opt).from(targetEl).save().then(() => {
