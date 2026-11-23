@@ -83,7 +83,7 @@
         Grading Station
       </button>
       <button class="btn-add" style="justify-content:center;background:#0f172a;" onclick="location.href='ab_grade.html'">
-        AB Grade Stock
+        Warehouse Stock
       </button>
       <button class="btn-add" style="justify-content:center;background:#7c3aed;" onclick="location.href='employees.html'">
         Employees & Att.
@@ -92,32 +92,32 @@
         Customer Stock
       </button>
       <button class="btn-add" id="suppliersBtn" style="justify-content:center;background:#0369a1;display:none;" onclick="location.href='suppliers.html'">
-        🏭 Suppliers
+        ðŸ­ Suppliers
       </button>
       <button class="btn-add" id="buyersBtn" style="justify-content:center;background:#059669;display:none;" onclick="location.href='buyers.html'">
-        🛒 Buyers
+        ðŸ›’ Buyers
       </button>
     </div>
 
     <!-- Secondary Links -->
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;">
       <button class="chip" id="suppliersChip" onclick="location.href='suppliers.html'" style="display:none;font-weight:700;color:#0369a1;border-color:#bae6fd;background:#f0f9ff;">
-        🏭 Suppliers
+        ðŸ­ Suppliers
       </button>
       <button class="chip" id="buyersChip" onclick="location.href='buyers.html'" style="display:none;font-weight:700;color:#059669;border-color:#a7f3d0;background:#ecfdf5;">
-        🛒 Buyers
+        ðŸ›’ Buyers
       </button>
       <button class="chip" id="pettyCashChip" onclick="location.href='petty_cash.html'" style="display:none;font-weight:700;color:#059669;border-color:#a7f3d0;background:#ecfdf5;">
-        💰 Petty Cash
+        ðŸ’° Petty Cash
       </button>
-      <button class="chip" onclick="location.href='employees.html'">👥 Attendance Sheet</button>
-      <button class="chip" onclick="location.href='media.html'">📷 Media Entries</button>
-      <button class="chip" onclick="location.href='bells.html'">🔔 Bells Register</button>
+      <button class="chip" onclick="location.href='employees.html'">ðŸ‘¥ Attendance Sheet</button>
+      <button class="chip" onclick="location.href='media.html'">ðŸ“· Media Entries</button>
+      <button class="chip" onclick="location.href='bells.html'">ðŸ”” Bells Register</button>
     </div>
 
-    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- SUPER USER & ADMIN MODULE: USER & ROLE MANAGEMENT                 -->
-    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="adminUserManagementSection" style="margin-bottom:24px;">
       <div class="sec-head">
         <div>
@@ -134,9 +134,9 @@
       </div>
     </div>
 
-    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- SUPER USER & ADMIN MODULE: SUPABASE CLOUD CONNECTION             -->
-    <!-- ═════════════════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <div id="adminSupabaseSection" style="margin-bottom:24px;">
       <div class="sec-head">
         <div>
@@ -144,7 +144,7 @@
           <div style="font-size:11px;color:var(--muted)">Live cloud database & PostgreSQL sync</div>
         </div>
         <div id="supabaseStatusBadge">
-          <span class="chip green">● Connected</span>
+          <span class="chip green">â— Connected</span>
         </div>
       </div>
 
@@ -162,7 +162,7 @@
 
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
             <button type="button" class="chip" onclick="openSQLSchemaModal()">
-              📋 View SQL Setup Script
+              ðŸ“‹ View SQL Setup Script
             </button>
             <div style="display:flex;gap:6px;">
               <button type="button" class="btn-del" style="font-size:11px;padding:6px 10px;" onclick="handleResetSupabase()">Reset Default</button>
@@ -180,9 +180,9 @@
 
 </div>
 
-<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <!-- MODAL: ADD STAFF USER WITH AUTOGENERATED CREDS                      -->
-<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div class="modal-overlay" id="addUserModal">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -230,9 +230,9 @@
   </div>
 </div>
 
-<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <!-- MODAL: SUPABASE SQL SETUP SCRIPT                                    -->
-<!-- ═════════════════════════════════════════════════════════════════════ -->
+<!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div class="modal-overlay" id="sqlModal">
   <div class="modal">
     <div class="modal-handle"></div>
@@ -241,7 +241,7 @@
     <div class="sql-box" id="sqlSchemaText"></div>
     <div class="modal-actions" style="margin-top:14px;">
       <button type="button" class="btn-cancel" onclick="closeSQLModal()">Close</button>
-      <button type="button" class="btn-save" style="background:var(--burgundy);" onclick="copySQLSchema()">📋 Copy SQL Script</button>
+      <button type="button" class="btn-save" style="background:var(--burgundy);" onclick="copySQLSchema()">ðŸ“‹ Copy SQL Script</button>
     </div>
   </div>
 </div>

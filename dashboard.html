@@ -82,11 +82,11 @@
 
     <!-- Stats Grid with Micro-Interactions -->
     <div class="stat-grid">
-      <!-- AB Grade Stock -->
+      <!-- Warehouse Stock -->
       <div class="stat-card anim-fade-up delay-1" onclick="location.href='ab_grade.html'">
         <div class="stat-card-accent" style="background:var(--burgundy)"></div>
         <div class="stat-label">Warehouse Stock</div>
-        <div class="stat-num burgundy" id="s_ab_grade">—</div>
+        <div class="stat-num burgundy" id="s_ab_grade">â€”</div>
         <div class="stat-desc">Warehouse pieces count</div>
         <div class="stat-icon"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
       </div>
@@ -95,7 +95,7 @@
       <div class="stat-card anim-fade-up delay-2" onclick="location.href='customer_items.html'">
         <div class="stat-card-accent" style="background:var(--gold)"></div>
         <div class="stat-label">Customer Ready</div>
-        <div class="stat-num gold" id="s_customer_items">—</div>
+        <div class="stat-num gold" id="s_customer_items">â€”</div>
         <div class="stat-desc">Order ready stock</div>
         <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
       </div>
@@ -106,12 +106,12 @@
         <div style="display:flex;align-items:center;justify-content:space-between">
           <div>
             <div class="stat-label">Graded Batches Today</div>
-            <div class="stat-num green" id="s_graded_pcs">—</div>
+            <div class="stat-num green" id="s_graded_pcs">â€”</div>
             <div class="stat-desc" id="s_grading_summary">Tracking output</div>
           </div>
           <div style="text-align:right">
             <div class="stat-label">QA Accuracy Rate</div>
-            <div class="stat-num" style="font-size:26px;color:var(--burgundy)" id="s_qa_rate">—</div>
+            <div class="stat-num" style="font-size:26px;color:var(--burgundy)" id="s_qa_rate">â€”</div>
             <div class="stat-desc" id="s_approval_status">Audit Score</div>
           </div>
         </div>
@@ -124,7 +124,7 @@
         <div class="workforce-split-box">
           <div>
             <div class="stat-label">Factory Floor Workforce</div>
-            <div class="stat-num purple" id="s_attendance_rate">—</div>
+            <div class="stat-num purple" id="s_attendance_rate">â€”</div>
             <div class="stat-desc" id="s_attendance_summary">Daily floor presence</div>
           </div>
           <div style="display:flex;align-items:center;gap:12px;">
@@ -141,9 +141,9 @@
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     <!-- BEAUTIFUL DASHBOARD ANALYTICS & GRAPHS SECTION                      -->
-    <!-- ═══════════════════════════════════════════════════════════════════ -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
     
     <!-- Graph 1: Weekly Grading & Quality Throughput Graph -->
     <div class="dash-chart-card anim-fade-up">
@@ -193,14 +193,14 @@
 
       <!-- Proportional Ratio Bar -->
       <div class="ratio-progress-container">
-        <div class="ratio-bar-segment" id="barAbGrade" style="width:50%;background:linear-gradient(90deg, #881337, #be123c);" title="AB Grade Stock"></div>
+        <div class="ratio-bar-segment" id="barAbGrade" style="width:50%;background:linear-gradient(90deg, #881337, #be123c);" title="Warehouse Stock"></div>
         <div class="ratio-bar-segment" id="barCustomer" style="width:50%;background:linear-gradient(90deg, #b48a3c, #d4af37);" title="Customer Ready"></div>
       </div>
 
       <div class="ratio-legend-grid">
         <div class="ratio-legend-box" onclick="location.href='ab_grade.html'" style="cursor:pointer">
           <div>
-            <div style="font-size:10.5px;font-weight:700;color:var(--burgundy);text-transform:uppercase;">AB Grade Stock</div>
+            <div style="font-size:10.5px;font-weight:700;color:var(--burgundy);text-transform:uppercase;"Warehouse Stock</div>
             <div style="font-size:15px;font-weight:800;color:var(--text-main);margin-top:2px;" id="ratioAbCount">0</div>
           </div>
           <span class="chip burgundy" id="ratioAbPct">50%</span>
@@ -227,7 +227,7 @@
           <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
         </div>
         <div>
-          <div class="quick-label">AB Grade Stock</div>
+          <div class="quick-label"Warehouse Stock</div>
           <div class="quick-sub">Adjust stock quantity</div>
         </div>
       </div>
@@ -430,7 +430,7 @@ async function init() {
       document.getElementById('s_approval_status').textContent = 'Audit Standard';
     }
 
-    // ── ATTENDANCE: EXCLUDE SUPER USER & ADMINISTRATOR ────────────────
+    // â”€â”€ ATTENDANCE: EXCLUDE SUPER USER & ADMINISTRATOR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Step 1: Build operational staff list from employees table
     let operationalStaff = (employees || []).filter(e => isOperationalStaff(e.role));
 
@@ -445,10 +445,10 @@ async function init() {
     const opIds = new Set(operationalStaff.map(e => e.id).filter(Boolean));
     const opNames = new Set(operationalStaff.map(e => e.name).filter(Boolean));
 
-    // Step 3: Filter today's attendance — match by role field (most reliable) OR by id/name
+    // Step 3: Filter today's attendance â€” match by role field (most reliable) OR by id/name
     let todayOpAtt = (attendanceRecords || []).filter(x => {
       if (x.date !== todayStr) return false;
-      if (x.role) return isOperationalStaff(x.role);          // role field present → use it
+      if (x.role) return isOperationalStaff(x.role);          // role field present â†’ use it
       if (opIds.size > 0 && opIds.has(x.employee_id)) return true;  // match by ID
       if (opNames.size > 0 && opNames.has(x.employee_name)) return true; // match by name
       // No role field and no matching employee: include if not explicitly executive
@@ -489,10 +489,10 @@ async function init() {
       rhAnimateValue('gaugeCenterText', 0, attRate, 800, '%');
     }
 
-    // ── GRAPH 1: RENDER 7-DAY GRADING THROUGHPUT ──────────────────────
+    // â”€â”€ GRAPH 1: RENDER 7-DAY GRADING THROUGHPUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     renderWeeklyGradingGraph(gradingRecords || []);
 
-    // ── GRAPH 2: RENDER STOCK ALLOCATION BALANCE ──────────────────────
+    // â”€â”€ GRAPH 2: RENDER STOCK ALLOCATION BALANCE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     renderStockRatio(abPcs, custPcs);
 
     // Render Recent 5 grading batches
@@ -528,7 +528,7 @@ async function init() {
   hideLoader();
 }
 
-// ── Weekly Grading & QA Chart Renderer ────────────────────────────────
+// â”€â”€ Weekly Grading & QA Chart Renderer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderWeeklyGradingGraph(records) {
   const canvas = document.getElementById('gradingChartCanvas');
   if (!canvas) return;
@@ -560,7 +560,7 @@ function renderWeeklyGradingGraph(records) {
     let approvedPcs = dayRecords.filter(r => r.status && r.status.includes('Approved'))
                                 .reduce((sum, r) => sum + (parseInt(r.total_pcs) || 0), 0);
 
-    // Real data only — no mock injection. Zero means nothing graded that day.
+    // Real data only â€” no mock injection. Zero means nothing graded that day.
     weekTotalPcs += totalPcs;
     days.push({ label: dayLabel, date: dateStr, total: totalPcs, approved: approvedPcs });
   }
@@ -667,7 +667,7 @@ function renderWeeklyGradingGraph(records) {
   });
 }
 
-// ── Stock Ratio & Allocation Renderer ─────────────────────────────────
+// â”€â”€ Stock Ratio & Allocation Renderer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function renderStockRatio(abPcs, custPcs) {
   const total = abPcs + custPcs;
   const abPct = total > 0 ? Math.round((abPcs / total) * 100) : 50;

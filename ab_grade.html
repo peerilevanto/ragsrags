@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>AB Grade Stock - Rags Heaven</title>
+<title>Warehouse Stock - Rags Heaven</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="style.css">
 <style>
@@ -54,7 +54,7 @@
   <!-- Topbar -->
   <div class="topbar">
     <img src="logo.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='favicon.png'">
-    <div class="topbar-title">AB Grade Stock</div>
+    <div class="topbar-title">Warehouse Stock</div>
     <div id="roleBadge" class="role-badge">Staff</div>
     <button onclick="handleGlobalProfileClick()" style="background:none;border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="User Profile">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -76,7 +76,7 @@
     <!-- Search & Filter -->
     <div class="search-wrap">
       <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="si" type="text" placeholder="Search AB Grade items, racks, categories..." oninput="render(this.value)">
+      <input id="si" type="text" placeholder="Search Warehouse items, racks, categories..." oninput="render(this.value)">
     </div>
 
     <!-- Helper Notice -->
@@ -84,7 +84,7 @@
       <!-- Dynamic role guidance text -->
     </div>
 
-    <div id="msg" style="text-align:center;padding:34px;color:var(--muted);font-size:13px">Loading AB Grade stock from Supabase...</div>
+    <div id="msg" style="text-align:center;padding:34px;color:var(--muted);font-size:13px">Loading Warehouse stock from Supabase...</div>
     <div class="item-list" id="list" style="display:none"></div>
   </div>
 </div>
@@ -92,11 +92,11 @@
 <!-- Bottom Navigation Bar -->
 <div id="appDoubleNav" class="double-nav-container"></div>
 
-<!-- Modal: Add / Edit AB Grade Item (Admin & Super User only) -->
+<!-- Modal: Add / Edit Warehouse Item (Admin & Super User only) -->
 <div class="modal-overlay" id="mo">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="mt">Add AB Grade Item</div>
+    <div class="modal-title" id="mt">Add Warehouse Item</div>
     <div class="field">
       <label>Item Name</label>
       <input id="fn" placeholder="e.g. Ralph Lauren Oxford Shirts">
@@ -149,10 +149,10 @@ async function init() {
 
   if (role === 'floor_helper') {
     notice.style.display = 'block';
-    notice.innerHTML = '👷 <strong>Floor Assistant Mode:</strong> Use the <strong>+</strong> and <strong>-</strong> quantity buttons below to record warehouse stock movements.';
+    notice.innerHTML = 'ðŸ‘· <strong>Floor Assistant Mode:</strong> Use the <strong>+</strong> and <strong>-</strong> quantity buttons below to record warehouse stock movements.';
   } else if (role === 'grader') {
     notice.style.display = 'block';
-    notice.innerHTML = '✂ <strong>Grader Mode:</strong> Adjust stock counts when picking items, or tap <strong>Take to Grade</strong> to sort into categories.';
+    notice.innerHTML = 'âœ‚ <strong>Grader Mode:</strong> Adjust stock counts when picking items, or tap <strong>Take to Grade</strong> to sort into categories.';
   }
 
   // Only Administrator and Super User can add or delete full items
@@ -177,10 +177,10 @@ function render(q) {
   const el = document.getElementById('list');
   
   const totalPcs = all.reduce((sum, item) => sum + (parseInt(item.pcs) || 0), 0);
-  document.getElementById('totalPcsSummary').textContent = `${all.length} categories · ${totalPcs.toLocaleString()} total pieces in stock`;
+  document.getElementById('totalPcsSummary').textContent = `${all.length} categories Â· ${totalPcs.toLocaleString()} total pieces in stock`;
 
   if (!d.length) {
-    el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>No AB Grade items found</div>';
+    el.innerHTML = '<div class="empty"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>No Warehouse items found</div>';
     return;
   }
 
@@ -225,7 +225,7 @@ function render(q) {
       <div class="act-row">
         ${isGraderRole ? `
           <button class="btn-edit" style="background:var(--burgundy);color:#fff;" onclick="takeToGrade('${escapeHtml(x.name || '')}', ${pcs})">
-            ✂ Take to Grade
+            âœ‚ Take to Grade
           </button>
         ` : ''}
 
@@ -243,7 +243,7 @@ function render(q) {
   `}).join('');
 }
 
-// ── Quick Adjust Quantity Function ────────────────────────────────────
+// â”€â”€ Quick Adjust Quantity Function â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Allows Graders and Floor Helpers to subtract & add quantities effortlessly
 async function quickAdjust(id, delta) {
   const item = all.find(x => x.id == id);
@@ -273,7 +273,7 @@ function takeToGrade(itemName, pcs) {
 function openModal(id) {
   eid = id || null;
   const x = id ? all.find(a => a.id == id) : {};
-  document.getElementById('mt').textContent = id ? 'Edit AB Grade Item' : 'Add AB Grade Item';
+  document.getElementById('mt').textContent = id ? 'Edit Warehouse Item' : 'Add Warehouse Item';
   document.getElementById('fn').value = x.name || '';
   document.getElementById('fl').value = x.location || '';
   document.getElementById('fc').value = x.category || '';
@@ -315,11 +315,11 @@ async function save() {
 
   all = await sbGet('ab_grade_items');
   render(document.getElementById('si').value);
-  showToast(eid ? 'AB Grade item updated!' : 'AB Grade item added!');
+  showToast(eid ? 'Warehouse item updated!' : 'Warehouse item added!');
 }
 
 async function del(id) {
-  if (!confirm('Are you sure you want to remove this AB Grade item?')) return;
+  if (!confirm('Are you sure you want to remove this Warehouse item?')) return;
   await sbDelete('ab_grade_items', id);
   all = await sbGet('ab_grade_items');
   render(document.getElementById('si').value);

@@ -1,13 +1,13 @@
-// ═══════════════════════════════════════════════════════════════════════
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 // RAGS HEAVEN - Core Shared Application Library
 // Connected to Supabase: https://deaqdbsqcmnzlhghjbpj.supabase.co
-// ═══════════════════════════════════════════════════════════════════════
+// Ã¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢ÂÃ¢â€¢Â
 
-// ── Application Identity & Logo ───────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Application Identity & Logo Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 window._rhLogo = 'logo.png';
 window._tkLogo = 'logo.png'; // backward compatibility
 
-// ── HTML Escape Helper ────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ HTML Escape Helper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function escapeHtml(str) {
   if (str === null || str === undefined) return '';
   return String(str)
@@ -18,7 +18,7 @@ function escapeHtml(str) {
     .replace(/'/g, '&#39;');
 }
 
-// ── Default Supabase Project Credentials ──────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Default Supabase Project Credentials Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const DEFAULT_SUPABASE_URL = 'https://deaqdbsqcmnzlhghjbpj.supabase.co';
 const DEFAULT_SUPABASE_KEY = 'sb_publishable_jpYI3CIHnImUp_5FdUmHLA_iln5rPLl';
 
@@ -43,7 +43,7 @@ function disconnectSupabase() {
   localStorage.removeItem('rh_sb_key');
 }
 
-// ── Auth Gatekeeper: Don't open the app until user can login ─────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Auth Gatekeeper: Don't open the app until user can login Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function requireAuth(allowedRoles) {
   const user = getCurrentUser();
   if (!user) {
@@ -75,7 +75,7 @@ function requireAuth(allowedRoles) {
   return true;
 }
 
-// ── User & Role Management ───────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ User & Role Management Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function getCurrentUser() {
   try {
     const u = localStorage.getItem('rh_current_user');
@@ -127,7 +127,7 @@ function getRoleName(r) {
   return map[r] || 'Staff Member';
 }
 
-// ── Permissions Matrix ────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Permissions Matrix Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function isExecutiveRole(role) {
   if (!role) return false;
   const r = String(role).toLowerCase().trim();
@@ -210,7 +210,7 @@ function canEdit() {
   return ['admin', 'super_user', 'special', 'grader', 'checker', 'floor_helper', 'media'].includes(r);
 }
 
-// ── Default Staff Accounts ───────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Default Staff Accounts Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 const DEFAULT_USERS = [
   { id: 'u_admin', name: 'Master Administrator', username: 'admin', password: 'admin123', role: 'admin', createdAt: '2026-01-01' },
   { id: 'u_superuser', name: 'Executive Super User', username: 'superuser', password: 'super123', role: 'super_user', createdAt: '2026-01-01' },
@@ -389,7 +389,7 @@ async function authenticateUser(username, password) {
   return null;
 }
 
-// ── Local Storage Data Layer (Fallback & Cache) ──────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Local Storage Data Layer (Fallback & Cache) Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function getLocalTable(table) {
   try {
     const raw = localStorage.getItem('rh_tbl_' + table);
@@ -452,7 +452,7 @@ function getLocalTable(table) {
   if (table === 'grading_categories') {
     return [
       { id: 'cat_1', name: 'A Grade Stock', color: 'green' },
-      { id: 'cat_2', name: 'AB Grade Stock', color: 'blue' },
+      { id: 'cat_2', name: 'Warehouse Stock', color: 'blue' },
       { id: 'cat_3', name: 'Wash / Cleaning', color: 'amber' },
       { id: 'cat_4', name: 'Repairing & Zippers', color: 'purple' },
       { id: 'cat_5', name: 'Order Ready Stock', color: 'burgundy' },
@@ -471,7 +471,7 @@ function getLocalTable(table) {
         grader_name: 'Zahid Hussain',
         categories_breakdown: [
           { name: 'A Grade Stock', pcs: 28 },
-          { name: 'AB Grade Stock', pcs: 12 },
+          { name: 'Warehouse Stock', pcs: 12 },
           { name: 'Wash / Cleaning', pcs: 5 },
           { name: 'Repairing & Zippers', pcs: 3 },
           { name: 'Order Ready Stock', pcs: 2 }
@@ -482,7 +482,7 @@ function getLocalTable(table) {
         errors_pcs: 1,
         accuracy_percent: 98,
         checker_notes: 'Excellent sorting. 1 zipper issue repaired.',
-        movement_status: 'Moved to AB Stock',
+        movement_status: 'Moved to Warehouse',
         movement_notes: 'Approved pcs added to floor inventory',
         created_at: new Date(Date.now() - 3600000 * 4).toISOString()
       },
@@ -495,7 +495,7 @@ function getLocalTable(table) {
         grader_name: 'Zahid Hussain',
         categories_breakdown: [
           { name: 'A Grade Stock', pcs: 22 },
-          { name: 'AB Grade Stock', pcs: 10 },
+          { name: 'Warehouse Stock', pcs: 10 },
           { name: 'Wash / Cleaning', pcs: 4 },
           { name: 'Repairing & Zippers', pcs: 4 }
         ],
@@ -517,7 +517,7 @@ function getLocalTable(table) {
         grader_name: 'Zahid Hussain',
         categories_breakdown: [
           { name: 'A Grade Stock', pcs: 18 },
-          { name: 'AB Grade Stock', pcs: 8 },
+          { name: 'Warehouse Stock', pcs: 8 },
           { name: 'Wash / Cleaning', pcs: 5 },
           { name: 'Repairing & Zippers', pcs: 4 }
         ],
@@ -543,7 +543,7 @@ function getLocalTable(table) {
 
   if (table === 'inventory_movements') {
     return [
-      { id: 'im_1', item_name: 'Patagonia Fleece Pull-over', qty: 28, from_location: 'Grading Station', to_location: 'AB Grade Stock (Rack C-01)', grader_name: 'Zahid Hussain', checker_name: 'Farhan Ali', lot_no: 'BALE-782', created_at: new Date(Date.now() - 3600000 * 3).toISOString() }
+      { id: 'im_1', item_name: 'Patagonia Fleece Pull-over', qty: 28, from_location: 'Grading Station', to_location: 'Warehouse Stock (Rack C-01)', grader_name: 'Zahid Hussain', checker_name: 'Farhan Ali', lot_no: 'BALE-782', created_at: new Date(Date.now() - 3600000 * 3).toISOString() }
     ];
   }
 
@@ -573,7 +573,7 @@ function saveLocalTable(table, data) {
   localStorage.setItem('rh_tbl_' + table, JSON.stringify(data));
 }
 
-// ── Universal Database Request Layer ──────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Universal Database Request Layer Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // Automatically connects to Supabase, falls back to synchronized local store
 async function sbReq(table, method, body, filter) {
   method = method || 'GET';
@@ -679,7 +679,7 @@ async function sbInsert(t, d) { return await sbReq(t, 'POST', d); }
 async function sbUpdate(t, id, d) { return await sbReq(t, 'PATCH', d, { id }); }
 async function sbDelete(t, id) { return await sbReq(t, 'DELETE', null, { id }); }
 
-// ── Stock Quantity Adjustment Helper ──────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Stock Quantity Adjustment Helper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // Used by Graders and Floor Assistants to subtract and add stock
 async function adjustStockQuantity(itemId, delta, itemName) {
   delta = parseInt(delta) || 0;
@@ -702,7 +702,7 @@ async function adjustStockQuantity(itemId, delta, itemName) {
   return newPcs;
 }
 
-// ── Inventory Movement Helper ─────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Inventory Movement Helper Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 // Final Checker approved movement into warehouse stock
 async function recordInventoryMovement(movement) {
   const payload = {
@@ -719,7 +719,7 @@ async function recordInventoryMovement(movement) {
   return await sbInsert('inventory_movements', payload);
 }
 
-// ── Toast Notifications ───────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Toast Notifications Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function showToast(msg, err) {
   let t = document.getElementById('toast');
   if (!t) {
@@ -742,7 +742,7 @@ function showToast(msg, err) {
   window._toastTimeout = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-// ── Role Badge Initializer ───────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Role Badge Initializer Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function initRole(activeId) {
   const r = getRole();
   const b = document.getElementById('roleBadge');
@@ -776,7 +776,7 @@ function initRole(activeId) {
   renderDoubleNav(activeId);
 }
 
-// ── Active Navigation Tab Detector ────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Active Navigation Tab Detector Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function detectActiveNavId() {
   const p = (window.location.pathname || '').toLowerCase();
   if (p.includes('dashboard')) return 'dashboard';
@@ -794,7 +794,7 @@ function detectActiveNavId() {
   return 'dashboard';
 }
 
-// ── Global Topbar Profile Navigation & Modal ──────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Global Topbar Profile Navigation & Modal Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function handleGlobalProfileClick() {
   const r = getRole();
   if (r === 'super_user' || r === 'special') {
@@ -831,11 +831,11 @@ function showGlobalProfileModal() {
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
         ${['grader', 'checker', 'floor_helper'].includes(user.role) ? `
           <button type="button" class="btn-save" style="background:#0f172a;padding:10px;" onclick="location.href='my_attendance.html'">
-            📅 View My Attendance & Overtime
+            Ã°Å¸â€œâ€¦ View My Attendance & Overtime
           </button>
         ` : ''}
         <button type="button" class="btn-save" style="background:#be123c;padding:10px;" onclick="handleSignOut()">
-          🚪 Sign Out
+          Ã°Å¸Å¡Âª Sign Out
         </button>
         <button type="button" class="btn-cancel" onclick="closeGlobalProfileModal()">Cancel</button>
       </div>
@@ -853,7 +853,7 @@ function closeGlobalProfileModal() {
   if (m) m.classList.remove('open');
 }
 
-// ── Double Navigation Fold Toggle ─────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Double Navigation Fold Toggle Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function toggleDoubleNav() {
   const container = document.getElementById('appDoubleNav') || document.querySelector('.double-nav-container');
   if (!container) return;
@@ -875,21 +875,21 @@ function toggleDoubleNav() {
     labelEl.textContent = isFolded ? 'Show Operations Deck (Petty Cash, Bells, Customer, Media)' : 'Fold Operations Deck';
   }
   if (arrowEl) {
-    arrowEl.textContent = isFolded ? '▲' : '▼';
+    arrowEl.textContent = isFolded ? 'Ã¢â€“Â²' : 'Ã¢â€“Â¼';
   }
 }
 
-// ── Finance Deck Navigation Fold Toggle ───────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Finance Deck Navigation Fold Toggle Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function toggleFinanceNav() {
   const tier = document.getElementById('navFinanceTier');
   const arrow = document.getElementById('financeArrow');
   if (!tier) return;
   const isHidden = tier.classList.toggle('finance-folded');
-  if (arrow) arrow.textContent = isHidden ? '▼' : '▲';
+  if (arrow) arrow.textContent = isHidden ? 'Ã¢â€“Â¼' : 'Ã¢â€“Â²';
   localStorage.setItem('rh_finance_folded', isHidden ? '1' : '0');
 }
 
-// ── Role-Based Navigation Bar Renderer ────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Role-Based Navigation Bar Renderer Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function renderDoubleNav(activeId) {
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
   const path = (window.location.pathname || '').toLowerCase();
@@ -952,7 +952,7 @@ function renderDoubleNav(activeId) {
     container.innerHTML = `
       <!-- Finance Fold / Unfold Handle -->
       <div class="nav-fold-handle" onclick="toggleFinanceNav()" title="Click to Fold or Expand Finance Deck" style="background:linear-gradient(90deg,#0c4a6e,#0f172a);color:#7dd3fc;border-bottom:1px solid #1e3a5f;">
-        <span class="toggle-arrow" style="font-size:9px" id="financeArrow">${isFinanceFolded ? '▼' : '▲'}</span>
+        <span class="toggle-arrow" style="font-size:9px" id="financeArrow">${isFinanceFolded ? 'Ã¢â€“Â¼' : 'Ã¢â€“Â²'}</span>
         <span style="font-weight:800;letter-spacing:0.5px;font-size:10px;color:#e0f2fe">FINANCE DECK</span>
         <span style="display:inline-block;padding:1px 6px;border-radius:10px;background:rgba(14,165,233,0.2);color:#38bdf8;font-size:9px;font-weight:700">SUPPLIERS &amp; BUYERS</span>
       </div>
@@ -971,7 +971,7 @@ function renderDoubleNav(activeId) {
 
       <!-- Fold / Unfold Handle -->
       <div class="nav-fold-handle" onclick="toggleDoubleNav()" title="Click to Fold or Expand Operations Deck">
-        <span class="toggle-arrow" style="font-size:9px">${isFolded ? '▲' : '▼'}</span>
+        <span class="toggle-arrow" style="font-size:9px">${isFolded ? 'Ã¢â€“Â²' : 'Ã¢â€“Â¼'}</span>
         <span class="toggle-label">${isFolded ? 'Show Operations Deck (Petty Cash, Bells, Customer, Media)' : 'Fold Operations Deck'}</span>
         <span style="display:inline-block;padding:1px 6px;border-radius:10px;background:rgba(136,19,55,0.08);color:var(--burgundy);font-size:9px;font-weight:700">4 TABS</span>
       </div>
@@ -1004,7 +1004,7 @@ function renderDoubleNav(activeId) {
         </button>
         <button type="button" class="nav-item ${activeId === 'ab_grade' ? 'active' : ''}" onclick="location.href='ab_grade.html'">
           <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          <span>AB Grade</span>
+          <span>Warehouse</span>
         </button>
         <button type="button" class="nav-item ${activeId === 'grading' ? 'active' : ''}" onclick="location.href='grading.html'">
           <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -1036,7 +1036,7 @@ function renderDoubleNav(activeId) {
         </button>
         <button type="button" class="nav-item ${activeId === 'ab_grade' ? 'active' : ''}" onclick="location.href='ab_grade.html'">
           <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          <span>AB Grade</span>
+          <span>Warehouse</span>
         </button>
         <button type="button" class="nav-item ${activeId === 'grading' ? 'active' : ''}" onclick="location.href='grading.html'">
           <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
@@ -1061,7 +1061,7 @@ function renderDoubleNav(activeId) {
         </button>
         <button type="button" class="nav-item ${activeId === 'ab_grade' ? 'active' : ''}" onclick="location.href='ab_grade.html'">
           <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          <span>AB Stock</span>
+          <span>Warehouse</span>
         </button>
         <button type="button" class="nav-item ${activeId === 'customer' ? 'active' : ''}" onclick="location.href='customer_items.html'">
           <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -1094,7 +1094,7 @@ function renderDoubleNav(activeId) {
         </button>
         <button type="button" class="nav-item ${activeId === 'ab_grade' ? 'active' : ''}" onclick="location.href='ab_grade.html'">
           <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          <span>AB Stock</span>
+          <span>Warehouse</span>
         </button>
         <button type="button" class="nav-item ${activeId === 'attendance' ? 'active' : ''}" onclick="location.href='my_attendance.html'">
           <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="15" r="2"/></svg>
@@ -1111,7 +1111,7 @@ function renderDoubleNav(activeId) {
         </button>
         <button type="button" class="nav-item ${activeId === 'ab_grade' ? 'active' : ''}" onclick="location.href='ab_grade.html'">
           <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-          <span>AB Stock</span>
+          <span>Warehouse</span>
         </button>
         <button type="button" class="nav-item ${activeId === 'customer' ? 'active' : ''}" onclick="location.href='customer_items.html'">
           <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -1169,7 +1169,7 @@ if (typeof document !== 'undefined') {
   }
 }
 
-// ── Luxury Loader ─────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Luxury Loader Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function showLoader() {
   if (document.getElementById('tk-loader')) return;
   const el = document.createElement('div');
@@ -1188,7 +1188,7 @@ function hideLoader() {
   setTimeout(() => el.remove(), 260);
 }
 
-// ── Sign Out ──────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ Sign Out Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function handleSignOut() {
   setCurrentUser(null);
   showToast('Signed out successfully');
@@ -1197,7 +1197,7 @@ function handleSignOut() {
   }, 400);
 }
 
-// ── SQL Setup Script Generator for Supabase ───────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬ SQL Setup Script Generator for Supabase Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 function getSupabaseSQLSchema() {
   return `-- =====================================================================
 -- RAGS HEAVEN - SUPABASE DATABASE SETUP SCHEMA
@@ -1388,7 +1388,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.grading_categories (name, color)
 VALUES
     ('A Grade Stock', 'green'),
-    ('AB Grade Stock', 'blue'),
+    ('Warehouse Stock', 'blue'),
     ('Wash / Cleaning', 'amber'),
     ('Repairing & Zippers', 'purple'),
     ('Order Ready Stock', 'burgundy'),
