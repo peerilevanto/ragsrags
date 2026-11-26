@@ -319,15 +319,22 @@
           <div style="font-size:11px; color:#0369a1; font-weight:700;" id="invoicesSummaryCount">0 documents</div>
         </div>
 
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-          <div class="search-wrap" style="flex:2; min-width:200px; margin-bottom:0;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+          <div class="search-wrap" style="flex:2; min-width:190px; margin-bottom:0;">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input type="text" id="invoiceSearchInput" placeholder="Search Invoice # (e.g. PUR-00007), Supplier, Item..." oninput="renderInvoicesList()">
           </div>
-          <div style="flex:1; min-width:160px;">
+          <div style="flex:1; min-width:150px;">
             <select id="invoiceSupplierFilter" onchange="renderInvoicesList()" style="width:100%; height:38px; border:1px solid var(--border); border-radius:8px; padding:0 8px; font-size:12px; font-weight:600;">
               <option value="">-- All Suppliers --</option>
             </select>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input type="month" id="invoiceMonthFilter" onchange="renderInvoicesList()" style="height:38px; border:1px solid var(--border); border-radius:8px; padding:0 8px; font-size:12px; font-weight:600; background:#fff;" title="Filter by Month">
+            <button type="button" class="btn-action-sm" onclick="clearInvoiceMonthFilter()" title="Show All Months" style="height:38px;">All</button>
+            <button type="button" class="btn-action-sm primary" onclick="exportMonthlySupplierPdf()" style="height:38px; background:#0369a1; color:#fff; white-space:nowrap;">
+              📄 Monthly Purchase PDF
+            </button>
           </div>
         </div>
 
@@ -1343,9 +1350,45 @@ function openSupplierInvoices(supplierId) {
   switchTab('invoices');
 }
 
+function clearInvoiceMonthFilter() {
+  const el = document.getElementById('invoiceMonthFilter');
+  if (el) el.value = '';
+  renderInvoicesList();
+}
+
+function exportMonthlySupplierPdf() {
+  const monthEl = document.getElementById('invoiceMonthFilter');
+  let monthStr = monthEl ? monthEl.value : '';
+  if (!monthStr) {
+    monthStr = new Date().toISOString().slice(0, 7);
+    if (monthEl) monthEl.value = monthStr;
+    renderInvoicesList();
+  }
+  const suppFilter = document.getElementById('invoiceSupplierFilter').value;
+  const selectedSupp = suppFilter ? suppliers.find(s => s.id == suppFilter) : null;
+
+  const monthTx = supplierTransactions.filter(tx => {
+    const d = tx.date || (tx.created_at ? tx.created_at.slice(0, 10) : '');
+    if (!d.startsWith(monthStr)) return false;
+    if (suppFilter && tx.supplier_id != suppFilter) return false;
+    return true;
+  });
+
+  const monthPm = supplierPayments.filter(pm => {
+    const d = pm.date || (pm.created_at ? pm.created_at.slice(0, 10) : '');
+    if (!d.startsWith(monthStr)) return false;
+    if (suppFilter && pm.supplier_id != suppFilter) return false;
+    return true;
+  });
+
+  const htmlDoc = buildMonthlySupplierReport(monthStr, monthTx, monthPm, suppliers, selectedSupp);
+  previewDocument(htmlDoc, `Monthly Purchases & Payments - ${monthStr}`);
+}
+
 function renderInvoicesList() {
   const query = (document.getElementById('invoiceSearchInput').value || '').toLowerCase().trim();
   const suppFilter = document.getElementById('invoiceSupplierFilter').value;
+  const monthFilter = (document.getElementById('invoiceMonthFilter')?.value || '').trim();
   const container = document.getElementById('invoicesCardsContainer');
   if (!container) return;
 
@@ -1391,6 +1434,7 @@ function renderInvoicesList() {
   // Filter
   const filtered = docs.filter(doc => {
     if (suppFilter && doc.supplier.id != suppFilter) return false;
+    if (monthFilter && !(doc.date || '').startsWith(monthFilter)) return false;
     if (!query) return true;
 
     const refMatch = (doc.ref || '').toLowerCase().includes(query);

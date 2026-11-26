@@ -244,51 +244,21 @@ function renderMyAttendance() {
 
   let activeRecs = dedupedRecs;
 
-  // If no records in this month yet, generate realistic shift logs (10:00 AM to 8:00 PM, 10 hrs)
-  if (activeRecs.length === 0) {
-    const daysInMonth = new Date(y, m + 1, 0).getDate();
-    const today = new Date();
-    const isCurrentMonth = (today.getFullYear() === y && today.getMonth() === m);
-    const maxDay = isCurrentMonth ? today.getDate() : Math.min(26, daysInMonth);
-
-    for (let d = maxDay; d >= 1; d--) {
-      const dt = new Date(y, m, d);
-      if (dt.getDay() === 0) continue; // skip Sunday
-      const dateStr = `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-      const isAbsent = (d === 14);
-      const isHalf = (d === 5);
-      const hasOT = (!isAbsent && d % 3 === 0);
-
-      activeRecs.push({
-        id: `gen_${d}`,
-        date: dateStr,
-        status: isAbsent ? 'Absent' : isHalf ? 'Half Day' : 'Present',
-        in_time: isAbsent ? '-' : '10:00',
-        out_time: isAbsent ? '-' : (isHalf ? '15:00' : '20:00'),
-        hours_worked: isAbsent ? 0 : (isHalf ? 5 : 10),
-        overtime_hours: hasOT ? 1.5 : 0,
-        notes: isAbsent ? 'Medical Leave' : hasOT ? 'Evening sorting batch' : 'Regular Shift'
-      });
-    }
-  }
-
-  // Calculate Metrics
+  // Calculate Metrics (strictly from real marked attendance only)
   const presentDays = activeRecs.filter(x => x.status === 'Present').length;
   const halfDays = activeRecs.filter(x => x.status === 'Half Day').length;
   const absentDays = activeRecs.filter(x => x.status === 'Absent').length;
   const totalOT = activeRecs.reduce((acc, x) => acc + (parseFloat(x.overtime_hours) || 0), 0);
-  const totalDays = Math.max(1, activeRecs.length);
-  const attRate = Math.round(((presentDays + (halfDays * 0.5)) / totalDays) * 100);
+  const totalDays = activeRecs.length;
+  const attRate = totalDays > 0 ? Math.round(((presentDays + (halfDays * 0.5)) / totalDays) * 100) : 0;
 
   document.getElementById('statPresentDays').textContent = presentDays;
   document.getElementById('statTotalOT').textContent = totalOT.toFixed(1) + ' hrs';
   document.getElementById('statAttRate').textContent = attRate + '%';
   document.getElementById('statAbsentDays').textContent = `${absentDays} days absent`;
 
-  let eff = Math.min(100, Math.max(88, Math.round(attRate * 0.98)));
-  if (currentUser.role === 'checker') eff = 98;
-  if (currentUser.role === 'grader') eff = 96;
-  document.getElementById('statEfficiency').textContent = eff + '%';
+  let eff = totalDays > 0 ? Math.min(100, Math.max(0, Math.round(attRate * 0.98))) : 0;
+  document.getElementById('statEfficiency').textContent = totalDays > 0 ? eff + '%' : '—';
 
   document.getElementById('logSummary').textContent = `${activeRecs.length} logged shift days`;
 

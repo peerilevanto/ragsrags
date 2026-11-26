@@ -6,7 +6,22 @@
   <title>Employees & Attendance | Rags Heaven</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
+    /* Enhanced Mobile & Table Responsiveness */
+    .table-card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .emp-actions-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; padding-top: 8px; border-top: 1px solid #f1f5f9; }
+    .btn-emp-sm { padding: 5px 10px; border-radius: 7px; font-size: 11px; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: #fff; color: var(--text-main); display: inline-flex; align-items: center; gap: 4px; font-family: inherit; }
+    .btn-emp-sm.primary { background: #0f2744; color: #fff; border-color: #0f2744; }
+    .btn-emp-sm.success { background: #059669; color: #fff; border-color: #059669; }
+    .btn-emp-sm.warn { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+    .btn-emp-sm.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+    .cred-box { display: inline-flex; align-items: center; gap: 6px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 3px 8px; font-size: 11px; font-family: monospace; }
+    @media (max-width: 640px) {
+      .emp-tab-btn { font-size: 10.5px; padding: 7px 6px; }
+      .emp-actions-row { display: grid; grid-template-columns: 1fr 1fr; }
+      .btn-emp-sm { justify-content: center; padding: 7px 6px; }
+    }
     /* Tab Switcher */
     .emp-tab-nav {
       display: flex;
@@ -404,12 +419,18 @@
           </select>
         </div>
 
-        <div style="display:flex;gap:6px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn-add" style="background:#0f2744;font-size:11px;padding:6px 12px;" onclick="exportLuxurySalarySheetPdf()">
+            💎 Luxury Salary Sheet (PDF)
+          </button>
+          <button class="btn-add" style="background:#064e3b;font-size:11px;padding:6px 12px;" onclick="exportAllPayslipsPdf()">
+            🧾 All Payslips (1 PDF)
+          </button>
           <button class="btn-add" style="background:#059669;font-size:11px;padding:6px 12px;" onclick="exportMonthlyCSV()">
             📊 Export CSV
           </button>
-          <button class="btn-add" style="background:#0f172a;font-size:11px;padding:6px 12px;" onclick="printMonthlySheet()">
-            🖨 Print / PDF
+          <button class="btn-add" style="background:#334155;font-size:11px;padding:6px 12px;" onclick="printMonthlySheet()">
+            🖨 Print
           </button>
         </div>
       </div>
@@ -430,7 +451,9 @@
               <th style="text-align:center;">Half Day</th>
               <th style="text-align:center;">Overtime</th>
               <th style="text-align:center;">Att. Rate</th>
-              <th style="text-align:center;">Efficiency</th>
+              <th style="text-align:center;">Loan Ded.</th>
+              <th style="text-align:center;">Net Salary</th>
+              <th style="text-align:center;">Payslip</th>
             </tr>
           </thead>
           <tbody id="monthlyTableBody"></tbody>
@@ -474,10 +497,11 @@
 <div class="modal-overlay" id="addEmpModal">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title">Add New Employee</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Create staff profile & auto-generate workspace credentials.</div>
+    <div class="modal-title" id="empModalTitle">Add New Employee</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Create or update staff profile &amp; workspace credentials.</div>
 
     <form onsubmit="handleSaveNewEmployee(event)">
+      <input type="hidden" id="editEmpId" value="">
       <div class="field">
         <label>Full Employee Name *</label>
         <input id="neName" placeholder="e.g. Tariq Mehmood" required oninput="suggestEmpCredentials()">
@@ -530,7 +554,55 @@
 
       <div class="modal-actions">
         <button type="button" class="btn-cancel" onclick="closeAddEmpModal()">Cancel</button>
-        <button type="submit" class="btn-save" style="background:var(--burgundy);">Create Employee</button>
+        <button type="submit" class="btn-save" id="empModalSaveBtn" style="background:var(--burgundy);">Create Employee</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- MODAL: EMPLOYEE LOAN / ADVANCE (SUPER USER ONLY) -->
+<div class="modal-overlay" id="loanModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="loanModalTitle">Record Loan / Advance</div>
+    <form onsubmit="handleSaveLoan(event)">
+      <input type="hidden" id="loanEmpId">
+      <input type="hidden" id="loanEmpName">
+      <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;">
+        Active Loan Balance: <strong id="loanCurrentBal" style="color:#b91c1c;">PKR 0</strong>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="field">
+          <label>Entry Type *</label>
+          <select id="loanType">
+            <option value="loan">Loan Given</option>
+            <option value="advance">Salary Advance</option>
+            <option value="repayment">Loan Repayment</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Date *</label>
+          <input type="date" id="loanDate" required>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="field">
+          <label>Amount (PKR) *</label>
+          <input type="number" id="loanAmount" required min="1" placeholder="e.g. 10000">
+        </div>
+        <div class="field">
+          <label>Monthly Deduction (PKR)</label>
+          <input type="number" id="loanMonthlyDed" min="0" value="0" placeholder="e.g. 2500">
+        </div>
+      </div>
+      <div class="field">
+        <label>Notes / Reason</label>
+        <input type="text" id="loanNotes" placeholder="e.g. Medical advance, deduct 2500/mo">
+      </div>
+      <div id="loanHistoryBox" style="max-height:130px;overflow-y:auto;margin-bottom:10px;"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeLoanModal()">Close</button>
+        <button type="submit" class="btn-save" style="background:#059669;">Save Loan Entry</button>
       </div>
     </form>
   </div>
@@ -539,11 +611,14 @@
 <div class="toast" id="toast"></div>
 
 <script src="shared.js"></script>
+<script src="document_engine.js"></script>
 <script>
 let allEmployees = [];
 let allAttendance = [];
 let allGradingRecords = [];
+let allLoans = [];
 let currentAttMap = {};
+let visibleCredsSet = new Set();
 
 if (!requireAuth()) {
   throw new Error("Auth Required");
@@ -598,53 +673,17 @@ function getOperationalStaffList() {
 }
 
 async function loadCoreData() {
-  const [emps, atts, gradings] = await Promise.all([
+  const [emps, atts, gradings, loans] = await Promise.all([
     sbGet('employees'),
     sbGet('attendance_records'),
-    sbGet('grading_records')
+    sbGet('grading_records'),
+    sbGet('employee_loans').catch(() => [])
   ]);
 
   allEmployees = (emps && emps.length) ? emps : DEFAULT_EMPLOYEES;
-  allAttendance = (atts && atts.length) ? atts : getLocalTable('attendance_records');
+  allAttendance = Array.isArray(atts) ? atts : [];
   allGradingRecords = gradings || [];
-
-  // Ensure today's date has attendance populated for operational staff so it doesn't show 0%
-  const todayStr = document.getElementById('attendanceDateInput').value;
-  const existingToday = allAttendance.filter(x => x.date === todayStr);
-
-  if (existingToday.length === 0) {
-    // If today has no records yet, look for the most recent recorded date
-    const uniqueDates = Array.from(new Set(allAttendance.map(x => x.date))).filter(Boolean).sort().reverse();
-    if (uniqueDates.length > 0) {
-      const latestDate = uniqueDates[0];
-      // Clone latest date records into today's local cache for operational staff
-      const latestRecs = allAttendance.filter(x => x.date === latestDate && isOperationalStaff(x.role));
-      latestRecs.forEach(r => {
-        allAttendance.push({
-          ...r,
-          id: 'att_' + r.employee_id + '_' + todayStr,
-          date: todayStr
-        });
-      });
-    } else {
-      // Default initial records for today (operational floor staff only)
-      getOperationalStaffList().forEach(emp => {
-        allAttendance.push({
-          id: 'att_' + emp.id + '_' + todayStr,
-          date: todayStr,
-          employee_id: emp.id,
-          employee_name: emp.name,
-          role: emp.role,
-          status: 'Present',
-          in_time: '10:00',
-          out_time: '20:00',
-          hours_worked: 10,
-          overtime_hours: 0,
-          notes: ''
-        });
-      });
-    }
-  }
+  allLoans = Array.isArray(loans) && loans.length ? loans : getLocalTable('employee_loans');
 
   updateKpis();
   renderTodayRoster();
@@ -1142,52 +1181,118 @@ async function saveDailyAttendance() {
   }
 }
 
-function renderMonthlySheet() {
-  const m = parseInt(document.getElementById('monthlyMonthSelect').value);
-  const y = parseInt(document.getElementById('monthlyYearSelect').value);
-  const monthName = document.getElementById('monthlyMonthSelect').options[m].text;
-  document.getElementById('sheetTitle').textContent = `Monthly Attendance & Working Efficiency — ${monthName} ${y}`;
+function getEmpLoanSummary(empId, empName) {
+  const recs = allLoans.filter(l => l.employee_id === empId || l.employee_name === empName);
+  let given = 0, repaid = 0, monthlyDed = 0;
+  recs.forEach(r => {
+    const amt = parseFloat(r.amount) || 0;
+    if (r.type === 'repayment') repaid += amt;
+    else {
+      given += amt;
+      if ((parseFloat(r.monthly_deduction) || 0) > 0) monthlyDed = parseFloat(r.monthly_deduction) || 0;
+    }
+  });
+  const balance = Math.max(0, given - repaid);
+  const suggestedDed = balance > 0 ? Math.min(balance, monthlyDed || 0) : 0;
+  return { balance, suggestedDed, recs };
+}
 
-  const tbody = document.getElementById('monthlyTableBody');
-  const mPrefix = `${y}-${String(m + 1).padStart(2, '0')}`;
-
-  const rows = getOperationalStaffList().map(emp => {
+function buildPayrollData(mPrefix) {
+  const rows = [];
+  let totGross = 0, totDed = 0, totNet = 0;
+  getOperationalStaffList().forEach(emp => {
     const empRecs = allAttendance.filter(x => {
       const matchEmp = (x.employee_id === emp.id || x.employee_name === emp.name);
       return matchEmp && x.date && x.date.startsWith(mPrefix);
     });
+    const present = empRecs.filter(x => x.status === 'Present').length;
+    const half = empRecs.filter(x => x.status === 'Half Day').length;
+    const absent = empRecs.filter(x => x.status === 'Absent').length;
+    const otHours = empRecs.reduce((acc, x) => acc + (parseFloat(x.overtime_hours) || 0), 0);
+    const attRate = empRecs.length ? Math.round(((present + (half * 0.5)) / empRecs.length) * 100) : 0;
+    const baseSalary = parseFloat(emp.salary) || 0;
+    const hourlyRate = baseSalary > 0 ? (baseSalary / 260) : 0; // ~26 days * 10 hrs
+    const otPay = Math.round(otHours * hourlyRate);
+    const loanInfo = getEmpLoanSummary(emp.id, emp.name);
+    const loanDeduction = loanInfo.suggestedDed;
+    const netPayable = Math.max(0, Math.round(baseSalary + otPay - loanDeduction));
 
-    const presentDays = empRecs.filter(x => x.status === 'Present').length;
-    const halfDays = empRecs.filter(x => x.status === 'Half Day').length;
-    const absentDays = empRecs.filter(x => x.status === 'Absent').length;
-    const totOT = empRecs.reduce((acc, x) => acc + (parseFloat(x.overtime_hours) || 0), 0);
+    totGross += (baseSalary + otPay);
+    totDed += loanDeduction;
+    totNet += netPayable;
 
-    const workingDaysCount = Math.max(1, empRecs.length);
-    const attRate = Math.round(((presentDays + (halfDays * 0.5)) / workingDaysCount) * 100);
-    const eff = getEmpRealEfficiency(emp);
+    rows.push({
+      id: emp.id,
+      name: emp.name,
+      role: emp.role,
+      roleLabel: getRoleName(emp.role),
+      designation: emp.designation || '',
+      phone: emp.phone || '',
+      username: emp.username || '',
+      present, half, absent, otHours, attRate,
+      baseSalary, otPay, loanDeduction,
+      remainingLoan: Math.max(0, loanInfo.balance - loanDeduction),
+      netPayable
+    });
+  });
+  return { rows, totals: { gross: totGross, deductions: totDed, net: totNet } };
+}
 
-    return `
-      <tr>
-        <td>
-          <div style="font-weight:700;">${escapeHtml(emp.name)}</div>
-          <div style="font-size:10px;color:var(--muted);">${escapeHtml(emp.phone || emp.username || '')}</div>
-        </td>
-        <td><span class="chip" style="font-size:10px;">${escapeHtml(getRoleName(emp.role))}</span></td>
-        <td style="text-align:center;font-weight:700;color:#059669;">${presentDays}</td>
-        <td style="text-align:center;font-weight:700;color:#be123c;">${absentDays}</td>
-        <td style="text-align:center;font-weight:700;color:#d97706;">${halfDays}</td>
-        <td style="text-align:center;font-weight:700;">${totOT.toFixed(1)} hrs</td>
-        <td style="text-align:center;">
-          <strong style="color:${attRate >= 90 ? '#059669' : attRate >= 80 ? '#d97706' : '#be123c'};">${attRate}%</strong>
-        </td>
-        <td style="text-align:center;">
-          <span class="chip ${eff >= 90 ? 'green' : 'gold'}" style="font-size:10px;font-weight:800;">${eff}%</span>
-        </td>
-      </tr>
-    `;
-  }).join('');
+function renderMonthlySheet() {
+  const m = parseInt(document.getElementById('monthlyMonthSelect').value);
+  const y = parseInt(document.getElementById('monthlyYearSelect').value);
+  const monthName = document.getElementById('monthlyMonthSelect').options[m].text;
+  document.getElementById('sheetTitle').textContent = `Monthly Payroll & Attendance — ${monthName} ${y}`;
 
-  tbody.innerHTML = rows;
+  const tbody = document.getElementById('monthlyTableBody');
+  const mPrefix = `${y}-${String(m + 1).padStart(2, '0')}`;
+  const { rows } = buildPayrollData(mPrefix);
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>
+        <div style="font-weight:700;">${escapeHtml(r.name)}</div>
+        <div style="font-size:10px;color:var(--muted);">${escapeHtml(r.phone || r.username || '')}</div>
+      </td>
+      <td><span class="chip" style="font-size:10px;">${escapeHtml(r.roleLabel)}</span></td>
+      <td style="text-align:center;font-weight:700;color:#059669;">${r.present}</td>
+      <td style="text-align:center;font-weight:700;color:#be123c;">${r.absent}</td>
+      <td style="text-align:center;font-weight:700;color:#d97706;">${r.half}</td>
+      <td style="text-align:center;font-weight:700;">${r.otHours.toFixed(1)} hrs</td>
+      <td style="text-align:center;"><strong style="color:${r.attRate >= 90 ? '#059669' : '#d97706'};">${r.attRate}%</strong></td>
+      <td style="text-align:center;color:#b91c1c;font-weight:700;">${r.loanDeduction > 0 ? '-' + r.loanDeduction.toLocaleString() : '0'}</td>
+      <td style="text-align:center;font-weight:800;color:#0f2744;">PKR ${r.netPayable.toLocaleString()}</td>
+      <td style="text-align:center;">
+        <button type="button" class="btn-emp-sm primary" onclick="exportSinglePayslipPdf('${r.id}')">🧾 Receipt</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function exportLuxurySalarySheetPdf() {
+  const m = parseInt(document.getElementById('monthlyMonthSelect').value);
+  const y = parseInt(document.getElementById('monthlyYearSelect').value);
+  const mPrefix = `${y}-${String(m + 1).padStart(2, '0')}`;
+  const { rows, totals } = buildPayrollData(mPrefix);
+  previewDocument(buildMonthlySalarySheetPdf(mPrefix, rows, totals), `Salary Sheet - ${mPrefix}`);
+}
+
+function exportAllPayslipsPdf() {
+  const m = parseInt(document.getElementById('monthlyMonthSelect').value);
+  const y = parseInt(document.getElementById('monthlyYearSelect').value);
+  const mPrefix = `${y}-${String(m + 1).padStart(2, '0')}`;
+  const { rows } = buildPayrollData(mPrefix);
+  previewDocument(buildAllPayslipsPdf(mPrefix, rows), `All Staff Payslips - ${mPrefix}`);
+}
+
+function exportSinglePayslipPdf(empId) {
+  const m = parseInt(document.getElementById('monthlyMonthSelect').value);
+  const y = parseInt(document.getElementById('monthlyYearSelect').value);
+  const mPrefix = `${y}-${String(m + 1).padStart(2, '0')}`;
+  const { rows } = buildPayrollData(mPrefix);
+  const row = rows.find(r => r.id == empId);
+  if (!row) { showToast('Employee not in payroll list', true); return; }
+  previewDocument(buildEmployeePayslipPdf(mPrefix, row), `Salary Receipt - ${row.name} (${mPrefix})`);
 }
 
 function exportMonthlyCSV() {
@@ -1228,6 +1333,12 @@ function printMonthlySheet() {
   window.print();
 }
 
+function toggleEmpCreds(empId) {
+  if (visibleCredsSet.has(empId)) visibleCredsSet.delete(empId);
+  else visibleCredsSet.add(empId);
+  renderEmployeeList(document.getElementById('empSearchInput')?.value || '');
+}
+
 function renderEmployeeList(q) {
   const container = document.getElementById('employeesListContainer');
   if (!container) return;
@@ -1235,7 +1346,7 @@ function renderEmployeeList(q) {
 
   let list = allEmployees;
   if (q) {
-    list = list.filter(e => (e.name + ' ' + e.role + ' ' + e.designation + ' ' + e.phone).toLowerCase().includes(q));
+    list = list.filter(e => (e.name + ' ' + e.role + ' ' + e.designation + ' ' + e.phone + ' ' + (e.username || '')).toLowerCase().includes(q));
   }
 
   if (!list.length) {
@@ -1243,8 +1354,16 @@ function renderEmployeeList(q) {
     return;
   }
 
+  const users = getUsers();
+  const isSuper = (getRole() === 'super_user' || getRole() === 'special');
+
   container.innerHTML = list.map(emp => {
     const eff = getEmpRealEfficiency(emp);
+    const loan = getEmpLoanSummary(emp.id, emp.name);
+    const uRec = users.find(u => u.username && emp.username && u.username.toLowerCase() === emp.username.toLowerCase()) || {};
+    const showCred = visibleCredsSet.has(emp.id);
+    const pwdDisplay = showCred ? (uRec.password || '—') : '••••••••';
+
     return `
       <div class="item-card">
         <div class="item-card-top">
@@ -1258,17 +1377,125 @@ function renderEmployeeList(q) {
         </div>
         <div class="item-meta">
           <span class="chip green">Salary: PKR ${(parseInt(emp.salary) || 0).toLocaleString()}</span>
+          ${loan.balance > 0 ? `<span class="chip" style="background:#fee2e2;color:#b91c1c;">Loan Bal: PKR ${loan.balance.toLocaleString()}</span>` : ''}
           <span class="chip gold">Efficiency: ${eff}%</span>
-          <span class="chip" style="background:#f8fafc">User: ${escapeHtml(emp.username || '—')}</span>
         </div>
+        ${isSuper ? `
+          <div style="margin-top:8px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span class="cred-box">👤 ${escapeHtml(emp.username || '—')} &nbsp;|&nbsp; 🔑 ${escapeHtml(pwdDisplay)}</span>
+            <button type="button" class="btn-emp-sm" onclick="toggleEmpCreds('${emp.id}')">${showCred ? '🙈 Hide' : '👁 Show'}</button>
+          </div>
+          <div class="emp-actions-row">
+            <button type="button" class="btn-emp-sm warn" onclick="openLoanModal('${emp.id}')">💵 Loan / Adv</button>
+            <button type="button" class="btn-emp-sm primary" onclick="exportSinglePayslipPdf('${emp.id}')">🧾 Payslip PDF</button>
+            <button type="button" class="btn-emp-sm" onclick="openEditEmployeeModal('${emp.id}')">✏ Edit</button>
+            ${emp.username !== 'admin' && emp.username !== 'superuser' ? `<button type="button" class="btn-emp-sm danger" onclick="deleteEmployeeRecord('${emp.id}')">🗑 Delete</button>` : ''}
+          </div>
+        ` : ''}
       </div>
     `;
   }).join('');
 }
 
 function openAddEmployeeModal() {
+  document.getElementById('editEmpId').value = '';
+  document.getElementById('empModalTitle').textContent = 'Add New Employee';
+  document.getElementById('empModalSaveBtn').textContent = 'Create Employee';
+  document.getElementById('neName').value = '';
+  document.getElementById('neDesignation').value = '';
+  document.getElementById('nePhone').value = '';
+  document.getElementById('neSalary').value = '';
+  document.getElementById('neUsername').value = '';
+  document.getElementById('nePassword').value = '';
   suggestEmpCredentials();
   document.getElementById('addEmpModal').classList.add('open');
+}
+
+function openEditEmployeeModal(empId) {
+  const emp = allEmployees.find(e => e.id === empId);
+  if (!emp) return;
+  const users = getUsers();
+  const uRec = users.find(u => u.username && emp.username && u.username.toLowerCase() === emp.username.toLowerCase()) || {};
+
+  document.getElementById('editEmpId').value = emp.id;
+  document.getElementById('empModalTitle').textContent = `Edit Employee — ${emp.name}`;
+  document.getElementById('empModalSaveBtn').textContent = 'Save Changes';
+  document.getElementById('neName').value = emp.name || '';
+  document.getElementById('neRole').value = emp.role || 'grader';
+  document.getElementById('neDesignation').value = emp.designation || '';
+  document.getElementById('nePhone').value = emp.phone || '';
+  document.getElementById('neSalary').value = emp.salary || 0;
+  document.getElementById('neUsername').value = emp.username || '';
+  document.getElementById('nePassword').value = uRec.password || '';
+  document.getElementById('addEmpModal').classList.add('open');
+}
+
+async function deleteEmployeeRecord(empId) {
+  const emp = allEmployees.find(e => e.id === empId);
+  if (!emp) return;
+  if (!confirm(`Delete employee "${emp.name}"? This will also remove their app login.`)) return;
+  try { await sbDelete('employees', emp.id); } catch (e) {}
+  allEmployees = allEmployees.filter(e => e.id !== emp.id);
+  saveLocalTable('employees', allEmployees);
+  const users = getUsers().filter(u => u.username !== emp.username);
+  saveUsers(users);
+  updateKpis();
+  renderTodayRoster();
+  renderMonthlySheet();
+  renderEmployeeList('');
+  showToast(`Deleted ${emp.name}`);
+}
+
+function openLoanModal(empId) {
+  const emp = allEmployees.find(e => e.id === empId);
+  if (!emp) return;
+  const loan = getEmpLoanSummary(emp.id, emp.name);
+  document.getElementById('loanEmpId').value = emp.id;
+  document.getElementById('loanEmpName').value = emp.name;
+  document.getElementById('loanModalTitle').textContent = `Loan / Advance — ${emp.name}`;
+  document.getElementById('loanCurrentBal').textContent = `PKR ${loan.balance.toLocaleString()}`;
+  document.getElementById('loanDate').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('loanAmount').value = '';
+  document.getElementById('loanMonthlyDed').value = '0';
+  document.getElementById('loanNotes').value = '';
+  document.getElementById('loanHistoryBox').innerHTML = loan.recs.length
+    ? loan.recs.map(r => `<div style="font-size:11px;padding:5px 8px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;">
+        <span><strong>${escapeHtml(r.type.toUpperCase())}</strong> (${r.date}) ${r.notes ? '— ' + escapeHtml(r.notes) : ''}</span>
+        <strong style="color:${r.type === 'repayment' ? '#059669' : '#b91c1c'};">PKR ${(parseFloat(r.amount) || 0).toLocaleString()}</strong>
+      </div>`).join('')
+    : '<div style="font-size:11px;color:var(--muted);padding:6px;">No loan entries yet.</div>';
+  document.getElementById('loanModal').classList.add('open');
+}
+
+function closeLoanModal() {
+  document.getElementById('loanModal').classList.remove('open');
+}
+
+async function handleSaveLoan(e) {
+  e.preventDefault();
+  const user = getCurrentUser() || {};
+  const payload = {
+    employee_id: document.getElementById('loanEmpId').value,
+    employee_name: document.getElementById('loanEmpName').value,
+    type: document.getElementById('loanType').value,
+    date: document.getElementById('loanDate').value,
+    amount: parseFloat(document.getElementById('loanAmount').value) || 0,
+    monthly_deduction: parseFloat(document.getElementById('loanMonthlyDed').value) || 0,
+    notes: document.getElementById('loanNotes').value.trim(),
+    created_by: user.name || 'Super User'
+  };
+  let saved = null;
+  try {
+    const r = await sbInsert('employee_loans', payload);
+    saved = Array.isArray(r) ? r[0] : r;
+  } catch (err) {}
+  if (!saved || !saved.id) saved = { ...payload, id: 'loan_' + Date.now(), created_at: new Date().toISOString() };
+  allLoans.unshift(saved);
+  saveLocalTable('employee_loans', allLoans);
+  closeLoanModal();
+  renderMonthlySheet();
+  renderEmployeeList(document.getElementById('empSearchInput')?.value || '');
+  showToast('Loan / advance recorded');
 }
 
 function closeAddEmpModal() {
@@ -1300,6 +1527,7 @@ function generateEmpPassword() {
 
 async function handleSaveNewEmployee(e) {
   e.preventDefault();
+  const editId = document.getElementById('editEmpId').value.trim();
   const name = document.getElementById('neName').value.trim();
   const role = document.getElementById('neRole').value;
   const designation = document.getElementById('neDesignation').value.trim();
@@ -1314,33 +1542,47 @@ async function handleSaveNewEmployee(e) {
   }
 
   showLoader();
-  const newEmp = {
-    id: 'emp_' + Date.now().toString(36),
-    name,
-    role,
-    designation,
-    phone,
-    salary,
-    username,
-    status: 'Active'
-  };
-
   try {
-    await sbInsert('employees', newEmp);
-    allEmployees.push(newEmp);
-    saveLocalTable('employees', allEmployees);
+    if (editId) {
+      const idx = allEmployees.findIndex(x => x.id === editId);
+      const patch = { name, role, designation, phone, salary, username };
+      try { await sbUpdate('employees', editId, patch); } catch (err) {}
+      if (idx !== -1) Object.assign(allEmployees[idx], patch);
+      saveLocalTable('employees', allEmployees);
 
-    await addUser({ name, role, username, password });
+      const users = getUsers();
+      const uIdx = users.findIndex(u => u.username && u.username.toLowerCase() === username.toLowerCase());
+      if (uIdx !== -1) {
+        users[uIdx].name = name;
+        users[uIdx].role = role;
+        users[uIdx].password = password;
+        saveUsers(users);
+        try { await sbUpdate('rh_users', users[uIdx].id, { name, role, password }); } catch (err) {}
+      } else {
+        await addUser({ name, role, username, password });
+      }
+      showToast(`Updated ${name}!`);
+    } else {
+      const newEmp = {
+        id: 'emp_' + Date.now().toString(36),
+        name, role, designation, phone, salary, username, status: 'Active'
+      };
+      await sbInsert('employees', newEmp);
+      allEmployees.push(newEmp);
+      saveLocalTable('employees', allEmployees);
+      await addUser({ name, role, username, password });
+      showToast(`Staff profile & login created for ${name}!`);
+    }
 
     closeAddEmpModal();
     updateKpis();
     drawAttendanceGraph();
     drawEfficiencyGraph();
     renderTodayRoster();
+    renderMonthlySheet();
     renderEmployeeList('');
-    showToast(`Staff profile & login created for ${name}!`);
   } catch(err) {
-    showToast('Created employee locally: ' + err.message);
+    showToast('Saved locally: ' + err.message);
   } finally {
     hideLoader();
   }

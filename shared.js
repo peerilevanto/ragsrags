@@ -401,33 +401,7 @@ function getLocalTable(table) {
   }
 
   if (table === 'attendance_records') {
-    // Generate initial 7 days of attendance for operational floor employees only (exclude Administrator & Super User)
-    const records = [];
-    const today = new Date();
-    const operationalStaff = DEFAULT_EMPLOYEES.filter(emp => isOperationalStaff(emp.role));
-    for (let dayOffset = 6; dayOffset >= 0; dayOffset--) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - dayOffset);
-      const dateStr = d.toISOString().slice(0, 10);
-      operationalStaff.forEach((emp, i) => {
-        const isAbsent = (i === 2 && dayOffset === 2);
-        const isHalfDay = (i === 0 && dayOffset === 4);
-        records.push({
-          id: `att_${emp.id}_${dateStr}`,
-          date: dateStr,
-          employee_id: emp.id,
-          employee_name: emp.name,
-          role: emp.role,
-          status: isAbsent ? 'Absent' : isHalfDay ? 'Half Day' : 'Present',
-          in_time: isAbsent ? '-' : '10:00',
-          out_time: isAbsent ? '-' : (isHalfDay ? '15:00' : '20:00'),
-          hours_worked: isAbsent ? 0 : (isHalfDay ? 5 : 10),
-          overtime_hours: (!isAbsent && dayOffset % 2 === 0) ? 1.5 : 0,
-          notes: isAbsent ? 'Medical Leave' : (isHalfDay ? 'Family event' : 'On floor')
-        });
-      });
-    }
-    return records;
+    return [];
   }
 
   if (table === 'ab_grade_items' || table === 'floor_items') {
@@ -586,7 +560,7 @@ async function sbReq(table, method, body, filter) {
     if (method === 'GET') {
       p.push('select=*');
       // Sort created_at desc if applicable
-      if (['ab_grade_items', 'customer_items', 'grading_records', 'petty_cash', 'attendance_records', 'inventory_movements', 'suppliers', 'buyers', 'supplier_transactions', 'supplier_payments', 'buyer_transactions', 'buyer_payments'].includes(table)) {
+      if (['ab_grade_items', 'customer_items', 'grading_records', 'petty_cash', 'attendance_records', 'inventory_movements', 'suppliers', 'buyers', 'supplier_transactions', 'supplier_payments', 'buyer_transactions', 'buyer_payments', 'orders', 'order_items', 'order_dispatches', 'order_logs', 'warehouse_expenses', 'employee_loans'].includes(table)) {
         p.push('order=created_at.desc');
       }
     }
@@ -812,6 +786,8 @@ function detectActiveNavId() {
   if (p.includes('media')) return 'media';
   if (p.includes('suppliers')) return 'suppliers';
   if (p.includes('buyers')) return 'buyers';
+  if (p.includes('expenses')) return 'expenses';
+  if (p.includes('orders')) return 'orders';
   return 'dashboard';
 }
 
@@ -945,9 +921,9 @@ function renderDoubleNav(activeId) {
 
   const isSuperUserRole = (role === 'super_user' || role === 'special');
 
-  // 1. SUPER USER: Double foldable deck with all 9 modules
+  // 1. SUPER USER: Double foldable deck with all 10 modules
   if (isSuperUserRole) {
-    const isSecondaryActive = ['customer', 'petty_cash', 'bells', 'media'].includes(activeId);
+    const isSecondaryActive = ['customer', 'petty_cash', 'bells', 'media', 'orders'].includes(activeId);
     let isFolded = localStorage.getItem('rh_nav_folded') === '1';
 
     if (isSecondaryActive) {
@@ -964,7 +940,7 @@ function renderDoubleNav(activeId) {
       document.body.classList.add('nav-expanded');
     }
 
-    const isFinanceActive = ['suppliers', 'buyers'].includes(activeId);
+    const isFinanceActive = ['suppliers', 'buyers', 'expenses'].includes(activeId);
     let isFinanceFolded = localStorage.getItem('rh_finance_folded') === '1';
     if (isFinanceActive) {
       isFinanceFolded = false;
@@ -975,7 +951,7 @@ function renderDoubleNav(activeId) {
       <div class="nav-fold-handle" onclick="toggleFinanceNav()" title="Click to Fold or Expand Finance Deck" style="background:linear-gradient(90deg,#0c4a6e,#0f172a);color:#7dd3fc;border-bottom:1px solid #1e3a5f;">
         <span class="toggle-arrow" style="font-size:9px" id="financeArrow">${isFinanceFolded ? 'Ã¢â€“Â¼' : 'Ã¢â€“Â²'}</span>
         <span style="font-weight:800;letter-spacing:0.5px;font-size:10px;color:#e0f2fe">FINANCE DECK</span>
-        <span style="display:inline-block;padding:1px 6px;border-radius:10px;background:rgba(14,165,233,0.2);color:#38bdf8;font-size:9px;font-weight:700">SUPPLIERS &amp; BUYERS</span>
+        <span style="display:inline-block;padding:1px 6px;border-radius:10px;background:rgba(14,165,233,0.2);color:#38bdf8;font-size:9px;font-weight:700">SUPPLIERS, BUYERS &amp; EXPENSES</span>
       </div>
 
       <!-- Tier 3: Finance Foldable Deck -->
@@ -988,17 +964,25 @@ function renderDoubleNav(activeId) {
           <svg viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
           <span>Buyers</span>
         </button>
+        <button type="button" class="nav-item ${activeId === 'expenses' ? 'active' : ''}" onclick="location.href='expenses.html'">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          <span>Expenses</span>
+        </button>
       </div>
 
       <!-- Fold / Unfold Handle -->
       <div class="nav-fold-handle" onclick="toggleDoubleNav()" title="Click to Fold or Expand Operations Deck">
         <span class="toggle-arrow" style="font-size:9px">${isFolded ? 'Ã¢â€“Â²' : 'Ã¢â€“Â¼'}</span>
-        <span class="toggle-label">${isFolded ? 'Show Operations Deck (Petty Cash, Bells, Customer, Media)' : 'Fold Operations Deck'}</span>
-        <span style="display:inline-block;padding:1px 6px;border-radius:10px;background:rgba(136,19,55,0.08);color:var(--burgundy);font-size:9px;font-weight:700">4 TABS</span>
+        <span class="toggle-label">${isFolded ? 'Show Operations Deck (Orders, Petty Cash, Bells, Customer, Media)' : 'Fold Operations Deck'}</span>
+        <span style="display:inline-block;padding:1px 6px;border-radius:10px;background:rgba(136,19,55,0.08);color:var(--burgundy);font-size:9px;font-weight:700">5 TABS</span>
       </div>
 
       <!-- Tier 2: Operations & Catalog Foldable Deck -->
       <div class="nav-tier-secondary">
+        <button type="button" class="nav-item ${activeId === 'orders' ? 'active' : ''}" onclick="location.href='orders.html'">
+          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+          <span>Orders</span>
+        </button>
         <button type="button" class="nav-item ${activeId === 'customer' ? 'active customer' : ''}" onclick="location.href='customer_items.html'">
           <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           <span>Customer Stock</span>
@@ -1067,6 +1051,10 @@ function renderDoubleNav(activeId) {
           <svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           <span>Customer Stock</span>
         </button>
+        <button type="button" class="nav-item ${activeId === 'orders' ? 'active' : ''}" onclick="location.href='orders.html'">
+          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+          <span>Orders</span>
+        </button>
         <button type="button" class="nav-item ${activeId === 'employees' ? 'active' : ''}" onclick="location.href='employees.html'">
           <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span>Employees</span>
@@ -1116,6 +1104,10 @@ function renderDoubleNav(activeId) {
         <button type="button" class="nav-item ${activeId === 'ab_grade' ? 'active' : ''}" onclick="location.href='ab_grade.html'">
           <svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
           <span>Warehouse</span>
+        </button>
+        <button type="button" class="nav-item ${activeId === 'orders' ? 'active' : ''}" onclick="location.href='orders.html'">
+          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+          <span>Orders</span>
         </button>
         <button type="button" class="nav-item ${activeId === 'attendance' ? 'active' : ''}" onclick="location.href='my_attendance.html'">
           <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="12" cy="15" r="2"/></svg>

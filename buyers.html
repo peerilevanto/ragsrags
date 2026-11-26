@@ -312,15 +312,22 @@
           <div style="font-size:11px; color:#065f46; font-weight:700;" id="invoicesSummaryCount">0 documents</div>
         </div>
 
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-          <div class="search-wrap" style="flex:2; min-width:200px; margin-bottom:0;">
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; align-items:center;">
+          <div class="search-wrap" style="flex:2; min-width:190px; margin-bottom:0;">
             <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input type="text" id="invoiceSearchInput" placeholder="Search Invoice # (e.g. INV-00001), Buyer, Item..." oninput="renderInvoicesList()">
           </div>
-          <div style="flex:1; min-width:160px;">
+          <div style="flex:1; min-width:150px;">
             <select id="invoiceBuyerFilter" onchange="renderInvoicesList()" style="width:100%; height:38px; border:1px solid var(--border); border-radius:8px; padding:0 8px; font-size:12px; font-weight:600;">
               <option value="">-- All Buyers --</option>
             </select>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input type="month" id="invoiceMonthFilter" onchange="renderInvoicesList()" style="height:38px; border:1px solid var(--border); border-radius:8px; padding:0 8px; font-size:12px; font-weight:600; background:#fff;" title="Filter by Month">
+            <button type="button" class="btn-action-sm" onclick="clearInvoiceMonthFilter()" title="Show All Months" style="height:38px;">All</button>
+            <button type="button" class="btn-action-sm primary" onclick="exportMonthlyBuyerPdf()" style="height:38px; background:#059669; color:#fff; white-space:nowrap;">
+              📄 Monthly Sales PDF
+            </button>
           </div>
         </div>
 
@@ -1332,9 +1339,45 @@ function openBuyerInvoices(buyerId) {
   switchTab('invoices');
 }
 
+function clearInvoiceMonthFilter() {
+  const el = document.getElementById('invoiceMonthFilter');
+  if (el) el.value = '';
+  renderInvoicesList();
+}
+
+function exportMonthlyBuyerPdf() {
+  const monthEl = document.getElementById('invoiceMonthFilter');
+  let monthStr = monthEl ? monthEl.value : '';
+  if (!monthStr) {
+    monthStr = new Date().toISOString().slice(0, 7);
+    if (monthEl) monthEl.value = monthStr;
+    renderInvoicesList();
+  }
+  const buyerFilter = document.getElementById('invoiceBuyerFilter').value;
+  const selectedBuyer = buyerFilter ? buyers.find(b => b.id == buyerFilter) : null;
+
+  const monthTx = buyerTransactions.filter(tx => {
+    const d = tx.date || (tx.created_at ? tx.created_at.slice(0, 10) : '');
+    if (!d.startsWith(monthStr)) return false;
+    if (buyerFilter && tx.buyer_id != buyerFilter) return false;
+    return true;
+  });
+
+  const monthPm = buyerPayments.filter(pm => {
+    const d = pm.date || (pm.created_at ? pm.created_at.slice(0, 10) : '');
+    if (!d.startsWith(monthStr)) return false;
+    if (buyerFilter && pm.buyer_id != buyerFilter) return false;
+    return true;
+  });
+
+  const htmlDoc = buildMonthlyBuyerReport(monthStr, monthTx, monthPm, buyers, selectedBuyer);
+  previewDocument(htmlDoc, `Monthly Sales & Receipts - ${monthStr}`);
+}
+
 function renderInvoicesList() {
   const query = (document.getElementById('invoiceSearchInput').value || '').toLowerCase().trim();
   const buyerFilter = document.getElementById('invoiceBuyerFilter').value;
+  const monthFilter = (document.getElementById('invoiceMonthFilter')?.value || '').trim();
   const container = document.getElementById('invoicesCardsContainer');
   if (!container) return;
 
@@ -1380,6 +1423,7 @@ function renderInvoicesList() {
   // Filter
   const filtered = docs.filter(doc => {
     if (buyerFilter && doc.buyer.id != buyerFilter) return false;
+    if (monthFilter && !(doc.date || '').startsWith(monthFilter)) return false;
     if (!query) return true;
 
     const refMatch = (doc.ref || '').toLowerCase().includes(query);

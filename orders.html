@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Orders &amp; Fulfillment — Rags Heaven</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+/* Orders Module Styles */
+.orders-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 55%, #0f2744 100%);
+  border-radius: 16px;
+  padding: 18px;
+  color: #fff;
+  margin-bottom: 14px;
+  box-shadow: 0 10px 25px rgba(15, 23, 42, 0.18);
+}
+.orders-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 12px;
+}
+@media (max-width: 720px) {
+  .orders-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+}
+.orders-kpi-box {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.orders-kpi-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 700; }
+.orders-kpi-val { font-size: 18px; font-weight: 800; color: #fff; margin-top: 2px; }
+.orders-kpi-sub { font-size: 10.5px; color: #cbd5e1; margin-top: 2px; }
+
+.order-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.order-card:hover { box-shadow: 0 6px 20px rgba(15,23,42,0.08); }
+.order-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.order-no-badge {
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.priority-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 99px;
+  text-transform: uppercase;
+}
+.priority-Normal { background: #f1f5f9; color: #475569; }
+.priority-High { background: #fef3c7; color: #b45309; }
+.priority-Urgent { background: #fee2e2; color: #b91c1c; }
+
+.status-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 3px 9px;
+  border-radius: 99px;
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.status-Dispatched, .status-Delivered { background: #dcfce7; color: #15803d; }
+.status-Ready { background: #ede9fe; color: #6d28d9; }
+.status-Pending { background: #fef3c7; color: #b45309; }
+.status-Cancelled { background: #fee2e2; color: #b91c1c; }
+
+.prog-wrap {
+  margin: 10px 0 8px;
+}
+.prog-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+.prog-track {
+  width: 100%;
+  height: 9px;
+  background: #e2e8f0;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.prog-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #059669, #10b981);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+
+.stage-strip {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.stage-step {
+  font-size: 9.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+.stage-step.done { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+.stage-step.current { background: #0f2744; color: #fff; border-color: #0f2744; }
+
+.btn-action-sm {
+  padding: 6px 11px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-main);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s;
+}
+.btn-action-sm:hover { background: #f8fafc; border-color: #94a3b8; }
+.btn-action-sm.primary { background: #0f2744; color: #fff; border-color: #0f2744; }
+.btn-action-sm.primary:hover { background: #1e3a5f; }
+.btn-action-sm.success { background: #059669; color: #fff; border-color: #059669; }
+.btn-action-sm.info { background: #0369a1; color: #fff; border-color: #0369a1; }
+.btn-action-sm.danger { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,0.65);
+  backdrop-filter: blur(4px);
+  z-index: 2500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+}
+.modal-overlay.open { display: flex; }
+.modal-content {
+  background: #fff;
+  border-radius: 14px;
+  width: 100%;
+  max-width: 760px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.28);
+  position: relative;
+}
+.modal-content.wide { max-width: 1020px; }
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+.modal-title { font-size: 16px; font-weight: 800; color: #0f2744; }
+.btn-modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--muted); line-height: 1; }
+.field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.field-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 640px) {
+  .field-grid-2, .field-grid-3 { grid-template-columns: 1fr; }
+}
+
+.ws-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.ws-tab {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  background: #f8fafc;
+  color: var(--muted);
+  cursor: pointer;
+}
+.ws-tab.active {
+  background: #0f2744;
+  color: #fff;
+  border-color: #0f2744;
+}
+
+.track-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+.track-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.track-table th {
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 800;
+  text-align: left;
+  padding: 8px 8px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.track-table td {
+  padding: 7px 8px;
+  border-bottom: 1px solid #f1f5f9;
+  vertical-align: middle;
+}
+.track-input {
+  width: 62px;
+  padding: 5px 6px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+.track-input-wide {
+  width: 125px;
+  padding: 5px 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 11.5px;
+}
+
+.form-item-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 80px 80px 1fr 32px;
+  gap: 6px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.ws-head-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+@media (max-width: 768px) {
+  .modal-overlay { padding: 6px; }
+  .modal-content { padding: 14px; max-height: 94vh; border-radius: 12px; }
+  .modal-head { flex-direction: column; align-items: stretch; gap: 10px; position: relative; padding-right: 30px; }
+  .modal-head .btn-modal-close { position: absolute; right: 0; top: 0; font-size: 24px; }
+  .ws-head-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 100%; }
+  .ws-head-actions .btn-action-sm { justify-content: center; padding: 8px 8px; font-size: 11px; }
+  .ws-tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+  .ws-tab { padding: 7px 4px; font-size: 10.5px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .form-item-row {
+    grid-template-columns: 1fr 1fr;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: 8px;
+  }
+  .form-item-row .fi-name { grid-column: 1 / -1; }
+
+  .track-table-wrap { border: none; overflow: visible; }
+  .track-table thead { display: none; }
+  .track-table, .track-table tbody { display: block; width: 100%; }
+  .track-table tr {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+  }
+  .track-table td {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch !important;
+    text-align: left !important;
+    padding: 0;
+    border: none;
+  }
+  .track-table td:first-child {
+    grid-column: 1 / -1;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 6px;
+    margin-bottom: 2px;
+  }
+  .track-table td:last-child { grid-column: 1 / -1; }
+  .track-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .track-input, .track-input-wide { width: 100%; height: 34px; box-sizing: border-box; }
+}
+
+.log-item {
+  display: flex;
+  gap: 10px;
+  padding: 8px 10px;
+  border-left: 3px solid #0369a1;
+  background: #f8fafc;
+  border-radius: 0 8px 8px 0;
+  margin-bottom: 8px;
+  font-size: 11.5px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Topbar -->
+  <div class="topbar">
+    <img src="logo_hd.png" class="topbar-logo" alt="Rags Heaven" onerror="this.src='logo.png'">
+    <div class="topbar-title">Orders &amp; Fulfillment</div>
+    <div id="roleBadge" class="role-badge">Orders</div>
+    <button onclick="handleGlobalProfileClick()" style="background:none;border:1px solid var(--border);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" title="User Profile">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </button>
+  </div>
+
+  <div class="content">
+    <!-- Hero KPI Banner -->
+    <div class="orders-hero">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <div>
+          <div style="font-size:11px;font-weight:700;color:#7dd3fc;letter-spacing:0.6px;text-transform:uppercase;">Export &amp; Custom Order Command</div>
+          <div style="font-size:20px;font-weight:800;margin-top:2px;">Customer Orders, Grading, Weight &amp; Dispatch</div>
+        </div>
+        <button id="btnNewOrder" class="btn-action-sm success" style="padding:9px 14px;font-size:12.5px;" onclick="openCreateOrderModal()">
+          + New Customer Order
+        </button>
+      </div>
+
+      <div class="orders-kpi-grid">
+        <div class="orders-kpi-box">
+          <div class="orders-kpi-label">Active Orders</div>
+          <div class="orders-kpi-val" id="kpiActiveOrders">0</div>
+          <div class="orders-kpi-sub" id="kpiUrgentOrders">0 Urgent</div>
+        </div>
+        <div class="orders-kpi-box">
+          <div class="orders-kpi-label">Total Pieces Progress</div>
+          <div class="orders-kpi-val" id="kpiPcsProgress">0%</div>
+          <div class="orders-kpi-sub" id="kpiPcsSub">0 / 0 pcs</div>
+        </div>
+        <div class="orders-kpi-box">
+          <div class="orders-kpi-label">Total Weight &amp; Bales</div>
+          <div class="orders-kpi-val" id="kpiTotalWeight">0 kg</div>
+          <div class="orders-kpi-sub" id="kpiTotalBales">0 bales packed</div>
+        </div>
+        <div class="orders-kpi-box">
+          <div class="orders-kpi-label">Ready / Dispatched</div>
+          <div class="orders-kpi-val" id="kpiDispatched">0</div>
+          <div class="orders-kpi-sub">Shipments tracked</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search & Filters -->
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:14px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div class="search-wrap" style="flex:2;min-width:200px;margin-bottom:0;">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="orderSearchInput" placeholder="Search Order #, Customer (e.g. James), Country (Spain), Item..." oninput="renderOrdersList()">
+        </div>
+        <select id="orderStatusFilter" onchange="renderOrdersList()" style="flex:1;min-width:145px;height:38px;border:1px solid var(--border);border-radius:8px;padding:0 8px;font-size:12px;font-weight:600;">
+          <option value="">-- All Statuses --</option>
+          <option value="Pending">Pending</option>
+          <option value="In Grading">In Grading</option>
+          <option value="Repair & Wash">Repair &amp; Wash</option>
+          <option value="Checking">Checking</option>
+          <option value="Packing & Weighing">Packing &amp; Weighing</option>
+          <option value="Ready to Dispatch">Ready to Dispatch</option>
+          <option value="Dispatched">Dispatched</option>
+          <option value="Delivered">Delivered</option>
+        </select>
+        <select id="orderPriorityFilter" onchange="renderOrdersList()" style="flex:1;min-width:125px;height:38px;border:1px solid var(--border);border-radius:8px;padding:0 8px;font-size:12px;font-weight:600;">
+          <option value="">-- All Priorities --</option>
+          <option value="Urgent">Urgent</option>
+          <option value="High">High</option>
+          <option value="Normal">Normal</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Orders List Container -->
+    <div id="ordersListContainer">
+      <div style="padding:32px;text-align:center;color:var(--muted);font-size:13px;">Loading orders...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     CREATE / EDIT ORDER MODAL
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="orderFormModal" class="modal-overlay">
+  <div class="modal-content wide">
+    <div class="modal-head">
+      <div class="modal-title" id="orderFormModalTitle">Create New Customer Order</div>
+      <button class="btn-modal-close" onclick="closeOrderFormModal()">&times;</button>
+    </div>
+
+    <input type="hidden" id="editOrderId">
+
+    <div style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:12px;">
+      <label style="font-size:11px;font-weight:700;color:#0369a1;display:block;margin-bottom:4px;">Quick-Fill from Existing Buyers (Optional)</label>
+      <select id="quickBuyerSelect" onchange="quickFillBuyer()" style="width:100%;height:36px;border:1px solid var(--border);border-radius:8px;padding:0 8px;font-size:12px;">
+        <option value="">-- Type Customer Manually or Pick Existing Buyer --</option>
+      </select>
+    </div>
+
+    <div class="field-grid-3">
+      <div class="field">
+        <label>Order Number *</label>
+        <input type="text" id="ordNo" placeholder="ORD-2026-0001">
+      </div>
+      <div class="field">
+        <label>Customer Name *</label>
+        <input type="text" id="ordCustomerName" placeholder="e.g. James">
+      </div>
+      <div class="field">
+        <label>Company (Optional)</label>
+        <input type="text" id="ordCompany" placeholder="e.g. Iberia Vintage SL">
+      </div>
+    </div>
+
+    <div class="field-grid-3">
+      <div class="field">
+        <label>Country *</label>
+        <input type="text" id="ordCountry" placeholder="e.g. Spain">
+      </div>
+      <div class="field">
+        <label>City / Port</label>
+        <input type="text" id="ordCity" placeholder="e.g. Madrid / Valencia">
+      </div>
+      <div class="field">
+        <label>Phone / Email</label>
+        <input type="text" id="ordPhone" placeholder="+34 ...">
+      </div>
+    </div>
+
+    <div class="field-grid-3">
+      <div class="field">
+        <label>Order Date</label>
+        <input type="date" id="ordDate">
+      </div>
+      <div class="field">
+        <label>Target Dispatch Date</label>
+        <input type="date" id="ordTargetDate">
+      </div>
+      <div class="field">
+        <label>Priority</label>
+        <select id="ordPriority">
+          <option value="Normal">Normal</option>
+          <option value="High">High</option>
+          <option value="Urgent">Urgent</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-grid-3">
+      <div class="field">
+        <label>Target Total Weight (kg)</label>
+        <input type="number" step="0.1" id="ordTargetWeight" placeholder="e.g. 450">
+      </div>
+      <div class="field">
+        <label>Shipping Method</label>
+        <select id="ordShippingMethod">
+          <option value="Sea Freight (Container)">Sea Freight (Container)</option>
+          <option value="Air Freight">Air Freight</option>
+          <option value="Road / Courier">Road / Courier</option>
+          <option value="Local Pickup">Local Pickup</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Currency</label>
+        <select id="ordCurrency">
+          <option value="EUR">EUR</option>
+          <option value="USD">USD</option>
+          <option value="GBP">GBP</option>
+          <option value="PKR">PKR</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Order Notes / Special Instructions</label>
+      <input type="text" id="ordNotes" placeholder="e.g. Strict Grade A check, no stains/tears, label each bale">
+    </div>
+
+    <!-- Order Items Builder -->
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="font-size:13px;font-weight:800;color:#0f2744;">Order Items List</div>
+        <button type="button" class="btn-action-sm primary" onclick="addFormItemRow()">+ Add Item</button>
+      </div>
+      <div id="formItemsContainer"></div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;border-top:1px solid var(--border);padding-top:12px;">
+      <button type="button" class="btn-action-sm" onclick="closeOrderFormModal()">Cancel</button>
+      <button type="button" class="btn-action-sm success" onclick="saveOrderFromForm()">💾 Save Order</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════════
+     ORDER WORKSPACE MODAL (Tracking, Weight, Dispatch, Logs, PDFs)
+     ══════════════════════════════════════════════════════════════════ -->
+<div id="orderWorkspaceModal" class="modal-overlay">
+  <div class="modal-content wide">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="wsTitle">Order Workspace</div>
+        <div style="font-size:11.5px;color:var(--muted);" id="wsSubtitle"></div>
+      </div>
+      <div class="ws-head-actions">
+        <button class="btn-action-sm info" onclick="exportCurrentGraderPdf()">📄 Grader Sheet PDF</button>
+        <button class="btn-action-sm success" id="wsCustomerPdfBtn" onclick="exportCurrentCustomerPdf()">📊 Customer Progress PDF</button>
+        <button class="btn-modal-close" onclick="closeWorkspaceModal()" title="Close">&times;</button>
+      </div>
+    </div>
+
+    <!-- Progress + Stage Stepper -->
+    <div id="wsHeaderSummary" style="background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;"></div>
+
+    <!-- Workspace Tabs -->
+    <div class="ws-tabs">
+      <button class="ws-tab active" id="wsTabBtn-items" onclick="switchWsTab('items')">📦 Items &amp; Progress Tracking</button>
+      <button class="ws-tab" id="wsTabBtn-dispatch" onclick="switchWsTab('dispatch')">🚢 Weight &amp; Dispatch System</button>
+      <button class="ws-tab" id="wsTabBtn-logs" onclick="switchWsTab('logs')">📜 Activity &amp; Tracking Log</button>
+    </div>
+
+    <!-- WS Tab 1: Items Tracking -->
+    <div id="wsTab-items">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <div style="font-size:11.5px;color:var(--muted);">Update Graded Pcs, Final Checked Pcs, Packed Pcs, Weight (kg), Bales &amp; Remarks directly below.</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <label id="wsShowPricesWrap" style="font-size:11px;font-weight:700;display:flex;align-items:center;gap:4px;cursor:pointer;">
+            <input type="checkbox" id="wsShowPricesPdf"> Include Prices in Customer PDF
+          </label>
+          <button class="btn-action-sm success" onclick="saveAllWorkspaceItems()">💾 Save Progress</button>
+        </div>
+      </div>
+      <div class="track-table-wrap">
+        <table class="track-table">
+          <thead>
+            <tr>
+              <th>Item &amp; Grade</th>
+              <th style="text-align:center;">Req Pcs</th>
+              <th style="text-align:center;">Graded Pcs</th>
+              <th style="text-align:center;">Repair Pcs</th>
+              <th style="text-align:center;">Wash Pcs</th>
+              <th style="text-align:center;">Checked Pcs</th>
+              <th style="text-align:center;">Packed Pcs</th>
+              <th style="text-align:center;">Weight (kg)</th>
+              <th style="text-align:center;">Bales</th>
+              <th>Status</th>
+              <th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="wsItemsTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- WS Tab 2: Weight & Dispatch -->
+    <div id="wsTab-dispatch" style="display:none;">
+      <div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:800;color:#0369a1;margin-bottom:8px;">+ Record New Dispatch / Shipment</div>
+        <div class="field-grid-3">
+          <div class="field"><label>Dispatch Date</label><input type="date" id="dspDate"></div>
+          <div class="field"><label>Shipping Method</label>
+            <select id="dspMethod">
+              <option value="Sea Freight (Container)">Sea Freight (Container)</option>
+              <option value="Air Freight">Air Freight</option>
+              <option value="Road / Courier">Road / Courier</option>
+              <option value="Local Pickup">Local Pickup</option>
+            </select>
+          </div>
+          <div class="field"><label>Carrier / Line</label><input type="text" id="dspCarrier" placeholder="e.g. Maersk / DHL"></div>
+        </div>
+        <div class="field-grid-3">
+          <div class="field"><label>Container / B/L / AWB #</label><input type="text" id="dspTracking" placeholder="MSKU1234567"></div>
+          <div class="field"><label>Seal #</label><input type="text" id="dspSeal" placeholder="SL-8891"></div>
+          <div class="field"><label>Dispatch Status</label>
+            <select id="dspStatus">
+              <option value="Preparing">Preparing</option>
+              <option value="Dispatched">Dispatched</option>
+              <option value="In Transit">In Transit</option>
+              <option value="Delivered">Delivered</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-grid-3">
+          <div class="field"><label>Total Bales</label><input type="number" id="dspBales" value="0"></div>
+          <div class="field"><label>Net Weight (kg)</label><input type="number" step="0.1" id="dspNetKg" value="0"></div>
+          <div class="field"><label>Gross Weight (kg)</label><input type="number" step="0.1" id="dspGrossKg" value="0"></div>
+        </div>
+        <div class="field"><label>Dispatch Notes</label><input type="text" id="dspNotes" placeholder="Container loaded at Karachi facility..."></div>
+        <div style="text-align:right;margin-top:8px;">
+          <button class="btn-action-sm primary" onclick="saveNewDispatch()">🚢 Save Dispatch Record</button>
+        </div>
+      </div>
+
+      <div style="font-size:13px;font-weight:800;color:#0f2744;margin-bottom:8px;">Recorded Dispatches</div>
+      <div id="wsDispatchesList"></div>
+    </div>
+
+    <!-- WS Tab 3: Logs -->
+    <div id="wsTab-logs" style="display:none;">
+      <div id="wsLogsList"></div>
+    </div>
+  </div>
+</div>
+
+<script src="shared.js"></script>
+<script src="document_engine.js"></script>
+<script>
+const ORDER_STAGES = ['Pending', 'In Grading', 'Repair & Wash', 'Checking', 'Packing & Weighing', 'Ready to Dispatch', 'Dispatched', 'Delivered'];
+const LS_ORDERS_KEY = 'rh_orders_cache';
+const LS_ITEMS_KEY = 'rh_order_items_cache';
+const LS_DISPATCH_KEY = 'rh_order_dispatches_cache';
+const LS_LOGS_KEY = 'rh_order_logs_cache';
+
+let ordersList = [];
+let orderItemsList = [];
+let orderDispatchesList = [];
+let orderLogsList = [];
+let buyersCache = [];
+let activeWorkspaceOrderId = null;
+
+async function initOrdersPage() {
+  try {
+    if (!requireAuth(['checker', 'admin', 'super_user'])) return;
+    const user = getCurrentUser() || {};
+    const badge = document.getElementById('roleBadge');
+    if (badge) badge.textContent = getRoleName(user.role || getRole());
+
+    // Final Checker cannot create/delete orders (Administrator & Super User can)
+    const role = (user.role || getRole() || '').toLowerCase();
+    const canManageOrders = ['admin', 'super_user', 'special', 'administrator'].includes(role);
+    const btnNew = document.getElementById('btnNewOrder');
+    if (btnNew && !canManageOrders) btnNew.style.display = 'none';
+
+    // Customer PDF is strictly visible for Super User (Supervisor) only
+    const canViewCustomerPdf = isSuperUser();
+    const wsCustBtn = document.getElementById('wsCustomerPdfBtn');
+    const wsPriceWrap = document.getElementById('wsShowPricesWrap');
+    if (wsCustBtn && !canViewCustomerPdf) wsCustBtn.style.display = 'none';
+    if (wsPriceWrap && !canViewCustomerPdf) wsPriceWrap.style.display = 'none';
+
+    await loadAllOrdersData();
+  } catch (err) {
+    console.error('initOrdersPage error:', err);
+    const c = document.getElementById('ordersListContainer');
+    if (c) c.innerHTML = `<div style="padding:24px;text-align:center;color:#b91c1c;background:#fee2e2;border-radius:12px;">Error loading orders: ${escapeHtml(err.message || String(err))}</div>`;
+  }
+}
+
+async function safeSbGet(table, fallbackKey) {
+  try {
+    const res = await sbGet(table);
+    if (Array.isArray(res)) return res;
+  } catch (e) {
+    console.warn('safeSbGet fallback for', table, e);
+  }
+  try {
+    return fallbackKey ? JSON.parse(localStorage.getItem(fallbackKey) || '[]') : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+async function loadAllOrdersData() {
+  const [o, it, dp, lg, by] = await Promise.all([
+    safeSbGet('orders', LS_ORDERS_KEY),
+    safeSbGet('order_items', LS_ITEMS_KEY),
+    safeSbGet('order_dispatches', LS_DISPATCH_KEY),
+    safeSbGet('order_logs', LS_LOGS_KEY),
+    safeSbGet('buyers', null)
+  ]);
+  ordersList = o;
+  orderItemsList = it;
+  orderDispatchesList = dp;
+  orderLogsList = lg;
+  buyersCache = by;
+
+  saveLocalCaches();
+  populateBuyersQuickSelect();
+  updateOrderKpis();
+  renderOrdersList();
+}
+
+function saveLocalCaches() {
+  try {
+    localStorage.setItem(LS_ORDERS_KEY, JSON.stringify(ordersList));
+    localStorage.setItem(LS_ITEMS_KEY, JSON.stringify(orderItemsList));
+    localStorage.setItem(LS_DISPATCH_KEY, JSON.stringify(orderDispatchesList));
+    localStorage.setItem(LS_LOGS_KEY, JSON.stringify(orderLogsList));
+  } catch (e) {}
+}
+
+function populateBuyersQuickSelect() {
+  const sel = document.getElementById('quickBuyerSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- Type Customer Manually or Pick Existing Buyer --</option>' +
+    buyersCache.map(b => `<option value="${b.id}">${escapeHtml(b.name)}${b.country ? ' — ' + escapeHtml(b.country) : ''}</option>`).join('');
+}
+
+function quickFillBuyer() {
+  const id = document.getElementById('quickBuyerSelect').value;
+  const b = buyersCache.find(x => x.id == id);
+  if (!b) return;
+  document.getElementById('ordCustomerName').value = b.name || '';
+  document.getElementById('ordCompany').value = b.company || '';
+  document.getElementById('ordCountry').value = b.country || '';
+  document.getElementById('ordCity').value = b.city || '';
+  document.getElementById('ordPhone').value = b.phone || b.email || '';
+  if (b.currency) document.getElementById('ordCurrency').value = b.currency;
+}
+
+function computeOrderStats(orderId) {
+  const items = orderItemsList.filter(i => i.order_id == orderId);
+  const req = items.reduce((s, i) => s + (parseInt(i.req_pcs, 10) || 0), 0);
+  const graded = items.reduce((s, i) => s + (parseInt(i.graded_pcs, 10) || 0), 0);
+  const repair = items.reduce((s, i) => s + (parseInt(i.repair_pcs, 10) || 0), 0);
+  const wash = items.reduce((s, i) => s + (parseInt(i.wash_pcs, 10) || 0), 0);
+  const checked = items.reduce((s, i) => s + (parseInt(i.checked_pcs, 10) || 0), 0);
+  const packed = items.reduce((s, i) => s + (parseInt(i.packed_pcs, 10) || 0), 0);
+  const bestDone = checked > 0 ? checked : graded;
+  const pct = req > 0 ? Math.min(100, Math.round((bestDone / req) * 100)) : 0;
+  const weight = items.reduce((s, i) => s + (parseFloat(i.actual_weight_kg) || 0), 0);
+  const bales = items.reduce((s, i) => s + (parseInt(i.bales_count, 10) || 0), 0);
+  return { items, req, graded, repair, wash, checked, packed, bestDone, pct, weight, bales };
+}
+
+function updateOrderKpis() {
+  const active = ordersList.filter(o => !['Delivered', 'Cancelled'].includes(o.status));
+  const urgent = active.filter(o => o.priority === 'Urgent').length;
+  const dispatched = ordersList.filter(o => ['Ready to Dispatch', 'Dispatched', 'Delivered'].includes(o.status)).length;
+
+  let totReq = 0, totDone = 0, totWeight = 0, totBales = 0;
+  ordersList.forEach(o => {
+    const st = computeOrderStats(o.id);
+    totReq += st.req;
+    totDone += st.bestDone;
+    totWeight += st.weight || (parseFloat(o.actual_weight_kg) || 0);
+    totBales += st.bales || (parseInt(o.total_bales, 10) || 0);
+  });
+
+  const pct = totReq > 0 ? Math.min(100, Math.round((totDone / totReq) * 100)) : 0;
+  document.getElementById('kpiActiveOrders').textContent = active.length;
+  document.getElementById('kpiUrgentOrders').textContent = `${urgent} Urgent`;
+  document.getElementById('kpiPcsProgress').textContent = `${pct}%`;
+  document.getElementById('kpiPcsSub').textContent = `${totDone.toLocaleString()} / ${totReq.toLocaleString()} pcs`;
+  document.getElementById('kpiTotalWeight').textContent = `${totWeight.toFixed(1)} kg`;
+  document.getElementById('kpiTotalBales').textContent = `${totBales} bales packed`;
+  document.getElementById('kpiDispatched').textContent = dispatched;
+}
+
+function renderOrdersList() {
+  const q = (document.getElementById('orderSearchInput').value || '').toLowerCase().trim();
+  const stFilter = document.getElementById('orderStatusFilter').value;
+  const prFilter = document.getElementById('orderPriorityFilter').value;
+  const container = document.getElementById('ordersListContainer');
+
+  const filtered = [...ordersList].sort((a, b) => (b.order_date || '').localeCompare(a.order_date || '')).filter(o => {
+    if (stFilter && o.status !== stFilter) return false;
+    if (prFilter && o.priority !== prFilter) return false;
+    if (!q) return true;
+    const stats = computeOrderStats(o.id);
+    const itemMatch = stats.items.some(it => (it.item_name || '').toLowerCase().includes(q));
+    return (o.order_no || '').toLowerCase().includes(q)
+      || (o.customer_name || '').toLowerCase().includes(q)
+      || (o.country || '').toLowerCase().includes(q)
+      || (o.customer_company || '').toLowerCase().includes(q)
+      || itemMatch;
+  });
+
+  if (!filtered.length) {
+    container.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--muted);background:#fff;border-radius:14px;border:1px dashed var(--border);">
+      No orders found. Click <strong>+ New Customer Order</strong> to create your first order.
+    </div>`;
+    return;
+  }
+
+  container.innerHTML = filtered.map(o => {
+    const st = computeOrderStats(o.id);
+    const stageIdx = ORDER_STAGES.indexOf(o.status);
+    const actualWt = st.weight || parseFloat(o.actual_weight_kg) || 0;
+    const targetWt = parseFloat(o.target_weight_kg) || 0;
+    const totalBales = st.bales || parseInt(o.total_bales, 10) || 0;
+    const statusCls = (o.status || '').split(' ')[0];
+
+    return `
+      <div class="order-card">
+        <div class="order-card-head">
+          <div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px;">
+              <span class="order-no-badge">${escapeHtml(o.order_no)}</span>
+              <span class="priority-badge priority-${escapeHtml(o.priority || 'Normal')}">${escapeHtml(o.priority || 'Normal')}</span>
+              <span class="status-pill status-${escapeHtml(statusCls)}">${escapeHtml(o.status || 'Pending')}</span>
+            </div>
+            <div style="font-size:15px;font-weight:800;color:#0f172a;">
+              ${escapeHtml(o.customer_name)}${o.country ? ' <span style="color:#0369a1;">(' + escapeHtml(o.country) + ')</span>' : ''}
+            </div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px;">
+              📅 Ordered: ${o.order_date || '-'} &bull; 🚢 Target Dispatch: <strong>${o.target_dispatch_date || 'Not set'}</strong> &bull; 📦 ${st.items.length} item(s)
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:14px;font-weight:800;color:#059669;">${st.bestDone.toLocaleString()} / ${st.req.toLocaleString()} pcs</div>
+            <div style="font-size:11px;color:var(--muted);">⚖ ${actualWt.toFixed(1)}${targetWt > 0 ? ' / ' + targetWt.toFixed(1) : ''} kg &bull; ${totalBales} bales</div>
+          </div>
+        </div>
+
+        <div class="prog-wrap">
+          <div class="prog-head">
+            <span>Order Fulfillment Progress</span>
+            <span style="color:#059669;">${st.pct}%</span>
+          </div>
+          <div class="prog-track"><div class="prog-fill" style="width:${st.pct}%;"></div></div>
+        </div>
+
+        <div class="stage-strip">
+          ${ORDER_STAGES.map((stg, idx) => {
+            const cls = idx < stageIdx ? 'done' : (idx === stageIdx ? 'current' : '');
+            return `<span class="stage-step ${cls}">${escapeHtml(stg)}</span>`;
+          }).join('')}
+        </div>
+
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;">
+          <button class="btn-action-sm primary" onclick="openOrderWorkspace('${o.id}')">⚙ Open Tracking &amp; Dispatch</button>
+          <button class="btn-action-sm info" onclick="exportGraderPdfById('${o.id}')">📄 Grader PDF</button>
+          ${isSuperUser() ? `<button class="btn-action-sm success" onclick="exportCustomerPdfById('${o.id}')">📊 Customer PDF</button>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── Create / Edit Order Form ────────────────────────────────────────────
+function openCreateOrderModal() {
+  document.getElementById('editOrderId').value = '';
+  document.getElementById('orderFormModalTitle').textContent = 'Create New Customer Order';
+  document.getElementById('ordNo').value = generateDocNumber('ORD');
+  document.getElementById('ordCustomerName').value = '';
+  document.getElementById('ordCompany').value = '';
+  document.getElementById('ordCountry').value = '';
+  document.getElementById('ordCity').value = '';
+  document.getElementById('ordPhone').value = '';
+  document.getElementById('ordDate').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('ordTargetDate').value = '';
+  document.getElementById('ordPriority').value = 'Normal';
+  document.getElementById('ordTargetWeight').value = '';
+  document.getElementById('ordShippingMethod').value = 'Sea Freight (Container)';
+  document.getElementById('ordCurrency').value = 'EUR';
+  document.getElementById('ordNotes').value = '';
+  document.getElementById('quickBuyerSelect').value = '';
+  document.getElementById('formItemsContainer').innerHTML = '';
+  addFormItemRow();
+  document.getElementById('orderFormModal').classList.add('open');
+}
+
+function closeOrderFormModal() {
+  document.getElementById('orderFormModal').classList.remove('open');
+}
+
+function addFormItemRow(prefill = {}) {
+  const wrap = document.getElementById('formItemsContainer');
+  const row = document.createElement('div');
+  row.className = 'form-item-row';
+  row.innerHTML = `
+    <input type="text" class="fi-name" placeholder="Item Name (e.g. Patagonia Fleece)" value="${escapeHtml(prefill.item_name || '')}" style="height:34px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;">
+    <input type="text" class="fi-cat" placeholder="Grade (e.g. Grade A)" value="${escapeHtml(prefill.category || 'Grade A')}" style="height:34px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;">
+    <input type="text" class="fi-spec" placeholder="Size/Spec" value="${escapeHtml(prefill.size_spec || '')}" style="height:34px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;">
+    <input type="number" class="fi-req" placeholder="Req Pcs" value="${prefill.req_pcs || ''}" style="height:34px;border:1px solid var(--border);border-radius:6px;padding:0 6px;font-size:12px;">
+    <input type="number" step="0.1" class="fi-wt" placeholder="Kg" value="${prefill.req_weight_kg || ''}" style="height:34px;border:1px solid var(--border);border-radius:6px;padding:0 6px;font-size:12px;">
+    <input type="text" class="fi-grader" placeholder="Grader" value="${escapeHtml(prefill.assigned_grader || '')}" style="height:34px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;">
+    <button type="button" onclick="this.parentElement.remove()" style="height:34px;background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;cursor:pointer;font-weight:800;">&times;</button>
+  `;
+  wrap.appendChild(row);
+}
+
+async function saveOrderFromForm() {
+  const customerName = document.getElementById('ordCustomerName').value.trim();
+  const orderNo = document.getElementById('ordNo').value.trim() || generateDocNumber('ORD');
+  if (!customerName) { showToast('Customer Name is required', true); return; }
+
+  const itemRows = [...document.querySelectorAll('#formItemsContainer .form-item-row')].map((r, idx) => ({
+    item_name: r.querySelector('.fi-name').value.trim(),
+    category: r.querySelector('.fi-cat').value.trim() || 'Grade A',
+    size_spec: r.querySelector('.fi-spec').value.trim(),
+    req_pcs: parseInt(r.querySelector('.fi-req').value, 10) || 0,
+    req_weight_kg: parseFloat(r.querySelector('.fi-wt').value) || 0,
+    assigned_grader: r.querySelector('.fi-grader').value.trim(),
+    sort_order: idx
+  })).filter(it => it.item_name);
+
+  if (!itemRows.length) { showToast('Add at least one item to the order', true); return; }
+
+  const user = getCurrentUser() || {};
+  const newOrder = {
+    order_no: orderNo,
+    customer_name: customerName,
+    customer_company: document.getElementById('ordCompany').value.trim(),
+    country: document.getElementById('ordCountry').value.trim(),
+    city: document.getElementById('ordCity').value.trim(),
+    phone: document.getElementById('ordPhone').value.trim(),
+    order_date: document.getElementById('ordDate').value || new Date().toISOString().slice(0, 10),
+    target_dispatch_date: document.getElementById('ordTargetDate').value || null,
+    priority: document.getElementById('ordPriority').value,
+    status: 'Pending',
+    currency: document.getElementById('ordCurrency').value,
+    target_weight_kg: parseFloat(document.getElementById('ordTargetWeight').value) || 0,
+    shipping_method: document.getElementById('ordShippingMethod').value,
+    notes: document.getElementById('ordNotes').value.trim(),
+    created_by: user.name || 'Administrator'
+  };
+
+  let savedOrder = null;
+  try {
+    const res = await sbInsert('orders', newOrder);
+    savedOrder = Array.isArray(res) ? res[0] : res;
+  } catch (e) {}
+  if (!savedOrder || !savedOrder.id) {
+    savedOrder = { ...newOrder, id: 'ord_' + Date.now(), created_at: new Date().toISOString() };
+  }
+  ordersList.unshift(savedOrder);
+
+  for (const it of itemRows) {
+    const itemPayload = { ...it, order_id: savedOrder.id, graded_pcs: 0, checked_pcs: 0, packed_pcs: 0, actual_weight_kg: 0, bales_count: 0, item_status: 'Pending' };
+    let savedIt = null;
+    try {
+      const r = await sbInsert('order_items', itemPayload);
+      savedIt = Array.isArray(r) ? r[0] : r;
+    } catch (e) {}
+    if (!savedIt || !savedIt.id) savedIt = { ...itemPayload, id: 'oit_' + Date.now() + Math.random().toString(36).slice(2, 6) };
+    orderItemsList.push(savedIt);
+  }
+
+  await appendOrderLog(savedOrder.id, 'Order Created', `Order ${savedOrder.order_no} for ${savedOrder.customer_name} (${itemRows.length} items)`);
+  saveLocalCaches();
+  closeOrderFormModal();
+  updateOrderKpis();
+  renderOrdersList();
+  showToast('Order created successfully');
+}
+
+async function appendOrderLog(orderId, action, details) {
+  const user = getCurrentUser() || {};
+  const log = {
+    order_id: orderId,
+    action,
+    details,
+    actor_name: user.name || 'Staff',
+    actor_role: getRoleName(user.role || getRole()),
+    created_at: new Date().toISOString()
+  };
+  try {
+    const r = await sbInsert('order_logs', log);
+    const saved = Array.isArray(r) ? r[0] : r;
+    if (saved && saved.id) { orderLogsList.unshift(saved); return; }
+  } catch (e) {}
+  orderLogsList.unshift({ ...log, id: 'log_' + Date.now() });
+}
+
+// ── Order Workspace Modal ───────────────────────────────────────────────
+function openOrderWorkspace(orderId) {
+  activeWorkspaceOrderId = orderId;
+  renderWorkspace();
+  switchWsTab('items');
+  document.getElementById('orderWorkspaceModal').classList.add('open');
+}
+
+function closeWorkspaceModal() {
+  document.getElementById('orderWorkspaceModal').classList.remove('open');
+  activeWorkspaceOrderId = null;
+}
+
+function switchWsTab(tabId) {
+  ['items', 'dispatch', 'logs'].forEach(t => {
+    document.getElementById(`wsTab-${t}`).style.display = t === tabId ? 'block' : 'none';
+    document.getElementById(`wsTabBtn-${t}`).classList.toggle('active', t === tabId);
+  });
+}
+
+function renderWorkspace() {
+  const o = ordersList.find(x => x.id == activeWorkspaceOrderId);
+  if (!o) return;
+  const st = computeOrderStats(o.id);
+
+  document.getElementById('wsTitle').textContent = `${o.order_no} — ${o.customer_name}${o.country ? ' (' + o.country + ')' : ''}`;
+  document.getElementById('wsSubtitle').textContent = `Ordered: ${o.order_date || '-'} • Target Dispatch: ${o.target_dispatch_date || 'Not set'} • Priority: ${o.priority || 'Normal'}`;
+
+  document.getElementById('wsHeaderSummary').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:800;">Order Stage:</span>
+        <select id="wsOrderStatusSelect" onchange="changeOrderStage(this.value)" style="height:32px;border:1px solid #cbd5e1;border-radius:6px;padding:0 8px;font-size:12px;font-weight:700;background:#fff;">
+          ${ORDER_STAGES.map(s => `<option value="${s}" ${o.status === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:#0f2744;">
+        Checked/Graded: <span style="color:#059669;">${st.bestDone.toLocaleString()} / ${st.req.toLocaleString()} pcs (${st.pct}%)</span> &bull;
+        ${st.repair > 0 || st.wash > 0 ? `<span style="color:#b45309;">🔧 Repair: ${st.repair} &bull; 🧼 Wash: ${st.wash}</span> &bull; ` : ''}
+        Weight: <span style="color:#0369a1;">${st.weight.toFixed(1)} kg</span> &bull; Bales: <span>${st.bales}</span>
+      </div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" style="width:${st.pct}%;"></div></div>
+  `;
+
+  // Items table
+  const tbody = document.getElementById('wsItemsTbody');
+  tbody.innerHTML = st.items.map(it => `
+    <tr data-item-id="${it.id}">
+      <td>
+        <div style="font-weight:800;color:#0f172a;">${escapeHtml(it.item_name)}</div>
+        <div style="font-size:10.5px;color:var(--muted);">${escapeHtml(it.category || 'Grade A')}${it.size_spec ? ' • ' + escapeHtml(it.size_spec) : ''}</div>
+      </td>
+      <td data-label="Req Pcs" style="text-align:center;font-weight:800;">${it.req_pcs || 0}</td>
+      <td data-label="Graded Pcs" style="text-align:center;"><input type="number" class="track-input wi-graded" value="${it.graded_pcs || 0}"></td>
+      <td data-label="Repair Pcs" style="text-align:center;"><input type="number" class="track-input wi-repair" value="${it.repair_pcs || 0}"></td>
+      <td data-label="Wash Pcs" style="text-align:center;"><input type="number" class="track-input wi-wash" value="${it.wash_pcs || 0}"></td>
+      <td data-label="Checked Pcs" style="text-align:center;"><input type="number" class="track-input wi-checked" value="${it.checked_pcs || 0}"></td>
+      <td data-label="Packed Pcs" style="text-align:center;"><input type="number" class="track-input wi-packed" value="${it.packed_pcs || 0}"></td>
+      <td data-label="Weight (kg)" style="text-align:center;"><input type="number" step="0.1" class="track-input wi-weight" value="${it.actual_weight_kg || 0}"></td>
+      <td data-label="Bales" style="text-align:center;"><input type="number" class="track-input wi-bales" value="${it.bales_count || 0}"></td>
+      <td data-label="Status">
+        <select class="track-input-wide wi-status">
+          ${['Pending', 'In Progress', 'Graded', 'Repair', 'Wash', 'Checked', 'Packed', 'Shortage'].map(s => `<option value="${s}" ${it.item_status === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td data-label="Remarks"><input type="text" class="track-input-wide wi-remarks" value="${escapeHtml(it.remarks || '')}" placeholder="Remarks..."></td>
+    </tr>
+  `).join('');
+
+  // Dispatches list
+  document.getElementById('dspDate').value = new Date().toISOString().slice(0, 10);
+  const dispatches = orderDispatchesList.filter(d => d.order_id == o.id);
+  const dspContainer = document.getElementById('wsDispatchesList');
+  dspContainer.innerHTML = dispatches.length ? dispatches.map(d => `
+    <div style="border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:#fff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-weight:800;font-size:12.5px;color:#0f2744;">${escapeHtml(d.dispatch_no)} <span class="status-pill">${escapeHtml(d.status)}</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">
+          📅 ${d.dispatch_date || '-'} &bull; ${escapeHtml(d.shipping_method || '-')} &bull; Carrier: ${escapeHtml(d.carrier_name || '-')} &bull; Ref: <strong>${escapeHtml(d.tracking_or_bl_no || '-')}</strong>
+        </div>
+        <div style="font-size:11px;color:#0369a1;font-weight:700;margin-top:2px;">
+          Bales: ${d.bales_count || 0} &bull; Net: ${(parseFloat(d.net_weight_kg) || 0).toFixed(1)} kg &bull; Gross: ${(parseFloat(d.gross_weight_kg) || 0).toFixed(1)} kg
+        </div>
+      </div>
+      <button class="btn-action-sm info" onclick="exportDispatchPdf('${d.id}')">🖨 Dispatch Packing List PDF</button>
+    </div>
+  `).join('') : '<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px;">No dispatches recorded yet.</div>';
+
+  // Logs list
+  const logs = orderLogsList.filter(l => l.order_id == o.id);
+  document.getElementById('wsLogsList').innerHTML = logs.length ? logs.map(l => `
+    <div class="log-item">
+      <div style="flex:1;">
+        <div style="font-weight:800;color:#0f2744;">${escapeHtml(l.action)}</div>
+        <div style="color:#475569;margin-top:2px;">${escapeHtml(l.details || '')}</div>
+      </div>
+      <div style="text-align:right;font-size:10.5px;color:var(--muted);white-space:nowrap;">
+        <div><strong>${escapeHtml(l.actor_name || 'Staff')}</strong> (${escapeHtml(l.actor_role || '')})</div>
+        <div>${(l.created_at || '').slice(0, 16).replace('T', ' ')}</div>
+      </div>
+    </div>
+  `).join('') : '<div style="padding:18px;text-align:center;color:var(--muted);font-size:12px;">No activity logs yet.</div>';
+}
+
+async function changeOrderStage(newStatus) {
+  const o = ordersList.find(x => x.id == activeWorkspaceOrderId);
+  if (!o) return;
+  const prev = o.status;
+  o.status = newStatus;
+  try { await sbUpdate('orders', o.id, { status: newStatus, updated_at: new Date().toISOString() }); } catch (e) {}
+  await appendOrderLog(o.id, 'Stage Updated', `Order status changed from "${prev}" to "${newStatus}"`);
+  saveLocalCaches();
+  updateOrderKpis();
+  renderOrdersList();
+  renderWorkspace();
+  showToast(`Status updated to ${newStatus}`);
+}
+
+async function saveAllWorkspaceItems() {
+  const o = ordersList.find(x => x.id == activeWorkspaceOrderId);
+  if (!o) return;
+  const rows = [...document.querySelectorAll('#wsItemsTbody tr')];
+  for (const r of rows) {
+    const id = r.getAttribute('data-item-id');
+    const it = orderItemsList.find(x => x.id == id);
+    if (!it) continue;
+    const patch = {
+      graded_pcs: parseInt(r.querySelector('.wi-graded').value, 10) || 0,
+      repair_pcs: parseInt(r.querySelector('.wi-repair').value, 10) || 0,
+      wash_pcs: parseInt(r.querySelector('.wi-wash').value, 10) || 0,
+      checked_pcs: parseInt(r.querySelector('.wi-checked').value, 10) || 0,
+      packed_pcs: parseInt(r.querySelector('.wi-packed').value, 10) || 0,
+      actual_weight_kg: parseFloat(r.querySelector('.wi-weight').value) || 0,
+      bales_count: parseInt(r.querySelector('.wi-bales').value, 10) || 0,
+      item_status: r.querySelector('.wi-status').value,
+      remarks: r.querySelector('.wi-remarks').value.trim(),
+      updated_at: new Date().toISOString()
+    };
+    Object.assign(it, patch);
+    try { await sbUpdate('order_items', it.id, patch); } catch (e) {}
+  }
+
+  const st = computeOrderStats(o.id);
+  o.actual_weight_kg = st.weight;
+  o.total_bales = st.bales;
+  try { await sbUpdate('orders', o.id, { actual_weight_kg: st.weight, total_bales: st.bales }); } catch (e) {}
+
+  await appendOrderLog(o.id, 'Item Progress Saved', `Updated counts (${st.bestDone}/${st.req} pcs, Repair: ${st.repair}, Wash: ${st.wash}, ${st.weight.toFixed(1)} kg, ${st.bales} bales)`);
+  saveLocalCaches();
+  updateOrderKpis();
+  renderOrdersList();
+  renderWorkspace();
+  showToast('Item progress & weights saved');
+}
+
+async function saveNewDispatch() {
+  const o = ordersList.find(x => x.id == activeWorkspaceOrderId);
+  if (!o) return;
+  const user = getCurrentUser() || {};
+  const payload = {
+    order_id: o.id,
+    dispatch_no: generateDocNumber('DSP'),
+    dispatch_date: document.getElementById('dspDate').value || new Date().toISOString().slice(0, 10),
+    shipping_method: document.getElementById('dspMethod').value,
+    carrier_name: document.getElementById('dspCarrier').value.trim(),
+    tracking_or_bl_no: document.getElementById('dspTracking').value.trim(),
+    seal_no: document.getElementById('dspSeal').value.trim(),
+    bales_count: parseInt(document.getElementById('dspBales').value, 10) || 0,
+    net_weight_kg: parseFloat(document.getElementById('dspNetKg').value) || 0,
+    gross_weight_kg: parseFloat(document.getElementById('dspGrossKg').value) || 0,
+    status: document.getElementById('dspStatus').value,
+    notes: document.getElementById('dspNotes').value.trim(),
+    created_by: user.name || 'Staff'
+  };
+
+  let saved = null;
+  try {
+    const r = await sbInsert('order_dispatches', payload);
+    saved = Array.isArray(r) ? r[0] : r;
+  } catch (e) {}
+  if (!saved || !saved.id) saved = { ...payload, id: 'dsp_' + Date.now(), created_at: new Date().toISOString() };
+  orderDispatchesList.unshift(saved);
+
+  if (payload.status === 'Dispatched' || payload.status === 'In Transit') {
+    o.status = 'Dispatched';
+    try { await sbUpdate('orders', o.id, { status: 'Dispatched', actual_dispatch_date: payload.dispatch_date }); } catch (e) {}
+  }
+
+  await appendOrderLog(o.id, 'Dispatch Recorded', `${saved.dispatch_no} (${saved.bales_count} bales, ${saved.net_weight_kg} kg net) — ${saved.status}`);
+  saveLocalCaches();
+  updateOrderKpis();
+  renderOrdersList();
+  renderWorkspace();
+  showToast('Dispatch record saved');
+}
+
+// ── PDF Exports ─────────────────────────────────────────────────────────
+function exportGraderPdfById(orderId) {
+  const o = ordersList.find(x => x.id == orderId);
+  if (!o) return;
+  const items = orderItemsList.filter(i => i.order_id == orderId);
+  previewDocument(buildOrderGraderSheetPdf(o, items), `Grader Sheet - ${o.order_no}`);
+}
+
+function exportCustomerPdfById(orderId, showPrices = false) {
+  if (!isSuperUser()) { showToast('Customer PDF is restricted to Super User', true); return; }
+  const o = ordersList.find(x => x.id == orderId);
+  if (!o) return;
+  const items = orderItemsList.filter(i => i.order_id == orderId);
+  const dispatches = orderDispatchesList.filter(d => d.order_id == orderId);
+  previewDocument(buildOrderCustomerProgressPdf(o, items, dispatches, { showPrices }), `Customer Progress - ${o.order_no}`);
+}
+
+function exportCurrentGraderPdf() {
+  if (activeWorkspaceOrderId) exportGraderPdfById(activeWorkspaceOrderId);
+}
+
+function exportCurrentCustomerPdf() {
+  if (!activeWorkspaceOrderId) return;
+  const showPrices = Boolean(document.getElementById('wsShowPricesPdf')?.checked);
+  exportCustomerPdfById(activeWorkspaceOrderId, showPrices);
+}
+
+function exportDispatchPdf(dispatchId) {
+  const d = orderDispatchesList.find(x => x.id == dispatchId);
+  if (!d) return;
+  const o = ordersList.find(x => x.id == d.order_id) || {};
+  const items = orderItemsList.filter(i => i.order_id == d.order_id);
+  previewDocument(buildOrderDispatchPdf(o, d, items), `Dispatch Note - ${d.dispatch_no}`);
+}
+
+document.addEventListener('DOMContentLoaded', initOrdersPage);
+</script>
+</body>
+</html>

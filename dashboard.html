@@ -262,6 +262,17 @@
         </div>
       </div>
 
+      <!-- Orders Module (Enabled for Final Checker, Admin & Super User) -->
+      <div class="quick-card" id="ordersQuickCard" onclick="location.href='orders.html'" style="display:none;">
+        <div class="quick-icon" style="background:#eff6ff;color:#1d4ed8">
+          <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Orders</div>
+          <div class="quick-sub">Tracking, weight &amp; dispatch</div>
+        </div>
+      </div>
+
       <!-- Petty Cash (Enabled for Super User & Admin) -->
       <div class="quick-card" id="pettyCashQuickCard" onclick="location.href='petty_cash.html'" style="display:none;">
         <div class="quick-icon" style="background:#ecfdf5;color:#059669">
@@ -291,6 +302,16 @@
         <div>
           <div class="quick-label">Buyers</div>
           <div class="quick-sub">Sales & Receivables</div>
+        </div>
+      </div>
+
+      <div class="quick-card" id="expensesQuickCard" onclick="location.href='expenses.html'" style="display:none;">
+        <div class="quick-icon" style="background:#fef2f2;color:#991b1b">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        </div>
+        <div>
+          <div class="quick-label">Expenses</div>
+          <div class="quick-sub">Warehouse expenses &amp; PDFs</div>
         </div>
       </div>
 
@@ -375,6 +396,12 @@ async function init() {
     weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
   });
 
+  // Enable Orders for Final Checker, Admin & Super User
+  if (isChecker() || isSuperUser()) {
+    const ordCard = document.getElementById('ordersQuickCard');
+    if (ordCard) ordCard.style.display = 'flex';
+  }
+
   // Enable Petty Cash for Super User & Admin
   if (canAccessPettyCash()) {
     const pcCard = document.getElementById('pettyCashQuickCard');
@@ -385,8 +412,10 @@ async function init() {
   if (canAccessFinance()) {
     const suppCard = document.getElementById('suppliersQuickCard');
     const buyCard = document.getElementById('buyersQuickCard');
+    const expCard = document.getElementById('expensesQuickCard');
     if (suppCard) suppCard.style.display = 'flex';
     if (buyCard) buyCard.style.display = 'flex';
+    if (expCard) expCard.style.display = 'flex';
   }
 
   try {

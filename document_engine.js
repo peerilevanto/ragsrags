@@ -1630,3 +1630,905 @@ function exportOutstandingToExcel(parties, type) {
 
   downloadExcelHtml(html, 'RagsHeaven_' + roleName + '_Outstanding');
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// 10. MONTHLY PURCHASE / SALES & RECEIPTS REPORT PDFs
+// ═══════════════════════════════════════════════════════════════════════
+function _formatMonthLabel(monthStr) {
+  if (!monthStr || !/^\d{4}-\d{2}$/.test(monthStr)) return monthStr || 'All Months';
+  const [y, m] = monthStr.split('-');
+  const d = new Date(parseInt(y, 10), parseInt(m, 10) - 1, 1);
+  return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+function _buildMonthlyPartyReport(config) {
+  const {
+    mode,           // 'supplier' | 'buyer'
+    monthStr,
+    transactions,
+    payments,
+    parties,
+    selectedParty
+  } = config;
+
+  const isSupplier = mode === 'supplier';
+  const monthLabel = _formatMonthLabel(monthStr);
+  const partyMap = {};
+  (parties || []).forEach(p => { partyMap[p.id] = p; });
+
+  const partyIdKey = isSupplier ? 'supplier_id' : 'buyer_id';
+  const txList = [...(transactions || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const pmList = [...(payments || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  const totalTxAmount = txList.reduce((s, t) => s + (parseFloat(t.grand_total) || 0), 0);
+  const totalPmAmount = pmList.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+  const primaryCur = selectedParty ? (selectedParty.currency || 'PKR') : (parties && parties[0] ? (parties[0].currency || 'PKR') : 'PKR');
+
+  // Compute period range from invoices (e.g. "23 – 24 Nov 2026")
+  const dates = txList.map(t => t.date).filter(Boolean).sort();
+  let periodText = monthLabel;
+  if (dates.length === 1) {
+    periodText = _formatDate(dates[0]);
+  } else if (dates.length > 1) {
+    const firstD = _formatDate(dates[0]);
+    const lastD = _formatDate(dates[dates.length - 1]);
+    periodText = firstD === lastD ? firstD : `${firstD} – ${lastD}`;
+  }
+
+  const accentColor = isSupplier ? '#991b1b' : '#065f46';
+  const accentSoft = isSupplier ? '#fef2f2' : '#ecfdf5';
+  const reportTitle = isSupplier ? 'P U R C H A S E &nbsp; R E P O R T' : 'S A L E S &nbsp; R E P O R T';
+  const grandLabel = isSupplier ? 'PURCHASES' : 'SALES';
+  const partyLabel = isSupplier ? 'SUPPLIER' : 'CUSTOMER';
+  const monthUpper = (monthLabel || '').toUpperCase();
+  const scopeNote = selectedParty
+    ? `${isSupplier ? 'Supplier' : 'Customer'}: ${_esc(selectedParty.name)}${selectedParty.company ? ' (' + _esc(selectedParty.company) + ')' : ''}`
+    : '';
+
+  // 1. Summary of Invoices Table
+  const summaryRows = txList.length ? txList.map((tx, idx) => {
+    const p = partyMap[tx[partyIdKey]] || {};
+    const cur = p.currency || primaryCur;
+    const items = Array.isArray(tx.items) ? tx.items : [];
+    const partyDisplay = `${_esc(p.name || 'Unknown')}${p.company ? ' (' + _esc(p.company) + ')' : ''}`;
+    const bg = idx % 2 === 1 ? 'background:#f8f6f4;' : 'background:#ffffff;';
+    return `<tr style="${bg}">
+      <td style="padding:7px 10px;font-family:monospace;font-size:8.5pt;color:#334155;border-bottom:1px solid #e5e7eb;">${_esc(tx.invoice_no || '-')}</td>
+      <td style="padding:7px 10px;font-weight:700;font-size:8.8pt;color:#111827;border-bottom:1px solid #e5e7eb;">${partyDisplay}</td>
+      <td style="padding:7px 10px;font-size:8.5pt;color:#374151;border-bottom:1px solid #e5e7eb;white-space:nowrap;">${_formatDate(tx.date)}</td>
+      <td style="padding:7px 10px;text-align:center;font-size:8.5pt;color:#374151;border-bottom:1px solid #e5e7eb;">${items.length}</td>
+      <td style="padding:7px 10px;text-align:right;font-weight:800;font-size:9pt;color:#111827;border-bottom:1px solid #e5e7eb;white-space:nowrap;">${(parseFloat(tx.grand_total) || 0).toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="5" style="padding:18px;text-align:center;color:#6b7280;">No invoices recorded for ${monthLabel}.</td></tr>`;
+
+  // 2. Per-Invoice Detailed Blocks
+  const detailBlocks = txList.map(tx => {
+    const p = partyMap[tx[partyIdKey]] || {};
+    const cur = p.currency || primaryCur;
+    const items = Array.isArray(tx.items) ? tx.items : [];
+    const partyHeading = `${_esc(p.name || 'Unknown')}${p.company ? ' &nbsp;&bull;&nbsp; ' + _esc(p.company) : ''}`;
+
+    const itemRows = items.length ? items.map((it, iIdx) => {
+      const qty = parseFloat(it.qty) || 0;
+      const rate = parseFloat(it.rate) || 0;
+      const amt = parseFloat(it.amount) || (qty * rate);
+      const bg = iIdx % 2 === 1 ? 'background:#f8f6f4;' : 'background:#ffffff;';
+      return `<tr style="${bg}">
+        <td style="padding:6px 10px;font-size:8.8pt;color:#1f2937;border-bottom:1px solid #e5e7eb;">${_esc(it.desc || 'Article')}</td>
+        <td style="padding:6px 10px;text-align:center;font-size:8.8pt;color:#1f2937;border-bottom:1px solid #e5e7eb;">${qty.toLocaleString()}</td>
+        <td style="padding:6px 10px;text-align:right;font-size:8.8pt;color:#6b7280;border-bottom:1px solid #e5e7eb;">${rate.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+        <td style="padding:6px 10px;text-align:right;font-weight:700;font-size:8.8pt;color:#111827;border-bottom:1px solid #e5e7eb;">${amt.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="4" style="padding:8px 10px;color:#6b7280;font-size:8.5pt;">No line items</td></tr>`;
+
+    const extras = [];
+    if (parseFloat(tx.transport) > 0) extras.push('Freight: ' + formatCurrency(tx.transport, cur));
+    if (parseFloat(tx.loading) > 0) extras.push('Loading: ' + formatCurrency(tx.loading, cur));
+    if (parseFloat(tx.tax) > 0) extras.push('Tax: ' + formatCurrency(tx.tax, cur));
+    if (parseFloat(tx.discount) > 0) extras.push('Discount: -' + formatCurrency(tx.discount, cur));
+
+    return `
+      <div class="inv-detail-block" style="margin-bottom:18px;page-break-inside:avoid;break-inside:avoid;">
+        <div style="font-size:12.5pt;font-weight:800;color:#111827;font-family:Georgia,'Times New Roman',serif;">${partyHeading}</div>
+        <div style="font-size:8.3pt;font-weight:700;color:${accentColor};margin:2px 0 6px;">
+          ${_esc(tx.invoice_no || '-')} &nbsp;|&nbsp; ${_formatDate(tx.date)} &nbsp;|&nbsp; ${items.length} article${items.length === 1 ? '' : 's'}
+        </div>
+        <table style="width:100%;border-collapse:collapse;border-bottom:1px solid #d1d5db;">
+          <thead>
+            <tr style="background:#111111;color:#ffffff;">
+              <th style="padding:7px 10px;text-align:left;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;">ARTICLE DESCRIPTION</th>
+              <th style="padding:7px 10px;text-align:center;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;width:75px;">QTY</th>
+              <th style="padding:7px 10px;text-align:right;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;width:95px;">RATE (${cur})</th>
+              <th style="padding:7px 10px;text-align:right;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;width:110px;">TOTAL (${cur})</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemRows}
+            ${extras.length || tx.notes ? `<tr><td colspan="4" style="padding:5px 10px;font-size:8pt;color:#4b5563;background:#fafafa;border-bottom:1px solid #e5e7eb;">${extras.join(' &bull; ')}${extras.length && tx.notes ? ' &bull; ' : ''}${tx.notes ? '<em>Note: ' + _esc(tx.notes) + '</em>' : ''}</td></tr>` : ''}
+            <tr style="background:#f8f6f4;">
+              <td colspan="3" style="padding:7px 10px;text-align:right;font-size:8.2pt;font-weight:800;color:#111827;border-top:1.5px solid ${accentColor};">INVOICE TOTAL</td>
+              <td style="padding:7px 10px;text-align:right;font-size:9.5pt;font-weight:800;color:#111827;border-top:1.5px solid ${accentColor};white-space:nowrap;">${formatCurrency(tx.grand_total || 0, cur)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join('');
+
+  // 3. Payment Vouchers / Receipts Table (only if any exist)
+  const pmSection = pmList.length ? `
+    <div style="margin-top:20px;page-break-inside:avoid;break-inside:avoid;">
+      <div style="font-size:13pt;font-weight:800;color:#111827;font-family:Georgia,'Times New Roman',serif;padding-bottom:5px;border-bottom:1.5px solid ${accentColor};margin-bottom:10px;">
+        ${isSupplier ? 'Payment Vouchers Settled' : 'Payment Receipts Collected'}
+      </div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:#111111;color:#ffffff;">
+            <th style="padding:7px 10px;text-align:left;font-size:7.5pt;letter-spacing:0.6px;">RECEIPT NO.</th>
+            <th style="padding:7px 10px;text-align:left;font-size:7.5pt;letter-spacing:0.6px;">${partyLabel}</th>
+            <th style="padding:7px 10px;text-align:left;font-size:7.5pt;letter-spacing:0.6px;">DATE</th>
+            <th style="padding:7px 10px;text-align:left;font-size:7.5pt;letter-spacing:0.6px;">METHOD / REF</th>
+            <th style="padding:7px 10px;text-align:right;font-size:7.5pt;letter-spacing:0.6px;">AMOUNT (${primaryCur})</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pmList.map((pm, idx) => {
+            const p = partyMap[pm[partyIdKey]] || {};
+            const cur = p.currency || primaryCur;
+            const bg = idx % 2 === 1 ? 'background:#f8f6f4;' : 'background:#ffffff;';
+            return `<tr style="${bg}">
+              <td style="padding:6px 10px;font-family:monospace;font-size:8.5pt;border-bottom:1px solid #e5e7eb;">${_esc(pm.receipt_no || '-')}</td>
+              <td style="padding:6px 10px;font-weight:700;font-size:8.8pt;border-bottom:1px solid #e5e7eb;">${_esc(p.name || 'Unknown')}</td>
+              <td style="padding:6px 10px;font-size:8.5pt;border-bottom:1px solid #e5e7eb;white-space:nowrap;">${_formatDate(pm.date)}</td>
+              <td style="padding:6px 10px;font-size:8.5pt;border-bottom:1px solid #e5e7eb;">${_esc(pm.payment_method || 'Cash')}${pm.bank_ref ? ' (' + _esc(pm.bank_ref) + ')' : ''}</td>
+              <td style="padding:6px 10px;text-align:right;font-weight:800;color:#059669;border-bottom:1px solid #e5e7eb;white-space:nowrap;">${(parseFloat(pm.amount) || 0).toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+            </tr>`;
+          }).join('')}
+          <tr style="background:#f8f6f4;">
+            <td colspan="4" style="padding:8px 10px;text-align:right;font-weight:800;font-size:8.5pt;border-top:1.5px solid #059669;">TOTAL ${isSupplier ? 'PAYMENTS SETTLED' : 'RECEIPTS COLLECTED'}</td>
+            <td style="padding:8px 10px;text-align:right;font-weight:800;font-size:9.5pt;color:#059669;border-top:1.5px solid #059669;white-space:nowrap;">${formatCurrency(totalPmAmount, primaryCur)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  ` : '';
+
+  const body = `
+    <!-- Editorial Brand Header -->
+    <div style="position:relative;text-align:center;padding-bottom:14px;border-bottom:2px solid ${accentColor};margin-bottom:16px;">
+      <img src="${RH_BRAND.logoBase64}" alt="Rags Heaven" style="position:absolute;left:0;top:0;height:38px;width:auto;object-fit:contain;">
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:21pt;font-weight:800;letter-spacing:2.5px;color:#111827;line-height:1.1;">RAGS HEAVEN</div>
+      <div style="color:${accentColor};font-size:9pt;letter-spacing:4px;margin:4px 0;">&diams; &diams; &diams;</div>
+      <div style="font-size:9pt;font-weight:700;letter-spacing:2.5px;color:${accentColor};">${reportTitle}</div>
+      <div style="font-size:10.5pt;font-style:italic;color:#6b7280;margin-top:3px;">${monthLabel}${scopeNote ? ' &bull; ' + scopeNote : ''}</div>
+    </div>
+
+    <!-- Top Summary Strip -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);background:#f8f6f4;border-radius:4px;padding:12px 10px;margin-bottom:18px;text-align:center;">
+      <div>
+        <div style="font-size:7pt;font-weight:700;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;">TOTAL ${grandLabel}</div>
+        <div style="font-size:14pt;font-weight:800;color:#111827;margin-top:3px;font-family:Georgia,'Times New Roman',serif;">${formatCurrency(totalTxAmount, primaryCur)}</div>
+      </div>
+      <div>
+        <div style="font-size:7pt;font-weight:700;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;">INVOICES</div>
+        <div style="font-size:14pt;font-weight:800;color:#111827;margin-top:3px;font-family:Georgia,'Times New Roman',serif;">${txList.length}</div>
+      </div>
+      <div>
+        <div style="font-size:7pt;font-weight:700;letter-spacing:1.5px;color:#6b7280;text-transform:uppercase;">PERIOD</div>
+        <div style="font-size:12pt;font-weight:800;color:#111827;margin-top:4px;font-family:Georgia,'Times New Roman',serif;">${periodText}</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Summary of Invoices -->
+    <div style="font-size:13.5pt;font-weight:800;color:#111827;font-family:Georgia,'Times New Roman',serif;margin-bottom:8px;">Summary of Invoices</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:20px;">
+      <thead>
+        <tr style="background:#111111;color:#ffffff;">
+          <th style="padding:8px 10px;text-align:left;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;">INVOICE NO.</th>
+          <th style="padding:8px 10px;text-align:left;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;">${partyLabel}</th>
+          <th style="padding:8px 10px;text-align:left;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;">DATE</th>
+          <th style="padding:8px 10px;text-align:center;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;">ITEMS</th>
+          <th style="padding:8px 10px;text-align:right;font-size:7.5pt;letter-spacing:0.6px;font-weight:700;">AMOUNT (${primaryCur})</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${summaryRows}
+        ${txList.length ? `<tr style="background:#f8f6f4;">
+          <td colspan="4" style="padding:9px 10px;text-align:right;font-size:8.5pt;font-weight:800;color:#111827;border-top:1.5px solid ${accentColor};">GRAND TOTAL &mdash; ${monthUpper} ${grandLabel}</td>
+          <td style="padding:9px 10px;text-align:right;font-size:10pt;font-weight:800;color:#111827;border-top:1.5px solid ${accentColor};white-space:nowrap;">${formatCurrency(totalTxAmount, primaryCur)}</td>
+        </tr>` : ''}
+      </tbody>
+    </table>
+
+    <!-- Section 2: Invoice Details -->
+    ${txList.length ? `
+      <div style="font-size:14pt;font-weight:800;color:#111827;font-family:Georgia,'Times New Roman',serif;padding-bottom:6px;border-bottom:1.5px solid ${accentColor};margin-bottom:14px;">Invoice Details</div>
+      ${detailBlocks}
+    ` : ''}
+
+    ${pmSection}
+
+    <!-- Final Grand Total Banner -->
+    <div style="text-align:center;margin-top:20px;page-break-inside:avoid;break-inside:avoid;">
+      <div style="color:${accentColor};font-size:10pt;margin-bottom:8px;">&diams;</div>
+      <div style="background:#111111;color:#ffffff;padding:16px 20px;border-top:3px solid ${accentColor};border-bottom:3px solid ${accentColor};">
+        <div style="font-size:7.5pt;letter-spacing:2.5px;color:#d1d5db;font-weight:700;">TOTAL ${grandLabel} &mdash; ${monthUpper}</div>
+        <div style="font-family:Georgia,'Times New Roman',serif;font-size:20pt;font-weight:800;color:#ffffff;margin-top:4px;">${formatCurrency(totalTxAmount, primaryCur)}</div>
+      </div>
+      <div style="margin-top:16px;padding-top:8px;border-top:1px solid ${accentColor};font-size:8pt;color:#6b7280;">
+        Rags Heaven &bull; ${isSupplier ? 'Purchase' : 'Sales'} Report, ${monthLabel}
+      </div>
+    </div>
+  `;
+
+  return _docShell(`${isSupplier ? 'Purchase' : 'Sales'} Report - ${monthLabel}`, body, isSupplier ? 'theme-supplier' : 'theme-buyer');
+}
+
+function buildMonthlySupplierReport(monthStr, transactions, payments, suppliers, selectedSupplier = null) {
+  return _buildMonthlyPartyReport({
+    mode: 'supplier',
+    monthStr,
+    transactions,
+    payments,
+    parties: suppliers,
+    selectedParty: selectedSupplier
+  });
+}
+
+function buildMonthlyBuyerReport(monthStr, transactions, payments, buyers, selectedBuyer = null) {
+  return _buildMonthlyPartyReport({
+    mode: 'buyer',
+    monthStr,
+    transactions,
+    payments,
+    parties: buyers,
+    selectedParty: selectedBuyer
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// 11. ORDERS MODULE PDF TEMPLATES (Grader Sheet, Customer Progress, Dispatch)
+// ═══════════════════════════════════════════════════════════════════════
+function buildOrderGraderSheetPdf(order, items) {
+  order = order || {};
+  items = items || [];
+  const totalReqPcs = items.reduce((s, it) => s + (parseInt(it.req_pcs, 10) || 0), 0);
+  const totalReqKg = items.reduce((s, it) => s + (parseFloat(it.req_weight_kg) || 0), 0);
+  const graders = [...new Set(items.map(i => i.assigned_grader).filter(Boolean))].join(', ') || 'Warehouse Grading Team';
+
+  const rows = items.map((it, idx) => `
+    <tr>
+      <td class="center" style="font-weight:700;">${idx + 1}</td>
+      <td>
+        <div style="font-weight:800;color:#0f172a;font-size:9.5pt;">${_esc(it.item_name)}</div>
+        ${it.size_spec ? `<div style="font-size:8pt;color:#64748b;">Spec: ${_esc(it.size_spec)}</div>` : ''}
+      </td>
+      <td class="center">${_esc(it.category || 'Grade A')}</td>
+      <td class="center" style="font-weight:800;font-size:10pt;color:#0f2744;">${(parseInt(it.req_pcs, 10) || 0).toLocaleString()} pcs</td>
+      <td style="border:1.5px solid #94a3b8;background:#ffffff;height:28px;"></td>
+      <td style="border:1.5px solid #94a3b8;background:#ffffff;"></td>
+      <td style="border:1.5px solid #94a3b8;background:#ffffff;"></td>
+      <td style="border:1.5px solid #94a3b8;background:#ffffff;"></td>
+      <td style="border:1.5px solid #94a3b8;background:#ffffff;"></td>
+    </tr>
+  `).join('');
+
+  const body = `
+    ${_renderHeader('GRADER WORKSHEET & COUNTING SHEET', order.order_no || 'ORD-SHEET', order.order_date || new Date().toISOString(), 'Floor Grading &amp; Counting Form')}
+
+    <div class="party-box party-primary" style="margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;font-size:9pt;">
+        <div><span style="color:#64748b;font-weight:700;">ORDER #:</span><br><strong>${_esc(order.order_no || '-')}</strong></div>
+        <div><span style="color:#64748b;font-weight:700;">DESTINATION:</span><br><strong>${_esc(order.customer_name || '-')}${order.country ? ' (' + _esc(order.country) + ')' : ''}</strong></div>
+        <div><span style="color:#64748b;font-weight:700;">TARGET DISPATCH:</span><br><strong>${_formatDate(order.target_dispatch_date)}</strong></div>
+        <div><span style="color:#64748b;font-weight:700;">PRIORITY:</span><br><strong style="color:${order.priority === 'Urgent' ? '#dc2626' : '#0f172a'};">${_esc(order.priority || 'Normal')}</strong></div>
+      </div>
+      <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #cbd5e1;display:flex;justify-content:space-between;font-size:9pt;">
+        <span><strong>Assigned Grader(s):</strong> ${_esc(graders)}</span>
+        <span><strong>Total Required:</strong> ${totalReqPcs.toLocaleString()} pcs ${totalReqKg > 0 ? '(' + totalReqKg.toFixed(1) + ' kg)' : ''}</span>
+      </div>
+    </div>
+
+    <div style="font-size:8.5pt;color:#475569;margin-bottom:8px;font-style:italic;">
+      Instructions: Please write the exact <strong>Actual Pcs We Got</strong>, <strong>Repair / Wash Pcs</strong>, <strong>Actual Weight (kg)</strong>, <strong>Bales Count</strong>, and any <strong>Remarks</strong> in the blank columns below, then submit to Final Checker.
+    </div>
+
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th style="width:26px;" class="center">#</th>
+          <th>Item / Article Name</th>
+          <th style="width:65px;" class="center">Grade</th>
+          <th style="width:74px;" class="center">Total Req Pcs</th>
+          <th style="width:82px;" class="center">Actual Pcs We Got</th>
+          <th style="width:68px;" class="center">Repair / Wash</th>
+          <th style="width:64px;" class="center">Weight (kg)</th>
+          <th style="width:48px;" class="center">Bales</th>
+          <th style="width:135px;">Remarks / Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+        <tr style="background:#f8fafc;font-weight:800;">
+          <td colspan="3" class="num">TOTAL REQUIRED:</td>
+          <td class="center">${totalReqPcs.toLocaleString()} pcs</td>
+          <td class="center" style="color:#94a3b8;">______ pcs</td>
+          <td class="center" style="color:#94a3b8;">____ / ____</td>
+          <td class="center" style="color:#94a3b8;">_____ kg</td>
+          <td class="center" style="color:#94a3b8;">____</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    ${order.notes ? `<div style="margin-top:10px;padding:8px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:6px;font-size:8.5pt;"><strong>Order Notes:</strong> ${_esc(order.notes)}</div>` : ''}
+
+    <div class="signature-grid" style="margin-top:34px;grid-template-columns:repeat(3,1fr);">
+      <div class="signature-box">
+        <div class="signature-title">Grader Name &amp; Signature</div>
+        <div class="signature-sub">Date: _______________</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Floor Supervisor</div>
+        <div class="signature-sub">Date: _______________</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Final Checker Verification</div>
+        <div class="signature-sub">Date: _______________</div>
+      </div>
+    </div>
+  `;
+
+  return _docShell(`Grader Sheet - ${order.order_no || 'Order'}`, body, 'theme-supplier');
+}
+
+function buildOrderCustomerProgressPdf(order, items, dispatches, options = {}) {
+  order = order || {};
+  items = items || [];
+  dispatches = dispatches || [];
+  const showPrices = Boolean(options.showPrices);
+  const cur = order.currency || 'EUR';
+
+  const totalReq = items.reduce((s, it) => s + (parseInt(it.req_pcs, 10) || 0), 0);
+  const totalReady = items.reduce((s, it) => s + (parseInt(it.checked_pcs, 10) || parseInt(it.graded_pcs, 10) || 0), 0);
+  const totalRemaining = Math.max(0, totalReq - totalReady);
+  const pct = totalReq > 0 ? Math.min(100, Math.round((totalReady / totalReq) * 100)) : 0;
+  const totalWeight = items.reduce((s, it) => s + (parseFloat(it.actual_weight_kg) || 0), 0) || (parseFloat(order.actual_weight_kg) || 0);
+  const totalBales = items.reduce((s, it) => s + (parseInt(it.bales_count, 10) || 0), 0) || (parseInt(order.total_bales, 10) || 0);
+
+  const itemRows = items.map((it, idx) => {
+    const req = parseInt(it.req_pcs, 10) || 0;
+    const ready = parseInt(it.checked_pcs, 10) || parseInt(it.graded_pcs, 10) || 0;
+    const rem = Math.max(0, req - ready);
+    const itemPct = req > 0 ? Math.min(100, Math.round((ready / req) * 100)) : 0;
+    const wt = parseFloat(it.actual_weight_kg) || 0;
+    const price = parseFloat(it.unit_price) || 0;
+
+    return `<tr>
+      <td class="center">${idx + 1}</td>
+      <td><strong>${_esc(it.item_name)}</strong>${it.size_spec ? '<div style="font-size:8pt;color:#64748b;">' + _esc(it.size_spec) + '</div>' : ''}</td>
+      <td class="center">${_esc(it.category || 'Grade A')}</td>
+      <td class="num">${req.toLocaleString()}</td>
+      <td class="num" style="color:#059669;font-weight:700;">${ready.toLocaleString()}</td>
+      <td class="num" style="color:${rem > 0 ? '#d97706' : '#059669'};">${rem.toLocaleString()}</td>
+      <td class="center" style="font-weight:700;">${itemPct}%</td>
+      <td class="num">${wt > 0 ? wt.toFixed(1) + ' kg' : '-'}</td>
+      ${showPrices ? `<td class="num">${price > 0 ? formatCurrency(ready * price, cur) : '-'}</td>` : ''}
+      <td class="center"><span style="font-size:8pt;font-weight:700;padding:2px 6px;border-radius:4px;background:#f1f5f9;">${_esc(it.item_status || 'Pending')}</span></td>
+    </tr>`;
+  }).join('');
+
+  const dispatchRows = dispatches.map(d => `
+    <tr>
+      <td style="font-family:monospace;font-weight:700;">${_esc(d.dispatch_no)}</td>
+      <td>${_formatDate(d.dispatch_date)}</td>
+      <td>${_esc(d.shipping_method || '-')}</td>
+      <td>${_esc(d.carrier_name || '-')}</td>
+      <td style="font-family:monospace;">${_esc(d.tracking_or_bl_no || '-')}</td>
+      <td class="center">${d.bales_count || 0}</td>
+      <td class="num">${(parseFloat(d.net_weight_kg) || 0).toFixed(1)} / ${(parseFloat(d.gross_weight_kg) || 0).toFixed(1)} kg</td>
+      <td class="center"><strong>${_esc(d.status || 'Preparing')}</strong></td>
+    </tr>
+  `).join('');
+
+  const body = `
+    ${_renderHeader('ORDER PROGRESS REPORT', order.order_no || 'ORD', new Date().toISOString(), 'Customer Fulfillment Update &bull; ' + _esc(order.status || 'In Progress'))}
+
+    <div class="party-box party-primary" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+          <div style="font-size:8pt;color:#64748b;font-weight:700;text-transform:uppercase;">Prepared For</div>
+          <div class="party-name" style="color:#065f46;">${_esc(order.customer_name || 'Valued Customer')}</div>
+          <div class="party-detail">${order.customer_company ? '<strong>Company:</strong> ' + _esc(order.customer_company) + ' &bull; ' : ''}<strong>Destination:</strong> ${_esc([order.city, order.country].filter(Boolean).join(', ') || '-')}</div>
+        </div>
+        <div style="text-align:right;font-size:8.5pt;">
+          <div><strong>Order Date:</strong> ${_formatDate(order.order_date)}</div>
+          <div><strong>Target Dispatch:</strong> ${_formatDate(order.target_dispatch_date)}</div>
+          <div><strong>Current Stage:</strong> <span style="color:#059669;font-weight:800;">${_esc(order.status || 'Pending')}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:12px;margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:9.5pt;font-weight:800;color:#0f172a;">OVERALL ORDER COMPLETION</span>
+        <span style="font-size:12pt;font-weight:800;color:#059669;">${pct}% (${totalReady.toLocaleString()} / ${totalReq.toLocaleString()} pcs)</span>
+      </div>
+      <div style="width:100%;height:12px;background:#e2e8f0;border-radius:99px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:linear-gradient(90deg,#059669,#10b981);"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;text-align:center;">
+        <div><div style="font-size:7.5pt;color:#64748b;font-weight:700;">ORDERED</div><div style="font-size:11pt;font-weight:800;">${totalReq.toLocaleString()} pcs</div></div>
+        <div><div style="font-size:7.5pt;color:#64748b;font-weight:700;">COMPLETED</div><div style="font-size:11pt;font-weight:800;color:#059669;">${totalReady.toLocaleString()} pcs</div></div>
+        <div><div style="font-size:7.5pt;color:#64748b;font-weight:700;">REMAINING</div><div style="font-size:11pt;font-weight:800;color:#d97706;">${totalRemaining.toLocaleString()} pcs</div></div>
+        <div><div style="font-size:7.5pt;color:#64748b;font-weight:700;">WEIGHT / BALES</div><div style="font-size:11pt;font-weight:800;">${totalWeight.toFixed(1)} kg (${totalBales} bales)</div></div>
+      </div>
+    </div>
+
+    <div style="font-size:9.5pt;font-weight:800;color:#065f46;margin:10px 0 6px;text-transform:uppercase;">Item-by-Item Fulfillment Progress</div>
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th style="width:26px;" class="center">#</th>
+          <th>Article / Item</th>
+          <th style="width:65px;" class="center">Grade</th>
+          <th style="width:65px;" class="num">Ordered</th>
+          <th style="width:65px;" class="num">Ready</th>
+          <th style="width:65px;" class="num">Pending</th>
+          <th style="width:48px;" class="center">%</th>
+          <th style="width:68px;" class="num">Weight</th>
+          ${showPrices ? '<th style="width:80px;" class="num">Value</th>' : ''}
+          <th style="width:72px;" class="center">Status</th>
+        </tr>
+      </thead>
+      <tbody>${itemRows}</tbody>
+    </table>
+
+    ${dispatches.length ? `
+      <div style="font-size:9.5pt;font-weight:800;color:#0f2744;margin:14px 0 6px;text-transform:uppercase;">Shipment &amp; Dispatch Details</div>
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th>Dispatch #</th>
+            <th>Date</th>
+            <th>Method</th>
+            <th>Carrier</th>
+            <th>Container / B/L #</th>
+            <th class="center">Bales</th>
+            <th class="num">Net / Gross Wt</th>
+            <th class="center">Status</th>
+          </tr>
+        </thead>
+        <tbody>${dispatchRows}</tbody>
+      </table>
+    ` : ''}
+
+    <div class="signature-grid" style="margin-top:26px;">
+      <div class="signature-box">
+        <div class="signature-title">Quality Control (Final Checker)</div>
+        <div class="signature-sub">Rags Heaven Export Desk</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Operations Manager</div>
+        <div class="signature-sub">Authorized Signature</div>
+      </div>
+    </div>
+  `;
+
+  return _docShell(`Order Progress - ${order.order_no || 'Customer'}`, body, 'theme-buyer');
+}
+
+function buildOrderDispatchPdf(order, dispatch, items) {
+  order = order || {};
+  dispatch = dispatch || {};
+  items = items || [];
+  const dItems = Array.isArray(dispatch.dispatched_items) && dispatch.dispatched_items.length
+    ? dispatch.dispatched_items
+    : items.map(it => ({
+        item_name: it.item_name,
+        category: it.category,
+        pcs: it.packed_pcs || it.checked_pcs || it.graded_pcs || it.req_pcs || 0,
+        weight_kg: it.actual_weight_kg || 0,
+        bales: it.bales_count || 0
+      }));
+
+  const rows = dItems.map((it, idx) => `
+    <tr>
+      <td class="center">${idx + 1}</td>
+      <td><strong>${_esc(it.item_name)}</strong></td>
+      <td class="center">${_esc(it.category || 'Grade A')}</td>
+      <td class="num" style="font-weight:700;">${(parseInt(it.pcs, 10) || 0).toLocaleString()} pcs</td>
+      <td class="center">${it.bales || 0}</td>
+      <td class="num">${(parseFloat(it.weight_kg) || 0).toFixed(1)} kg</td>
+    </tr>
+  `).join('');
+
+  const body = `
+    ${_renderHeader('DISPATCH & PACKING LIST', dispatch.dispatch_no || 'DSP', dispatch.dispatch_date || new Date().toISOString(), 'Order: ' + _esc(order.order_no || '-'))}
+
+    <div class="party-box party-primary" style="margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;font-size:9pt;">
+        <div>
+          <div style="font-size:8pt;color:#64748b;font-weight:700;text-transform:uppercase;">Consignee / Buyer</div>
+          <div style="font-size:11pt;font-weight:800;color:#0f2744;">${_esc(order.customer_name || '-')}</div>
+          <div>${_esc(order.customer_company || '')}</div>
+          <div>${_esc([order.city, order.country].filter(Boolean).join(', '))}</div>
+          ${order.port_of_destination ? `<div><strong>Port:</strong> ${_esc(order.port_of_destination)}</div>` : ''}
+        </div>
+        <div>
+          <div style="font-size:8pt;color:#64748b;font-weight:700;text-transform:uppercase;">Shipment &amp; Container Info</div>
+          <div><strong>Method:</strong> ${_esc(dispatch.shipping_method || order.shipping_method || '-')}</div>
+          <div><strong>Carrier:</strong> ${_esc(dispatch.carrier_name || order.shipping_carrier || '-')}</div>
+          <div><strong>Container / B/L / AWB #:</strong> <span style="font-family:monospace;font-weight:700;">${_esc(dispatch.tracking_or_bl_no || order.container_no || '-')}</span></div>
+          <div><strong>Seal #:</strong> ${_esc(dispatch.seal_no || '-')} &bull; <strong>Status:</strong> ${_esc(dispatch.status || 'Dispatched')}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+      <div class="party-box" style="padding:10px;text-align:center;">
+        <div style="font-size:8pt;color:#64748b;font-weight:700;">TOTAL BALES</div>
+        <div style="font-size:14pt;font-weight:800;color:#0f2744;">${dispatch.bales_count || 0}</div>
+      </div>
+      <div class="party-box" style="padding:10px;text-align:center;">
+        <div style="font-size:8pt;color:#64748b;font-weight:700;">NET WEIGHT</div>
+        <div style="font-size:14pt;font-weight:800;color:#059669;">${(parseFloat(dispatch.net_weight_kg) || 0).toFixed(1)} kg</div>
+      </div>
+      <div class="party-box" style="padding:10px;text-align:center;">
+        <div style="font-size:8pt;color:#64748b;font-weight:700;">GROSS WEIGHT</div>
+        <div style="font-size:14pt;font-weight:800;color:#0369a1;">${(parseFloat(dispatch.gross_weight_kg) || 0).toFixed(1)} kg</div>
+      </div>
+    </div>
+
+    <table class="doc-table">
+      <thead>
+        <tr>
+          <th style="width:28px;" class="center">#</th>
+          <th>Article Description</th>
+          <th style="width:80px;" class="center">Grade</th>
+          <th style="width:90px;" class="num">Quantity</th>
+          <th style="width:70px;" class="center">Bales</th>
+          <th style="width:90px;" class="num">Weight (kg)</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+
+    ${dispatch.notes ? `<div style="margin-top:10px;padding:8px 10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;font-size:8.5pt;"><strong>Dispatch Notes:</strong> ${_esc(dispatch.notes)}</div>` : ''}
+
+    <div class="signature-grid" style="margin-top:30px;">
+      <div class="signature-box">
+        <div class="signature-title">Prepared &amp; Checked By</div>
+        <div class="signature-sub">Rags Heaven Dispatch</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Driver / Carrier Receipt</div>
+        <div class="signature-sub">Signature &amp; Stamp</div>
+      </div>
+    </div>
+  `;
+
+  return _docShell(`Dispatch Note - ${dispatch.dispatch_no || 'Shipment'}`, body, 'theme-supplier');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// 12. LUXURY PAYROLL SALARY SHEET & HALF-PAGE INDIVIDUAL PAYSLIP PDFs
+// ═══════════════════════════════════════════════════════════════════════
+function buildMonthlySalarySheetPdf(monthStr, payrollRows, totals) {
+  const monthLabel = _formatMonthLabel(monthStr);
+  const monthUpper = (monthLabel || '').toUpperCase();
+  const navy = '#0f2744';
+  const gold = '#b48a3e';
+  const rows = payrollRows || [];
+  totals = totals || {};
+
+  const tableRows = rows.length ? rows.map((r, idx) => {
+    const bg = idx % 2 === 1 ? 'background:#f8fafc;' : 'background:#ffffff;';
+    return `<tr style="${bg}">
+      <td style="padding:7px 6px;text-align:center;font-size:8.2pt;color:#64748b;border-bottom:1px solid #e2e8f0;">${idx + 1}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid #e2e8f0;">
+        <div style="font-weight:800;font-size:8.8pt;color:#0f172a;">${_esc(r.name)}</div>
+        <div style="font-size:7.3pt;color:#64748b;">${_esc(r.roleLabel)}${r.designation ? ' &bull; ' + _esc(r.designation) : ''}</div>
+      </td>
+      <td style="padding:7px 6px;text-align:center;font-size:8pt;border-bottom:1px solid #e2e8f0;white-space:nowrap;">
+        <span style="color:#059669;font-weight:700;">${r.present}P</span> /
+        <span style="color:#d97706;font-weight:700;">${r.half}H</span> /
+        <span style="color:#dc2626;font-weight:700;">${r.absent}A</span>
+      </td>
+      <td style="padding:7px 6px;text-align:center;font-size:8.2pt;border-bottom:1px solid #e2e8f0;">${r.otHours.toFixed(1)}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:8.3pt;border-bottom:1px solid #e2e8f0;">${(r.baseSalary || 0).toLocaleString()}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:8.3pt;color:#059669;font-weight:700;border-bottom:1px solid #e2e8f0;">+${(r.otPay || 0).toLocaleString()}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:8.3pt;color:#b91c1c;font-weight:700;border-bottom:1px solid #e2e8f0;">-${(r.loanDeduction || 0).toLocaleString()}</td>
+      <td style="padding:7px 8px;text-align:right;font-weight:800;font-size:9pt;color:${navy};border-bottom:1px solid #e2e8f0;white-space:nowrap;">PKR ${(r.netPayable || 0).toLocaleString()}</td>
+      <td style="padding:7px 8px;border-bottom:1px solid #e2e8f0;width:95px;"></td>
+    </tr>`;
+  }).join('') : `<tr><td colspan="9" style="padding:18px;text-align:center;color:#64748b;">No staff payroll data for ${monthLabel}.</td></tr>`;
+
+  const body = `
+    <!-- Royal Navy & Gold Executive Header -->
+    <div style="border-top:4px solid ${navy};border-bottom:2px solid ${gold};padding:12px 0 14px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <img src="${RH_BRAND.logoBase64}" alt="Rags Heaven" style="height:42px;width:auto;object-fit:contain;">
+        <div>
+          <div style="font-size:16pt;font-weight:900;letter-spacing:1.5px;color:${navy};line-height:1.1;">RAGS HEAVEN</div>
+          <div style="font-size:7.8pt;letter-spacing:1.5px;color:${gold};font-weight:800;text-transform:uppercase;margin-top:2px;">Executive Payroll &amp; Salary Register</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="display:inline-block;background:${navy};color:#ffffff;padding:4px 12px;border-radius:4px;font-size:8.5pt;font-weight:800;letter-spacing:1px;border-bottom:2px solid ${gold};">${monthUpper}</div>
+        <div style="font-size:7.5pt;color:#64748b;margin-top:4px;">Generated: ${_todayDate()}</div>
+      </div>
+    </div>
+
+    <!-- 4-Card KPI Strip -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+      <div style="background:#f8fafc;border-left:3px solid ${navy};padding:9px 11px;border-radius:0 6px 6px 0;">
+        <div style="font-size:7pt;font-weight:800;letter-spacing:1px;color:#64748b;">ACTIVE STAFF</div>
+        <div style="font-size:14pt;font-weight:900;color:${navy};margin-top:2px;">${rows.length}</div>
+      </div>
+      <div style="background:#f8fafc;border-left:3px solid ${gold};padding:9px 11px;border-radius:0 6px 6px 0;">
+        <div style="font-size:7pt;font-weight:800;letter-spacing:1px;color:#64748b;">GROSS + OVERTIME</div>
+        <div style="font-size:12pt;font-weight:900;color:#0f172a;margin-top:3px;">PKR ${(totals.gross || 0).toLocaleString()}</div>
+      </div>
+      <div style="background:#fef2f2;border-left:3px solid #b91c1c;padding:9px 11px;border-radius:0 6px 6px 0;">
+        <div style="font-size:7pt;font-weight:800;letter-spacing:1px;color:#991b1b;">LOAN DEDUCTIONS</div>
+        <div style="font-size:12pt;font-weight:900;color:#b91c1c;margin-top:3px;">PKR ${(totals.deductions || 0).toLocaleString()}</div>
+      </div>
+      <div style="background:#ecfdf5;border-left:3px solid #059669;padding:9px 11px;border-radius:0 6px 6px 0;">
+        <div style="font-size:7pt;font-weight:800;letter-spacing:1px;color:#065f46;">NET DISBURSEMENT</div>
+        <div style="font-size:12.5pt;font-weight:900;color:#059669;margin-top:3px;">PKR ${(totals.net || 0).toLocaleString()}</div>
+      </div>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
+      <thead>
+        <tr style="background:${navy};color:#ffffff;border-bottom:2px solid ${gold};">
+          <th style="padding:8px 6px;text-align:center;font-size:7.2pt;letter-spacing:0.5px;">#</th>
+          <th style="padding:8px 8px;text-align:left;font-size:7.2pt;letter-spacing:0.5px;">EMPLOYEE</th>
+          <th style="padding:8px 6px;text-align:center;font-size:7.2pt;letter-spacing:0.5px;">ATTENDANCE</th>
+          <th style="padding:8px 6px;text-align:center;font-size:7.2pt;letter-spacing:0.5px;">OT HRS</th>
+          <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">BASE (PKR)</th>
+          <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">OT PAY</th>
+          <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">LOAN DED.</th>
+          <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">NET PAYABLE</th>
+          <th style="padding:8px 8px;text-align:center;font-size:7.2pt;letter-spacing:0.5px;">SIGNATURE</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>
+
+    <div style="background:${navy};color:#ffffff;padding:12px 18px;border-radius:6px;border-left:5px solid ${gold};display:flex;justify-content:space-between;align-items:center;page-break-inside:avoid;break-inside:avoid;">
+      <div>
+        <div style="font-size:7.5pt;letter-spacing:2px;color:${gold};font-weight:800;">TOTAL NET PAYROLL &mdash; ${monthUpper}</div>
+        <div style="font-size:8pt;color:#cbd5e1;margin-top:2px;">Verified against attendance &amp; loan ledger</div>
+      </div>
+      <div style="font-size:17pt;font-weight:900;color:#ffffff;letter-spacing:0.5px;">PKR ${(totals.net || 0).toLocaleString()}</div>
+    </div>
+
+    <div class="signature-grid" style="margin-top:28px;grid-template-columns:repeat(3,1fr);">
+      <div class="signature-box">
+        <div class="signature-title">Prepared By (HR)</div>
+        <div class="signature-sub">Rags Heaven</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Checked By (Accounts)</div>
+        <div class="signature-sub">Finance Verification</div>
+      </div>
+      <div class="signature-box">
+        <div class="signature-title">Approved By Director</div>
+        <div class="signature-sub">Authorized Signature &amp; Stamp</div>
+      </div>
+    </div>
+  `;
+
+  return _docShell(`Salary Sheet - ${monthLabel}`, body, 'theme-supplier');
+}
+
+function _renderSinglePayslipCard(monthStr, row) {
+  const monthLabel = _formatMonthLabel(monthStr);
+  const emerald = '#064e3b';
+  const gold = '#c5a059';
+  row = row || {};
+  const gross = (row.baseSalary || 0) + (row.otPay || 0);
+  const refNo = `PAY-${(monthStr || '').replace('-', '')}-${_esc((row.id || '').slice(-4).toUpperCase())}`;
+
+  return `
+    <div style="border:1.5px solid #0f172a;border-radius:8px;overflow:hidden;page-break-inside:avoid;break-inside:avoid;">
+      <!-- Dark Emerald/Obsidian Top Banner -->
+      <div style="background:linear-gradient(135deg,#0f172a 0%,${emerald} 100%);color:#ffffff;padding:10px 16px;border-bottom:2.5px solid ${gold};display:flex;justify-content:space-between;align-items:center;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="${RH_BRAND.logoBase64}" alt="Rags Heaven" style="height:30px;width:auto;background:#fff;border-radius:4px;padding:2px;">
+          <div>
+            <div style="font-size:12pt;font-weight:900;letter-spacing:1.5px;line-height:1;">RAGS HEAVEN</div>
+            <div style="font-size:7pt;color:${gold};letter-spacing:1.2px;font-weight:700;margin-top:2px;">OFFICIAL SALARY PAYSLIP VOUCHER</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:9pt;font-weight:800;color:${gold};letter-spacing:0.8px;">${(monthLabel || '').toUpperCase()}</div>
+          <div style="font-size:7.2pt;color:#cbd5e1;font-family:monospace;">${refNo}</div>
+        </div>
+      </div>
+
+      <!-- Compact Employee & Attendance Strip -->
+      <div style="background:#f8fafc;padding:9px 16px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-size:8.2pt;">
+        <div>
+          <span style="font-size:10.5pt;font-weight:900;color:#0f172a;">${_esc(row.name)}</span>
+          <span style="color:#64748b;margin-left:6px;">(${_esc(row.roleLabel)}${row.designation ? ' &bull; ' + _esc(row.designation) : ''})</span>
+          ${row.phone ? `<div style="font-size:7.5pt;color:#64748b;margin-top:1px;">Phone: ${_esc(row.phone)}</div>` : ''}
+        </div>
+        <div style="text-align:right;font-size:7.8pt;color:#334155;">
+          <div><strong>Attendance:</strong> <span style="color:#059669;font-weight:700;">${row.present || 0}P</span> &bull; <span style="color:#d97706;font-weight:700;">${row.half || 0}H</span> &bull; <span style="color:#dc2626;font-weight:700;">${row.absent || 0}A</span></div>
+          <div><strong>Overtime:</strong> ${(row.otHours || 0).toFixed(1)} hrs</div>
+        </div>
+      </div>
+
+      <!-- Side-by-Side Earnings & Deductions (Half-Page Compact) -->
+      <div style="padding:10px 16px;display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="border:1px solid #d1fae5;border-radius:6px;overflow:hidden;">
+          <div style="background:#ecfdf5;color:${emerald};font-size:7.5pt;font-weight:800;padding:5px 10px;letter-spacing:0.8px;border-bottom:1px solid #d1fae5;">EARNINGS</div>
+          <div style="padding:7px 10px;font-size:8.2pt;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Basic Salary</span><strong>PKR ${(row.baseSalary || 0).toLocaleString()}</strong></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Overtime (${(row.otHours || 0).toFixed(1)}h)</span><strong style="color:#059669;">+PKR ${(row.otPay || 0).toLocaleString()}</strong></div>
+            <div style="display:flex;justify-content:space-between;padding-top:4px;border-top:1px dashed #cbd5e1;font-weight:800;"><span>Gross Earnings</span><span>PKR ${gross.toLocaleString()}</span></div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #fecaca;border-radius:6px;overflow:hidden;">
+          <div style="background:#fef2f2;color:#991b1b;font-size:7.5pt;font-weight:800;padding:5px 10px;letter-spacing:0.8px;border-bottom:1px solid #fecaca;">DEDUCTIONS &amp; LOAN</div>
+          <div style="padding:7px 10px;font-size:8.2pt;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Loan / Adv Deduction</span><strong style="color:#b91c1c;">-PKR ${(row.loanDeduction || 0).toLocaleString()}</strong></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#64748b;"><span>Remaining Loan Bal.</span><span>PKR ${(row.remainingLoan || 0).toLocaleString()}</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:4px;border-top:1px dashed #cbd5e1;font-weight:800;color:#b91c1c;"><span>Total Deductions</span><span>PKR ${(row.loanDeduction || 0).toLocaleString()}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Net Payable Bar & Compact Signatures -->
+      <div style="margin:0 16px 10px;background:#0f172a;color:#ffffff;padding:8px 14px;border-radius:6px;border-left:4px solid ${gold};display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:7.8pt;letter-spacing:1.5px;color:${gold};font-weight:800;">NET SALARY PAYABLE</span>
+        <span style="font-size:14pt;font-weight:900;color:#ffffff;">PKR ${(row.netPayable || 0).toLocaleString()}</span>
+      </div>
+
+      <div style="padding:14px 16px 10px;display:flex;justify-content:space-between;gap:24px;font-size:7.5pt;color:#475569;">
+        <div style="flex:1;border-top:1px solid #94a3b8;padding-top:4px;text-align:center;"><strong>Employee Signature</strong> (${_esc(row.name)})</div>
+        <div style="flex:1;border-top:1px solid #94a3b8;padding-top:4px;text-align:center;"><strong>Authorized Signatory</strong> (Rags Heaven)</div>
+      </div>
+    </div>
+  `;
+}
+
+function buildEmployeePayslipPdf(monthStr, row) {
+  const monthLabel = _formatMonthLabel(monthStr);
+  return _docShell(`Salary Receipt - ${(row && row.name) || 'Employee'} (${monthLabel})`, _renderSinglePayslipCard(monthStr, row), 'theme-buyer');
+}
+
+function buildAllPayslipsPdf(monthStr, payrollRows) {
+  const monthLabel = _formatMonthLabel(monthStr);
+  const rows = payrollRows || [];
+  if (!rows.length) {
+    return _docShell(`All Payslips - ${monthLabel}`, `<div style="padding:30px;text-align:center;color:#64748b;">No staff payslips for ${monthLabel}.</div>`, 'theme-buyer');
+  }
+
+  const pages = [];
+  for (let i = 0; i < rows.length; i += 2) {
+    const first = _renderSinglePayslipCard(monthStr, rows[i]);
+    const second = rows[i + 1]
+      ? `<div style="margin:12px 0;border-top:1.5px dashed #94a3b8;text-align:center;line-height:0;"><span style="background:#fff;padding:0 8px;font-size:8pt;color:#94a3b8;">&#9986; CUT HERE</span></div>` + _renderSinglePayslipCard(monthStr, rows[i + 1])
+      : '';
+    const hasMore = (i + 2) < rows.length;
+    pages.push(`<div style="${hasMore ? 'page-break-after:always;break-after:page;' : ''}">${first}${second}</div>`);
+  }
+
+  return _docShell(`All Staff Payslips - ${monthLabel}`, pages.join(''), 'theme-buyer');
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// 13. LUXURY WAREHOUSE EXPENSES REPORT PDF (Super User Only)
+// ═══════════════════════════════════════════════════════════════════════
+function buildMonthlyExpensesReportPdf(monthStr, expenses, categoryFilter) {
+  const monthLabel = monthStr ? _formatMonthLabel(monthStr) : 'All Months';
+  const monthUpper = (monthLabel || '').toUpperCase();
+  const accent = '#991b1b';
+  const list = [...(expenses || [])].sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  const totalAmt = list.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+
+  // Category totals
+  const catMap = {};
+  list.forEach(e => {
+    const c = e.category || 'Miscellaneous';
+    if (!catMap[c]) catMap[c] = { count: 0, total: 0 };
+    catMap[c].count += 1;
+    catMap[c].total += (parseFloat(e.amount) || 0);
+  });
+  const catRows = Object.entries(catMap).sort((a, b) => b[1].total - a[1].total);
+
+  const dates = list.map(e => e.date).filter(Boolean).sort();
+  let periodText = monthLabel;
+  if (dates.length === 1) periodText = _formatDate(dates[0]);
+  else if (dates.length > 1) periodText = `${_formatDate(dates[0])} – ${_formatDate(dates[dates.length - 1])}`;
+
+  const body = `
+    <div style="position:relative;text-align:center;padding-bottom:14px;border-bottom:2px solid ${accent};margin-bottom:16px;">
+      <img src="${RH_BRAND.logoBase64}" alt="Rags Heaven" style="position:absolute;left:0;top:0;height:38px;width:auto;object-fit:contain;">
+      <div style="font-family:Georgia,'Times New Roman',serif;font-size:21pt;font-weight:800;letter-spacing:2.5px;color:#111827;line-height:1.1;">RAGS HEAVEN</div>
+      <div style="color:${accent};font-size:9pt;letter-spacing:4px;margin:4px 0;">&diams; &diams; &diams;</div>
+      <div style="font-size:9pt;font-weight:700;letter-spacing:2.5px;color:${accent};">W A R E H O U S E &nbsp; E X P E N S E S &nbsp; R E P O R T</div>
+      <div style="font-size:10.5pt;font-style:italic;color:#6b7280;margin-top:3px;">${monthLabel}${categoryFilter ? ' &bull; Category: ' + _esc(categoryFilter) : ''}</div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);background:#f8f6f4;border-radius:4px;padding:12px 10px;margin-bottom:18px;text-align:center;">
+      <div>
+        <div style="font-size:7pt;font-weight:700;letter-spacing:1.5px;color:#6b7280;">TOTAL EXPENSES</div>
+        <div style="font-size:14pt;font-weight:800;color:#111827;margin-top:3px;font-family:Georgia,'Times New Roman',serif;">PKR ${totalAmt.toLocaleString()}</div>
+      </div>
+      <div>
+        <div style="font-size:7pt;font-weight:700;letter-spacing:1.5px;color:#6b7280;">ENTRIES</div>
+        <div style="font-size:14pt;font-weight:800;color:#111827;margin-top:3px;font-family:Georgia,'Times New Roman',serif;">${list.length}</div>
+      </div>
+      <div>
+        <div style="font-size:7pt;font-weight:700;letter-spacing:1.5px;color:#6b7280;">PERIOD</div>
+        <div style="font-size:11.5pt;font-weight:800;color:#111827;margin-top:4px;font-family:Georgia,'Times New Roman',serif;">${periodText}</div>
+      </div>
+    </div>
+
+    ${catRows.length ? `
+      <div style="font-size:13pt;font-weight:800;color:#111827;font-family:Georgia,'Times New Roman',serif;margin-bottom:8px;">Category Breakdown</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+        <thead>
+          <tr style="background:#111111;color:#ffffff;">
+            <th style="padding:7px 10px;text-align:left;font-size:7.5pt;">EXPENSE CATEGORY</th>
+            <th style="padding:7px 10px;text-align:center;font-size:7.5pt;width:80px;">ENTRIES</th>
+            <th style="padding:7px 10px;text-align:right;font-size:7.5pt;width:130px;">TOTAL (PKR)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${catRows.map(([cat, info], idx) => `
+            <tr style="${idx % 2 === 1 ? 'background:#f8f6f4;' : 'background:#fff;'}">
+              <td style="padding:6px 10px;font-weight:700;font-size:8.8pt;border-bottom:1px solid #e5e7eb;">${_esc(cat)}</td>
+              <td style="padding:6px 10px;text-align:center;font-size:8.5pt;border-bottom:1px solid #e5e7eb;">${info.count}</td>
+              <td style="padding:6px 10px;text-align:right;font-weight:800;font-size:8.8pt;border-bottom:1px solid #e5e7eb;">PKR ${info.total.toLocaleString()}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    ` : ''}
+
+    <div style="font-size:13pt;font-weight:800;color:#111827;font-family:Georgia,'Times New Roman',serif;margin-bottom:8px;">Detailed Expense Ledger</div>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:18px;">
+      <thead>
+        <tr style="background:#111111;color:#ffffff;">
+          <th style="padding:7px 8px;text-align:left;font-size:7.2pt;">REF #</th>
+          <th style="padding:7px 8px;text-align:left;font-size:7.2pt;">DATE</th>
+          <th style="padding:7px 8px;text-align:left;font-size:7.2pt;">CATEGORY</th>
+          <th style="padding:7px 8px;text-align:left;font-size:7.2pt;">DESCRIPTION</th>
+          <th style="padding:7px 8px;text-align:left;font-size:7.2pt;">METHOD / BY</th>
+          <th style="padding:7px 8px;text-align:right;font-size:7.2pt;">AMOUNT (PKR)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${list.length ? list.map((e, idx) => `
+          <tr style="${idx % 2 === 1 ? 'background:#f8f6f4;' : 'background:#fff;'}">
+            <td style="padding:6px 8px;font-family:monospace;font-size:8pt;border-bottom:1px solid #e5e7eb;">${_esc(e.expense_no || '-')}</td>
+            <td style="padding:6px 8px;font-size:8pt;border-bottom:1px solid #e5e7eb;white-space:nowrap;">${_formatDate(e.date)}</td>
+            <td style="padding:6px 8px;font-size:8pt;font-weight:700;color:${accent};border-bottom:1px solid #e5e7eb;">${_esc(e.category)}</td>
+            <td style="padding:6px 8px;font-size:8.5pt;border-bottom:1px solid #e5e7eb;"><strong>${_esc(e.title)}</strong>${e.notes ? '<div style="font-size:7.5pt;color:#6b7280;">' + _esc(e.notes) + '</div>' : ''}</td>
+            <td style="padding:6px 8px;font-size:8pt;border-bottom:1px solid #e5e7eb;">${_esc(e.payment_method || 'Cash')}${e.paid_by ? ' (' + _esc(e.paid_by) + ')' : ''}</td>
+            <td style="padding:6px 8px;text-align:right;font-weight:800;font-size:8.8pt;border-bottom:1px solid #e5e7eb;white-space:nowrap;">${(parseFloat(e.amount) || 0).toLocaleString()}</td>
+          </tr>
+        `).join('') : `<tr><td colspan="6" style="padding:18px;text-align:center;color:#6b7280;">No expenses recorded for this period.</td></tr>`}
+      </tbody>
+    </table>
+
+    <div style="text-align:center;margin-top:16px;page-break-inside:avoid;break-inside:avoid;">
+      <div style="color:${accent};font-size:10pt;margin-bottom:8px;">&diams;</div>
+      <div style="background:#111111;color:#ffffff;padding:14px 20px;border-top:3px solid ${accent};border-bottom:3px solid ${accent};">
+        <div style="font-size:7.5pt;letter-spacing:2.5px;color:#d1d5db;font-weight:700;">TOTAL WAREHOUSE EXPENSES &mdash; ${monthUpper}</div>
+        <div style="font-family:Georgia,'Times New Roman',serif;font-size:19pt;font-weight:800;color:#ffffff;margin-top:4px;">PKR ${totalAmt.toLocaleString()}</div>
+      </div>
+    </div>
+  `;
+
+  return _docShell(`Expenses Report - ${monthLabel}`, body, 'theme-supplier');
+}
