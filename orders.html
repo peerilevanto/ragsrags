@@ -537,6 +537,7 @@
         <div style="font-size:11.5px;color:var(--muted);" id="wsSubtitle"></div>
       </div>
       <div class="ws-head-actions">
+        <button class="btn-action-sm" id="wsEditOrderBtn" onclick="editCurrentWorkspaceOrder()">✏ Edit Info</button>
         <button class="btn-action-sm info" onclick="exportCurrentGraderPdf()">📄 Grader Sheet PDF</button>
         <button class="btn-action-sm success" id="wsCustomerPdfBtn" onclick="exportCurrentCustomerPdf()">📊 Customer Progress PDF</button>
         <button class="btn-modal-close" onclick="closeWorkspaceModal()" title="Close">&times;</button>
@@ -664,6 +665,8 @@ async function initOrdersPage() {
     const canManageOrders = ['admin', 'super_user', 'special', 'administrator'].includes(role);
     const btnNew = document.getElementById('btnNewOrder');
     if (btnNew && !canManageOrders) btnNew.style.display = 'none';
+    const wsEditBtn = document.getElementById('wsEditOrderBtn');
+    if (wsEditBtn && !canManageOrders) wsEditBtn.style.display = 'none';
 
     // Customer PDF is strictly visible for Super User (Supervisor) only
     const canViewCustomerPdf = isSuperUser();
@@ -854,6 +857,7 @@ function renderOrdersList() {
 
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;">
           <button class="btn-action-sm primary" onclick="openOrderWorkspace('${o.id}')">⚙ Open Tracking &amp; Dispatch</button>
+          ${['admin', 'super_user', 'special', 'administrator'].includes((getRole() || '').toLowerCase()) ? `<button class="btn-action-sm" onclick="openEditOrderModal('${o.id}')">✏ Edit Info</button>` : ''}
           <button class="btn-action-sm info" onclick="exportGraderPdfById('${o.id}')">📄 Grader PDF</button>
           ${isSuperUser() ? `<button class="btn-action-sm success" onclick="exportCustomerPdfById('${o.id}')">📊 Customer PDF</button>` : ''}
         </div>
@@ -885,6 +889,43 @@ function openCreateOrderModal() {
   document.getElementById('orderFormModal').classList.add('open');
 }
 
+function openEditOrderModal(orderId) {
+  const o = ordersList.find(x => x.id == orderId);
+  if (!o) return;
+  document.getElementById('editOrderId').value = o.id;
+  document.getElementById('orderFormModalTitle').textContent = `Edit Order — ${o.order_no}`;
+  document.getElementById('ordNo').value = o.order_no || '';
+  document.getElementById('ordCustomerName').value = o.customer_name || '';
+  document.getElementById('ordCompany').value = o.customer_company || '';
+  document.getElementById('ordCountry').value = o.country || '';
+  document.getElementById('ordCity').value = o.city || '';
+  document.getElementById('ordPhone').value = o.phone || '';
+  document.getElementById('ordDate').value = o.order_date || new Date().toISOString().slice(0, 10);
+  document.getElementById('ordTargetDate').value = o.target_dispatch_date || '';
+  document.getElementById('ordPriority').value = o.priority || 'Normal';
+  document.getElementById('ordTargetWeight').value = o.target_weight_kg || '';
+  document.getElementById('ordShippingMethod').value = o.shipping_method || 'Sea Freight (Container)';
+  document.getElementById('ordCurrency').value = o.currency || 'EUR';
+  document.getElementById('ordNotes').value = o.notes || '';
+  document.getElementById('quickBuyerSelect').value = '';
+
+  const items = orderItemsList.filter(i => i.order_id == o.id).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+  document.getElementById('formItemsContainer').innerHTML = '';
+  if (items.length) {
+    items.forEach(it => addFormItemRow(it));
+  } else {
+    addFormItemRow();
+  }
+  document.getElementById('orderFormModal').classList.add('open');
+}
+
+function editCurrentWorkspaceOrder() {
+  if (!activeWorkspaceOrderId) return;
+  const id = activeWorkspaceOrderId;
+  closeWorkspaceModal();
+  openEditOrderModal(id);
+}
+
 function closeOrderFormModal() {
   document.getElementById('orderFormModal').classList.remove('open');
 }
@@ -893,6 +934,7 @@ function addFormItemRow(prefill = {}) {
   const wrap = document.getElementById('formItemsContainer');
   const row = document.createElement('div');
   row.className = 'form-item-row';
+  if (prefill.id) row.setAttribute('data-item-id', prefill.id);
   row.innerHTML = `
     <input type="text" class="fi-name" placeholder="Item Name (e.g. Patagonia Fleece)" value="${escapeHtml(prefill.item_name || '')}" style="height:34px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;">
     <input type="text" class="fi-cat" placeholder="Grade (e.g. Grade A)" value="${escapeHtml(prefill.category || 'Grade A')}" style="height:34px;border:1px solid var(--border);border-radius:6px;padding:0 8px;font-size:12px;">
@@ -906,11 +948,13 @@ function addFormItemRow(prefill = {}) {
 }
 
 async function saveOrderFromForm() {
+  const editId = document.getElementById('editOrderId').value.trim();
   const customerName = document.getElementById('ordCustomerName').value.trim();
   const orderNo = document.getElementById('ordNo').value.trim() || generateDocNumber('ORD');
   if (!customerName) { showToast('Customer Name is required', true); return; }
 
   const itemRows = [...document.querySelectorAll('#formItemsContainer .form-item-row')].map((r, idx) => ({
+    id: r.getAttribute('data-item-id') || null,
     item_name: r.querySelector('.fi-name').value.trim(),
     category: r.querySelector('.fi-cat').value.trim() || 'Grade A',
     size_spec: r.querySelector('.fi-spec').value.trim(),
@@ -923,7 +967,7 @@ async function saveOrderFromForm() {
   if (!itemRows.length) { showToast('Add at least one item to the order', true); return; }
 
   const user = getCurrentUser() || {};
-  const newOrder = {
+  const orderPayload = {
     order_no: orderNo,
     customer_name: customerName,
     customer_company: document.getElementById('ordCompany').value.trim(),
@@ -933,26 +977,84 @@ async function saveOrderFromForm() {
     order_date: document.getElementById('ordDate').value || new Date().toISOString().slice(0, 10),
     target_dispatch_date: document.getElementById('ordTargetDate').value || null,
     priority: document.getElementById('ordPriority').value,
-    status: 'Pending',
     currency: document.getElementById('ordCurrency').value,
     target_weight_kg: parseFloat(document.getElementById('ordTargetWeight').value) || 0,
     shipping_method: document.getElementById('ordShippingMethod').value,
     notes: document.getElementById('ordNotes').value.trim(),
-    created_by: user.name || 'Administrator'
+    updated_at: new Date().toISOString()
   };
+
+  if (editId) {
+    try { await sbUpdate('orders', editId, orderPayload); } catch (e) {}
+    const idx = ordersList.findIndex(x => x.id == editId);
+    if (idx !== -1) Object.assign(ordersList[idx], orderPayload);
+
+    const existingItems = orderItemsList.filter(i => i.order_id == editId);
+    const keptIds = new Set(itemRows.map(r => r.id).filter(Boolean));
+
+    // Delete removed items
+    for (const oldIt of existingItems) {
+      if (!keptIds.has(oldIt.id)) {
+        try { await sbDelete('order_items', oldIt.id); } catch (e) {}
+        orderItemsList = orderItemsList.filter(x => x.id != oldIt.id);
+      }
+    }
+
+    // Update existing or insert new items
+    for (const it of itemRows) {
+      if (it.id) {
+        const patch = {
+          item_name: it.item_name,
+          category: it.category,
+          size_spec: it.size_spec,
+          req_pcs: it.req_pcs,
+          req_weight_kg: it.req_weight_kg,
+          assigned_grader: it.assigned_grader,
+          sort_order: it.sort_order,
+          updated_at: new Date().toISOString()
+        };
+        try { await sbUpdate('order_items', it.id, patch); } catch (e) {}
+        const target = orderItemsList.find(x => x.id == it.id);
+        if (target) Object.assign(target, patch);
+      } else {
+        const { id: _unused, ...cleanIt } = it;
+        const itemPayload = { ...cleanIt, order_id: editId, graded_pcs: 0, repair_pcs: 0, wash_pcs: 0, checked_pcs: 0, packed_pcs: 0, actual_weight_kg: 0, bales_count: 0, item_status: 'Pending' };
+        let savedIt = null;
+        try {
+          const r = await sbInsert('order_items', itemPayload);
+          savedIt = Array.isArray(r) ? r[0] : r;
+        } catch (e) {}
+        if (!savedIt || !savedIt.id) savedIt = { ...itemPayload, id: 'oit_' + Date.now() + Math.random().toString(36).slice(2, 6) };
+        orderItemsList.push(savedIt);
+      }
+    }
+
+    await appendOrderLog(editId, 'Order Updated', `Updated order info & items for ${customerName} (${itemRows.length} items)`);
+    saveLocalCaches();
+    closeOrderFormModal();
+    updateOrderKpis();
+    renderOrdersList();
+    showToast('Order updated successfully');
+    return;
+  }
+
+  // Create New Order
+  orderPayload.status = 'Pending';
+  orderPayload.created_by = user.name || 'Administrator';
 
   let savedOrder = null;
   try {
-    const res = await sbInsert('orders', newOrder);
+    const res = await sbInsert('orders', orderPayload);
     savedOrder = Array.isArray(res) ? res[0] : res;
   } catch (e) {}
   if (!savedOrder || !savedOrder.id) {
-    savedOrder = { ...newOrder, id: 'ord_' + Date.now(), created_at: new Date().toISOString() };
+    savedOrder = { ...orderPayload, id: 'ord_' + Date.now(), created_at: new Date().toISOString() };
   }
   ordersList.unshift(savedOrder);
 
   for (const it of itemRows) {
-    const itemPayload = { ...it, order_id: savedOrder.id, graded_pcs: 0, checked_pcs: 0, packed_pcs: 0, actual_weight_kg: 0, bales_count: 0, item_status: 'Pending' };
+    const { id: _unused, ...cleanIt } = it;
+    const itemPayload = { ...cleanIt, order_id: savedOrder.id, graded_pcs: 0, repair_pcs: 0, wash_pcs: 0, checked_pcs: 0, packed_pcs: 0, actual_weight_kg: 0, bales_count: 0, item_status: 'Pending' };
     let savedIt = null;
     try {
       const r = await sbInsert('order_items', itemPayload);

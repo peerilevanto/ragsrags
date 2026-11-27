@@ -1951,11 +1951,11 @@ function buildOrderGraderSheetPdf(order, items) {
         ${rows}
         <tr style="background:#f8fafc;font-weight:800;">
           <td colspan="3" class="num">TOTAL REQUIRED:</td>
-          <td class="center">${totalReqPcs.toLocaleString()} pcs</td>
-          <td class="center" style="color:#94a3b8;">______ pcs</td>
-          <td class="center" style="color:#94a3b8;">____ / ____</td>
-          <td class="center" style="color:#94a3b8;">_____ kg</td>
-          <td class="center" style="color:#94a3b8;">____</td>
+          <td class="center" style="white-space:nowrap;">${totalReqPcs.toLocaleString()} pcs</td>
+          <td class="center" style="color:#94a3b8;white-space:nowrap;">_____ pcs</td>
+          <td class="center" style="color:#94a3b8;white-space:nowrap;">___ / ___</td>
+          <td class="center" style="color:#94a3b8;white-space:nowrap;">____ kg</td>
+          <td class="center" style="color:#94a3b8;white-space:nowrap;">____</td>
           <td></td>
         </tr>
       </tbody>
@@ -2238,11 +2238,12 @@ function buildMonthlySalarySheetPdf(monthStr, payrollRows, totals) {
       <td style="padding:7px 6px;text-align:center;font-size:8.2pt;border-bottom:1px solid #e2e8f0;">${r.otHours.toFixed(1)}</td>
       <td style="padding:7px 8px;text-align:right;font-size:8.3pt;border-bottom:1px solid #e2e8f0;">${(r.baseSalary || 0).toLocaleString()}</td>
       <td style="padding:7px 8px;text-align:right;font-size:8.3pt;color:#059669;font-weight:700;border-bottom:1px solid #e2e8f0;">+${(r.otPay || 0).toLocaleString()}</td>
+      <td style="padding:7px 8px;text-align:right;font-size:8.3pt;color:#d97706;font-weight:700;border-bottom:1px solid #e2e8f0;">-${(r.absentDeduction || 0).toLocaleString()}</td>
       <td style="padding:7px 8px;text-align:right;font-size:8.3pt;color:#b91c1c;font-weight:700;border-bottom:1px solid #e2e8f0;">-${(r.loanDeduction || 0).toLocaleString()}</td>
       <td style="padding:7px 8px;text-align:right;font-weight:800;font-size:9pt;color:${navy};border-bottom:1px solid #e2e8f0;white-space:nowrap;">PKR ${(r.netPayable || 0).toLocaleString()}</td>
-      <td style="padding:7px 8px;border-bottom:1px solid #e2e8f0;width:95px;"></td>
+      <td style="padding:7px 8px;border-bottom:1px solid #e2e8f0;width:85px;"></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="9" style="padding:18px;text-align:center;color:#64748b;">No staff payroll data for ${monthLabel}.</td></tr>`;
+  }).join('') : `<tr><td colspan="10" style="padding:18px;text-align:center;color:#64748b;">No staff payroll data for ${monthLabel}.</td></tr>`;
 
   const body = `
     <!-- Royal Navy & Gold Executive Header -->
@@ -2271,8 +2272,8 @@ function buildMonthlySalarySheetPdf(monthStr, payrollRows, totals) {
         <div style="font-size:12pt;font-weight:900;color:#0f172a;margin-top:3px;">PKR ${(totals.gross || 0).toLocaleString()}</div>
       </div>
       <div style="background:#fef2f2;border-left:3px solid #b91c1c;padding:9px 11px;border-radius:0 6px 6px 0;">
-        <div style="font-size:7pt;font-weight:800;letter-spacing:1px;color:#991b1b;">LOAN DEDUCTIONS</div>
-        <div style="font-size:12pt;font-weight:900;color:#b91c1c;margin-top:3px;">PKR ${(totals.deductions || 0).toLocaleString()}</div>
+        <div style="font-size:7pt;font-weight:800;letter-spacing:1px;color:#991b1b;">ABSENT + LOAN DED.</div>
+        <div style="font-size:12pt;font-weight:900;color:#b91c1c;margin-top:3px;">PKR ${((totals.absentDeductions || 0) + (totals.deductions || 0)).toLocaleString()}</div>
       </div>
       <div style="background:#ecfdf5;border-left:3px solid #059669;padding:9px 11px;border-radius:0 6px 6px 0;">
         <div style="font-size:7pt;font-weight:800;letter-spacing:1px;color:#065f46;">NET DISBURSEMENT</div>
@@ -2289,6 +2290,7 @@ function buildMonthlySalarySheetPdf(monthStr, payrollRows, totals) {
           <th style="padding:8px 6px;text-align:center;font-size:7.2pt;letter-spacing:0.5px;">OT HRS</th>
           <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">BASE (PKR)</th>
           <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">OT PAY</th>
+          <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">ABSENT DED.</th>
           <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">LOAN DED.</th>
           <th style="padding:8px 8px;text-align:right;font-size:7.2pt;letter-spacing:0.5px;">NET PAYABLE</th>
           <th style="padding:8px 8px;text-align:center;font-size:7.2pt;letter-spacing:0.5px;">SIGNATURE</th>
@@ -2378,9 +2380,10 @@ function _renderSinglePayslipCard(monthStr, row) {
         <div style="border:1px solid #fecaca;border-radius:6px;overflow:hidden;">
           <div style="background:#fef2f2;color:#991b1b;font-size:7.5pt;font-weight:800;padding:5px 10px;letter-spacing:0.8px;border-bottom:1px solid #fecaca;">DEDUCTIONS &amp; LOAN</div>
           <div style="padding:7px 10px;font-size:8.2pt;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>Loan / Adv Deduction</span><strong style="color:#b91c1c;">-PKR ${(row.loanDeduction || 0).toLocaleString()}</strong></div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;color:#64748b;"><span>Remaining Loan Bal.</span><span>PKR ${(row.remainingLoan || 0).toLocaleString()}</span></div>
-            <div style="display:flex;justify-content:space-between;padding-top:4px;border-top:1px dashed #cbd5e1;font-weight:800;color:#b91c1c;"><span>Total Deductions</span><span>PKR ${(row.loanDeduction || 0).toLocaleString()}</span></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span>Absent / Half Ded.</span><strong style="color:#d97706;">-PKR ${(row.absentDeduction || 0).toLocaleString()}</strong></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span>Loan / Adv Deduction</span><strong style="color:#b91c1c;">-PKR ${(row.loanDeduction || 0).toLocaleString()}</strong></div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px;color:#64748b;"><span>Remaining Loan Bal.</span><span>PKR ${(row.remainingLoan || 0).toLocaleString()}</span></div>
+            <div style="display:flex;justify-content:space-between;padding-top:4px;border-top:1px dashed #cbd5e1;font-weight:800;color:#b91c1c;"><span>Total Deductions</span><span>PKR ${((row.absentDeduction || 0) + (row.loanDeduction || 0)).toLocaleString()}</span></div>
           </div>
         </div>
       </div>
